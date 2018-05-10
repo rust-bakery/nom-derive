@@ -125,7 +125,7 @@ fn add_verify(field: &syn::Field, p: String) -> String {
 }
 
 fn impl_nom(ast: &syn::DeriveInput) -> quote::Tokens {
-    eprintln!("ast: {:#?}", ast);
+    // eprintln!("ast: {:#?}", ast);
     let mut parsers = vec![];
     // test if struct has a lifetime
     let lifetime = ::syn::Ident::from(get_optional_lifetime(ast).unwrap_or_default().as_ref());
@@ -181,6 +181,6 @@ fn impl_nom(ast: &syn::DeriveInput) -> quote::Tokens {
             }
         }
     };
-    eprintln!("xxx: {:#?}", xxx);
+    // eprintln!("xxx: {:#?}", xxx);
     xxx
 }
