@@ -60,7 +60,9 @@ fn get_type_parser(ty: &::syn::Ty) -> Option<String> {
                         _ => panic!("Unsupported Vec/parameterized type"),
                     }
                 },
-                _     => None
+                s     => {
+                    Some(format!("call!({}::parse)", s))
+                }
             }
         },
         _ => None

@@ -28,7 +28,6 @@ struct StructWithParser {
 struct StructWithSubStruct {
     pub a: u32,
     b: u64,
-    #[Parse="call!(StructWithParser::parse)"]
     s: StructWithParser,
 }
 
