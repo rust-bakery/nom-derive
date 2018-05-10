@@ -28,14 +28,14 @@ fn get_type_parser(ty: &::syn::Ty) -> Option<String> {
             }
             let segment = path.segments.last().unwrap();
             match segment.ident.as_ref() {
-                "u8"  => Some("be_u8".to_owned()),
-                "u16" => Some("be_u16".to_owned()),
-                "u32" => Some("be_u32".to_owned()),
-                "u64" => Some("be_u64".to_owned()),
-                "i8"  => Some("be_i8".to_owned()),
-                "i16" => Some("be_i16".to_owned()),
-                "i32" => Some("be_i32".to_owned()),
-                "i64" => Some("be_i64".to_owned()),
+                "u8"  |
+                "u16" |
+                "u32" |
+                "u64" |
+                "i8"  |
+                "i16" |
+                "i32" |
+                "i64"    => Some(format!("be_{}", segment.ident.as_ref())),
                 "Option" => {
                     match segment.parameters {
                         ::syn::PathParameters::AngleBracketed(ref ab) => {
@@ -48,7 +48,7 @@ fn get_type_parser(ty: &::syn::Ty) -> Option<String> {
                         _ => panic!("Unsupported Option/parameterized type"),
                     }
                 },
-                "Vec" => {
+                "Vec"    => {
                     match segment.parameters {
                         ::syn::PathParameters::AngleBracketed(ref ab) => {
                             // eprintln!("Vec type: {:?}", ab);
@@ -60,7 +60,7 @@ fn get_type_parser(ty: &::syn::Ty) -> Option<String> {
                         _ => panic!("Unsupported Vec/parameterized type"),
                     }
                 },
-                s     => {
+                s        => {
                     Some(format!("call!({}::parse)", s))
                 }
             }
