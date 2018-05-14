@@ -38,6 +38,14 @@ struct StructWithVerify {
     pub a: u32,
 }
 
+/// A simple structure with a condition
+#[derive(Debug,PartialEq,Nom)]
+struct StructWithCondition {
+    pub a: u32,
+    #[Cond="a == 1"]
+    pub b: Option<u32>,
+}
+
 #[test]
 fn test_simple_struct() {
     let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
@@ -67,4 +75,14 @@ fn test_struct_with_verify() {
 
     let res = StructWithVerify::parse(&input[4..]);
     assert_eq!(res, IResult::Error(ErrorKind::Verify));
+}
+
+#[test]
+fn test_struct_with_condition() {
+    let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
+    let res = StructWithCondition::parse(input);
+    assert_eq!(res, IResult::Done(&input[8..],StructWithCondition{a:1,b:Some(0x12345678)}));
+
+    let res = StructWithCondition::parse(&input[4..]);
+    assert_eq!(res, IResult::Done(&input[8..],StructWithCondition{a:0x12345678,b:None}));
 }

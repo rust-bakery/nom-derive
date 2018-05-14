@@ -4,8 +4,33 @@ extern crate syn;
 extern crate quote;
 
 use proc_macro::TokenStream;
+use std::fmt;
 
-#[proc_macro_derive(Nom, attributes(Parse,Verify))]
+enum ParserTree {
+    Cond(Box<ParserTree>, String),
+    Verify(Box<ParserTree>, String, String),
+    Complete(Box<ParserTree>),
+    Opt(Box<ParserTree>),
+    Many0(Box<ParserTree>),
+    CallParse(String),
+    Raw(String)
+}
+
+impl fmt::Display for ParserTree {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ParserTree::Cond(p, c)      => write!(f, "cond!({}, {})", c, p),
+            ParserTree::Verify(p, i, c) => write!(f, "verify!({}, |{}| {{ {} }})", p, i, c),
+            ParserTree::Complete(p)     => write!(f, "complete!({})", p),
+            ParserTree::Opt(p)          => write!(f, "opt!({})", p),
+            ParserTree::Many0(p)        => write!(f, "many0!({})", p),
+            ParserTree::CallParse(s)    => write!(f, "call!({}::parse)", s),
+            ParserTree::Raw(s)          => f.write_str(s)
+        }
+    }
+}
+
+#[proc_macro_derive(Nom, attributes(Parse,Verify,Cond))]
 pub fn nom(input: TokenStream) -> TokenStream {
     // Construct a string representation of the type definition
     let s = input.to_string();
@@ -20,7 +45,7 @@ pub fn nom(input: TokenStream) -> TokenStream {
     gen.parse().unwrap()
 }
 
-fn get_type_parser(ty: &::syn::Ty) -> Option<String> {
+fn get_type_parser(ty: &::syn::Ty) -> Option<ParserTree> {
     match ty {
         ::syn::Ty::Path(_, path) => {
             if path.segments.len() != 1 {
@@ -35,7 +60,7 @@ fn get_type_parser(ty: &::syn::Ty) -> Option<String> {
                 "i8"  |
                 "i16" |
                 "i32" |
-                "i64"    => Some(format!("be_{}", segment.ident.as_ref())),
+                "i64"    => Some(ParserTree::Raw(format!("be_{}", segment.ident.as_ref()))),
                 "Option" => {
                     match segment.parameters {
                         ::syn::PathParameters::AngleBracketed(ref ab) => {
@@ -43,7 +68,7 @@ fn get_type_parser(ty: &::syn::Ty) -> Option<String> {
                             if ab.types.len() != 1 { panic!("Option type with multiple types are unsupported"); }
                             let s = get_type_parser(&ab.types[0]);
                             // eprintln!("    recursion: {:?}", s);
-                            s.map(|x| format!("opt!(complete!({}))", x))
+                            s.map(|x| ParserTree::Opt(Box::new(ParserTree::Complete(Box::new(x)))))
                         },
                         _ => panic!("Unsupported Option/parameterized type"),
                     }
@@ -55,13 +80,13 @@ fn get_type_parser(ty: &::syn::Ty) -> Option<String> {
                             if ab.types.len() != 1 { panic!("Vec type with multiple types are unsupported"); }
                             let s = get_type_parser(&ab.types[0]);
                             // eprintln!("    recursion: {:?}", s);
-                            s.map(|x| format!("many0!({})", x))
+                            s.map(|x| ParserTree::Many0(Box::new(x)))
                         },
                         _ => panic!("Unsupported Vec/parameterized type"),
                     }
                 },
                 s        => {
-                    Some(format!("call!({}::parse)", s))
+                    Some(ParserTree::CallParse(s.to_owned()))
                 }
             }
         },
@@ -69,7 +94,7 @@ fn get_type_parser(ty: &::syn::Ty) -> Option<String> {
     }
 }
 
-fn get_parser(field: &::syn::Field) -> Option<String> {
+fn get_parser(field: &::syn::Field) -> Option<ParserTree> {
     let ty = &field.ty;
     // first check if we have an attribute
     for attr in &field.attrs {
@@ -78,7 +103,7 @@ fn get_parser(field: &::syn::Field) -> Option<String> {
                 if &ident == &"Parse" {
                     match lit {
                         ::syn::Lit::Str(s,_) => {
-                            return Some(s.to_owned())
+                            return Some(ParserTree::Raw(s.to_owned()))
                         },
                         _ => unimplemented!()
                     }
@@ -104,7 +129,7 @@ fn get_optional_lifetime(ast: &syn::DeriveInput) -> Option<String> {
     Some(res)
 }
 
-fn add_verify(field: &syn::Field, p: String) -> String {
+fn add_verify(field: &syn::Field, p: ParserTree) -> ParserTree {
     let ident = field.ident.as_ref().unwrap();
     for attr in &field.attrs {
         match attr.value {
@@ -112,7 +137,32 @@ fn add_verify(field: &syn::Field, p: String) -> String {
                 if &attr_ident == &"Verify" {
                     match lit {
                         ::syn::Lit::Str(s,_) => {
-                            return format!("verify!({},|{}| {{ {} }})", p, ident, s)
+                            return ParserTree::Verify(Box::new(p), format!("{}",ident), s.to_owned())
+                        },
+                        _ => unimplemented!()
+                    }
+                }
+            },
+            _ => ()
+        }
+    }
+    p
+}
+
+fn patch_condition(field: &syn::Field, p: ParserTree) -> ParserTree {
+    let ident = field.ident.as_ref().unwrap();
+    for attr in &field.attrs {
+        match attr.value {
+            ::syn::MetaItem::NameValue(ref attr_ident, ref lit) => {
+                if &attr_ident == &"Cond" {
+                    match lit {
+                        ::syn::Lit::Str(s,_) => {
+                            match p {
+                                ParserTree::Opt(sub) => {
+                                    return ParserTree::Cond(sub, s.to_owned());
+                            }
+                            _ => panic!("A condition was given on field {}, which is not an option type. Hint: use Option<...>", ident),
+                            }
                         },
                         _ => unimplemented!()
                     }
@@ -144,6 +194,8 @@ fn impl_nom(ast: &syn::DeriveInput) -> quote::Tokens {
                         // eprintln!("    get_parser -> {:?}", ty);
                         match opt_parser {
                             Some(p) => {
+                                // Check if a condition was given, and set it
+                                let p = patch_condition(&field, p);
                                 // add verify field, if present
                                 let p = add_verify(&field, p);
                                 parsers.push( (ident.as_ref(), p) )
@@ -168,7 +220,7 @@ fn impl_nom(ast: &syn::DeriveInput) -> quote::Tokens {
     let idents2 = idents.clone();
     let mut parser_idents = vec![];
     for (_, ref parser) in parsers.iter() {
-        parser_idents.push(syn::Ident::from(parser.as_ref()));
+        parser_idents.push(syn::Ident::from(format!("{}",parser)))
     };
     let xxx = quote! {
         impl#lifetime #name#lifetime {
