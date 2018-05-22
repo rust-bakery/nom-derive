@@ -50,39 +50,39 @@ struct StructWithCondition {
 fn test_simple_struct() {
     let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
     let res = SimpleStruct::parse(input);
-    assert_eq!(res, IResult::Done(&input[12..],SimpleStruct{a:1, b:0x1234567812345678}));
+    assert_eq!(res, Ok((&input[12..],SimpleStruct{a:1, b:0x1234567812345678})));
 }
 
 #[test]
 fn test_struct_parse() {
     let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
     let res = StructWithParser::parse(input);
-    assert_eq!(res, IResult::Done(&input[4..],StructWithParser{a:0x01000000}));
+    assert_eq!(res, Ok((&input[4..],StructWithParser{a:0x01000000})));
 }
 
 #[test]
 fn test_struct_parse_substruct() {
     let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
     let res = StructWithSubStruct::parse(input);
-    assert_eq!(res, IResult::Done(&input[16..],StructWithSubStruct{a:1,b:0x1234567812345678,s:StructWithParser{a:0x01000000}}));
+    assert_eq!(res, Ok((&input[16..],StructWithSubStruct{a:1,b:0x1234567812345678,s:StructWithParser{a:0x01000000}})));
 }
 
 #[test]
 fn test_struct_with_verify() {
     let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
     let res = StructWithVerify::parse(input);
-    assert_eq!(res, IResult::Done(&input[4..],StructWithVerify{a:1}));
+    assert_eq!(res, Ok((&input[4..],StructWithVerify{a:1})));
 
     let res = StructWithVerify::parse(&input[4..]);
-    assert_eq!(res, IResult::Error(ErrorKind::Verify));
+    assert_eq!(res, Err(Err::Error(error_position!(&input[4..], ErrorKind::Verify))));
 }
 
 #[test]
 fn test_struct_with_condition() {
     let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
     let res = StructWithCondition::parse(input);
-    assert_eq!(res, IResult::Done(&input[8..],StructWithCondition{a:1,b:Some(0x12345678)}));
+    assert_eq!(res, Ok((&input[8..],StructWithCondition{a:1,b:Some(0x12345678)})));
 
     let res = StructWithCondition::parse(&input[4..]);
-    assert_eq!(res, IResult::Done(&input[8..],StructWithCondition{a:0x12345678,b:None}));
+    assert_eq!(res, Ok((&input[8..],StructWithCondition{a:0x12345678,b:None})));
 }

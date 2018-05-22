@@ -24,7 +24,7 @@ struct StructWithLifetimes<'a,'b> {
 fn test_struct_with_lifetimes() {
     let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
     let res = StructWithLifetimes::parse(input);
-    assert_eq!(res, IResult::Done(&input[8..],StructWithLifetimes{s:&input[0..4], t:&input[4..8]}));
+    assert_eq!(res, Ok((&input[8..],StructWithLifetimes{s:&input[0..4], t:&input[4..8]})));
 }
 
 // XXX generics are not supported

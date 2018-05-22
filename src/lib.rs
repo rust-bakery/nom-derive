@@ -80,7 +80,7 @@ fn get_type_parser(ty: &::syn::Ty) -> Option<ParserTree> {
                             if ab.types.len() != 1 { panic!("Vec type with multiple types are unsupported"); }
                             let s = get_type_parser(&ab.types[0]);
                             // eprintln!("    recursion: {:?}", s);
-                            s.map(|x| ParserTree::Many0(Box::new(x)))
+                            s.map(|x| ParserTree::Many0(Box::new(ParserTree::Complete(Box::new(x)))))
                         },
                         _ => panic!("Unsupported Vec/parameterized type"),
                     }

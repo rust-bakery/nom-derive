@@ -22,5 +22,5 @@ struct StructWithComplexParser {
 fn test_struct_complex_parse() {
     let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
     let res = StructWithComplexParser::parse(input);
-    assert_eq!(res, IResult::Done(&input[12..],StructWithComplexParser{a:1,b:Some(0x1234567812345678)}));
+    assert_eq!(res, Ok((&input[12..],StructWithComplexParser{a:1,b:Some(0x1234567812345678)})));
 }
