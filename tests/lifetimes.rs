@@ -9,6 +9,14 @@ extern crate nom;
 
 use nom::*;
 
+/// A simple structure, with a lifetime
+#[derive(Debug,Nom)]
+struct SubStruct<'a> {
+    /// This field provides the parsing code, and calls a macro
+    #[Parse="take!(4)"]
+    s: &'a[u8],
+}
+
 /// A structure with different lifetimes
 #[derive(Debug,PartialEq,Nom)]
 struct StructWithLifetimes<'a,'b> {
@@ -30,9 +38,11 @@ fn test_struct_with_lifetimes() {
 // XXX generics are not supported
 
 // fn parse_generics<G>(i:&[u8]) -> IResult<&[u8],Option<G>> {
-//     IResult::Done(i,None)
+//     Ok((i,None))
 // }
-// 
+//
+// use std::fmt::Debug;
+//
 // /// A structure with lifetimes and generics
 // #[derive(Debug,PartialEq,Nom)]
 // struct StructWithGenerics<'a,'b,G>
@@ -41,6 +51,6 @@ fn test_struct_with_lifetimes() {
 //     s: &'a[u8],
 //     #[Parse="take!(4)"]
 //     t: &'b[u8],
-//     #[Parse="parse_generics"]
+//     #[Parse="call!(parse_generics)"]
 //     g: Option<G>,
 // }

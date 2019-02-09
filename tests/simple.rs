@@ -23,6 +23,13 @@ struct StructWithParser {
     pub a: u32,
 }
 
+/// A simple structure, giving the parser explicitly
+#[derive(Debug,PartialEq,Nom)]
+struct StructWithParser2 {
+    #[Parse="opt!(le_u32)"]
+    pub a: Option<u32>,
+}
+
 /// A structure containing a substructure
 #[derive(Debug,PartialEq,Nom)]
 struct StructWithSubStruct {
