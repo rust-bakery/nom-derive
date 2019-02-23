@@ -5,6 +5,8 @@ version = "0.1.0"
 license = "MIT/Apache-2.0"
 keywords = ["parser","nom"]
 authors = ["Pierre Chifflier <chifflier@wzdftpd.net>"]
+homepage = "https://github.com/chifflier/nom-derive"
+repository = "https://github.com/chifflier/nom-derive.git"
 edition = "2018"
 
 [lib]
@@ -17,5 +19,5 @@ quote = "0.6"
 proc-macro2 = "0.4"
 
 [dev-dependencies]
-nom = "4.0"
+nom = "4.2"
 pretty_assertions = "0.5.0"
