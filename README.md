@@ -28,14 +28,13 @@ The goal of this project is that:
 Add to your `Cargo.toml` file::
 
 ```
- # this will change when the crate is released
- nom-derive = {git="https://github.com/chifflier/nom-derive.git"}
- nom = "3.2.1"
+ nom-derive = "0.1"
+ nom = "4.2"
 ```
 
 Add `#[derive(Nom)]` to the structure(s) you want.
 
-See the [tests](https://github.com/chifflier/nom-derive/tree/master/tests)
+See the [tests](https://github.com/rust-bakery/nom-derive/tree/master/tests)
 directory for examples.
 
 ## Example
