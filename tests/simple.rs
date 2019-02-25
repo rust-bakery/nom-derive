@@ -53,6 +53,14 @@ struct StructWithCondition {
     pub b: Option<u32>,
 }
 
+/// A tuple struct with one field (newtype)
+#[derive(Debug,PartialEq,Nom)]
+struct NewType(pub u32);
+
+/// A tuple struct with two fields (newtype)
+#[derive(Debug,PartialEq,Nom)]
+struct NewType2(pub u32, pub u16);
+
 #[test]
 fn test_simple_struct() {
     let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
@@ -92,4 +100,18 @@ fn test_struct_with_condition() {
 
     let res = StructWithCondition::parse(&input[4..]);
     assert_eq!(res, Ok((&input[8..],StructWithCondition{a:0x12345678,b:None})));
+}
+
+#[test]
+fn test_tuple_struct_1() {
+    let input = b"\x00\x00\x00\x01";
+    let res = NewType::parse(input);
+    assert_eq!(res, Ok((&input[4..],NewType(1))));
+}
+
+#[test]
+fn test_tuple_struct_2() {
+    let input = b"\x00\x00\x00\x01\xff\xff";
+    let res = NewType2::parse(input);
+    assert_eq!(res, Ok((&input[6..],NewType2(1,0xffff))));
 }

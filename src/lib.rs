@@ -54,7 +54,7 @@ fn get_type_parser(ty: &Type) -> Option<ParserTree> {
             if path.segments.len() != 1 {
                 panic!("Multiple segments in type path are not supported");
             }
-            let pair = path.segments.last().unwrap();
+            let pair = path.segments.last().expect("empty segments list");
             let segment = pair.value();
             let ident_s = segment.ident.to_string();
             match ident_s.as_ref() {
@@ -136,7 +136,8 @@ fn get_parser(field: &::syn::Field) -> Option<ParserTree> {
 }
 
 fn add_verify(field: &syn::Field, p: ParserTree) -> ParserTree {
-    let ident = field.ident.as_ref().unwrap();
+    if field.ident == None { return p; }
+    let ident = field.ident.as_ref().expect("empty field ident (add_verify)");
     for attr in &field.attrs {
         if let Ok(ref meta) = attr.parse_meta() {
             match meta {
@@ -158,7 +159,8 @@ fn add_verify(field: &syn::Field, p: ParserTree) -> ParserTree {
 }
 
 fn patch_condition(field: &syn::Field, p: ParserTree) -> ParserTree {
-    let ident = field.ident.as_ref().unwrap();
+    if field.ident == None { return p; }
+    let ident = field.ident.as_ref().expect("empty field ident (patch condition)");
     for attr in &field.attrs {
         if let Ok(ref meta) = attr.parse_meta() {
             match meta {
@@ -187,14 +189,28 @@ fn patch_condition(field: &syn::Field, p: ParserTree) -> ParserTree {
 fn impl_nom(ast: &syn::DeriveInput) -> TokenStream {
     // eprintln!("ast: {:#?}", ast);
     let mut parsers = vec![];
+    let mut is_unnamed = false;
     // test if struct has a lifetime
     let generics = &ast.generics;
     // iter fields
     match &ast.data {
         &syn::Data::Enum(_)       => panic!("Enums not supported"),
         &syn::Data::Struct(ref s) => {
-            for field in s.fields.iter() {
-                let ident = field.ident.as_ref().unwrap();
+            // eprintln!("s: {:?}", ast.data);
+            match s.fields {
+                syn::Fields::Named(_) => (),
+                syn::Fields::Unnamed(_) => {
+                    is_unnamed = true;
+                },
+                syn::Fields::Unit => {
+                    panic!("unit struct, nothing to parse");
+                }
+            }
+            for (idx,field) in s.fields.iter().enumerate() {
+                let ident_str = match field.ident.as_ref() {
+                    Some(s) => s.to_string(),
+                    None    => format!("_{}",idx)
+                };
                 // eprintln!("Field: {:?}", ident);
                 // eprintln!("Type: {:?}", field.ty);
                 // eprintln!("Attrs: {:?}", field.attrs);
@@ -206,9 +222,9 @@ fn impl_nom(ast: &syn::DeriveInput) -> TokenStream {
                         let p = patch_condition(&field, p);
                         // add verify field, if present
                         let p = add_verify(&field, p);
-                        parsers.push( (ident.to_string(), p) )
+                        parsers.push( (ident_str, p) )
                     },
-                    None    => panic!("Could not infer parser for field {}", ident)
+                    None    => panic!("Could not infer parser for field {}", ident_str)
                 }
             }
         }
@@ -221,6 +237,10 @@ fn impl_nom(ast: &syn::DeriveInput) -> TokenStream {
         idents.push(Ident::new(name.as_ref(), Span::call_site()));
     };
     let idents2 = idents.clone();
+    let struct_def = match is_unnamed {
+        false => quote!{ ( #name { #(#idents2),* } ) },
+        true  => quote!{ ( #name ( #(#idents2),* ) ) },
+    };
     let mut parser_idents = vec![];
     for (_, ref parser) in parsers.iter() {
         let s = format!("{}",parser);
@@ -236,7 +256,7 @@ fn impl_nom(ast: &syn::DeriveInput) -> TokenStream {
                 do_parse!{
                     i,
                     #(#idents: #parser_idents >>)*
-                    ( #name { #(#idents2),* } )
+                    #struct_def
                 }
             }
         }
