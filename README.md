@@ -8,6 +8,8 @@
 
 nom-derive is a custom derive attribute, to derive [nom] parsers automatically from the structure definition.
 
+- [API documentation](https://docs.rs/nom-derive)
+
 *This is only test code for now. Feedback welcome !*
 
 ## `#[derive(Nom)]`
@@ -28,7 +30,7 @@ The goal of this project is that:
 Add to your `Cargo.toml` file::
 
 ```
- nom-derive = "0.1"
+ nom-derive = "0.2"
  nom = "4.2"
 ```
 
