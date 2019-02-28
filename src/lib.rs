@@ -32,6 +32,7 @@ enum ParserTree {
     Opt(Box<ParserTree>),
     Many0(Box<ParserTree>),
     CallParse(String),
+    Count(Box<ParserTree>, String),
     Raw(String)
 }
 
@@ -44,6 +45,7 @@ impl fmt::Display for ParserTree {
             ParserTree::Opt(p)          => write!(f, "opt!({})", p),
             ParserTree::Many0(p)        => write!(f, "many0!({})", p),
             ParserTree::CallParse(s)    => write!(f, "call!({}::parse)", s),
+            ParserTree::Count(s,n)      => write!(f, "count!({}, {{ {} }} as usize)", s, n),
             ParserTree::Raw(s)          => f.write_str(s)
         }
     }
@@ -140,6 +142,32 @@ impl fmt::Display for ParserTree {
 /// let input = b"\x00\x00\x00\x01";
 /// let res = S::parse(input);
 /// assert_eq!(res, Ok((&input[4..],S{a:vec![0,1]})));
+/// # }
+/// ```
+///
+/// The `Count(n)` attribute can be used to specify the number of items to parse.
+///
+/// Notes:
+///   - the subparser is inferred as usual (item type must be `Vec< ... >`)
+///   - the number of items (`n`) can be any expression, and will be cast to `usize`
+///
+/// For ex:
+/// ```rust
+/// # use nom_derive::Nom;
+/// # use nom::{do_parse,IResult,call,count,be_u16};
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// struct S {
+///   a: u16,
+///   #[Count="a"]
+///   b: Vec<u16>
+/// }
+/// #
+/// # fn main() {
+/// # let input = b"\x00\x01\x12\x34";
+/// # let res = S::parse(input);
+/// # assert_eq!(res, Ok((&input[4..],S{a:1, b:vec![0x1234]})));
 /// # }
 /// ```
 ///
@@ -313,7 +341,7 @@ impl fmt::Display for ParserTree {
 ///
 /// The generated parsers use the [nom] combinators directly, so they must be
 /// visible in the current namespace (*i.e* imported in a `use` statement).
-#[proc_macro_derive(Nom, attributes(Parse,Verify,Cond))]
+#[proc_macro_derive(Nom, attributes(Parse,Verify,Cond,Count))]
 pub fn nom(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
     let ast = parse_macro_input!(input as DeriveInput);
@@ -400,6 +428,24 @@ fn get_parser(field: &::syn::Field) -> Option<ParserTree> {
                         match &namevalue.lit {
                             Lit::Str(s) => {
                                 return Some(ParserTree::Raw(s.value()))
+                            },
+                            _ => unimplemented!()
+                        }
+                    }
+                    if &namevalue.ident == &"Count" {
+                        match &namevalue.lit {
+                            Lit::Str(s) => {
+                                // try to infer subparser
+                                let sub = get_type_parser(ty);
+                                let s1 = match sub {
+                                    Some(ParserTree::Many0(m)) => { m },
+                                    _ => panic!("Unable to infer parser for 'Count' attribute. Is item type a Vec ?")
+                                };
+                                let s2 = match *s1 {
+                                    ParserTree::Complete(m) => { m },
+                                    _ => panic!("Unable to infer parser for 'Count' attribute. Is item type a Vec ?")
+                                };
+                                return Some(ParserTree::Count(s2, s.value()));
                             },
                             _ => unimplemented!()
                         }
