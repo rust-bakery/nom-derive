@@ -4,9 +4,10 @@ description = "Custom derive nom parsers from struct"
 version = "0.2.0"
 license = "MIT/Apache-2.0"
 keywords = ["parser","nom"]
+categories = ["parsing"]
 authors = ["Pierre Chifflier <chifflier@wzdftpd.net>"]
-homepage = "https://github.com/chifflier/nom-derive"
-repository = "https://github.com/chifflier/nom-derive.git"
+homepage = "https://github.com/rust-bakery/nom-derive"
+repository = "https://github.com/rust-bakery/nom-derive.git"
 readme = "README.md"
 edition = "2018"
 
