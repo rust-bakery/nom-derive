@@ -26,12 +26,19 @@ The goal of this project is that:
 * it allows using generated parsing functions along with handwritten parsers and
   combining them without efforts
 
+## Changes
+
+### 0.3.0
+
+- Move crate to rust-bakery github project
+- Add `Count` attribute
+
 ## Usage
 
 Add to your `Cargo.toml` file::
 
 ```
- nom-derive = "0.2"
+ nom-derive = "0.3"
  nom = "4.2"
 ```
 
@@ -76,6 +83,8 @@ impl SimpleStruct {
     }
 }
 ```
+
+See the [API documentation](https://docs.rs/nom-derive) for more examples.
 
 [nom]: https://github.com/geal/nom
 
