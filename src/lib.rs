@@ -2,7 +2,7 @@
 //!
 //! ```rust
 //! # use nom_derive::Nom;
-//! # use nom::{do_parse,IResult,be_u32};
+//! # use nom::{do_parse,IResult,be_u32,call};
 //! #
 //! #[derive(Nom)]
 //! # struct S(u32);
@@ -61,7 +61,7 @@ impl fmt::Display for ParserTree {
 ///
 /// ```rust
 /// use nom_derive::Nom;
-/// use nom::{do_parse,IResult,be_u16,be_u32};
+/// use nom::{do_parse,IResult,be_u16,be_u32,call};
 ///
 /// #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -82,7 +82,7 @@ impl fmt::Display for ParserTree {
 ///
 /// ```rust
 /// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,be_u16,be_u32};
+/// # use nom::{do_parse,IResult,be_u16,be_u32,call};
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -222,7 +222,7 @@ impl fmt::Display for ParserTree {
 ///
 /// ```rust
 /// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,le_u16};
+/// # use nom::{do_parse,IResult,call,le_u16};
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -241,7 +241,7 @@ impl fmt::Display for ParserTree {
 /// The `Parse` argument can be a complex expression:
 /// ```rust
 /// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,be_u8,be_u16,cond};
+/// # use nom::{do_parse,IResult,be_u8,be_u16,call,cond};
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -268,7 +268,7 @@ impl fmt::Display for ParserTree {
 ///
 /// ```rust
 /// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,cond,complete,be_u8,be_u16};
+/// # use nom::{do_parse,IResult,cond,complete,be_u8,be_u16,call};
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -293,7 +293,7 @@ impl fmt::Display for ParserTree {
 ///
 /// ```rust
 /// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,verify,complete,be_u8,be_u16};
+/// # use nom::{do_parse,IResult,verify,complete,be_u8,be_u16,call};
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
