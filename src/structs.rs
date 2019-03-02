@@ -181,11 +181,7 @@ pub(crate) fn parse_fields(f: &Fields) -> StructParserTree {
             Some(s) => s.to_string(),
             None    => format!("_{}",idx)
         };
-        // eprintln!("Field: {:?}", ident);
-        // eprintln!("Type: {:?}", field.ty);
-        // eprintln!("Attrs: {:?}", field.attrs);
         let opt_parser = get_parser(&field);
-        // eprintln!("    get_parser -> {:?}", ty);
         match opt_parser {
             Some(p) => {
                 // Check if a condition was given, and set it

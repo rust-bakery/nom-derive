@@ -335,33 +335,29 @@ pub fn nom(input: TokenStream) -> TokenStream {
 fn impl_nom(ast: &syn::DeriveInput, debug:bool) -> TokenStream {
     // eprintln!("ast: {:#?}", ast);
     // test if struct has a lifetime
-    let generics = &ast.generics;
-    // iter fields
     let s =
         match &ast.data {
             &syn::Data::Enum(_)       => { return impl_nom_unions(ast, debug); },
             &syn::Data::Struct(ref s) => parse_struct(s),
             &syn::Data::Union(_)       => panic!("Unions not supported"),
     };
-    // Code generation
+    // parse string items and prepare tokens for each field parser
+    let generics = &ast.generics;
     let name = &ast.ident;
-    let mut idents = vec![];
-    for (ref name,_) in s.parsers.iter() {
-        idents.push(Ident::new(name.as_ref(), Span::call_site()));
-    };
+    let (idents,parser_tokens) : (Vec<_>,Vec<_>) = s.parsers.iter()
+        .map(|(name,parser)| {
+            let id = syn::Ident::new(name, Span::call_site());
+            let s = format!("{}",parser);
+            let input : proc_macro2::TokenStream = s.parse().unwrap();
+            (id,input)
+        })
+        .unzip();
     let idents2 = idents.clone();
+    // Code generation
     let struct_def = match s.unnamed {
         false => quote!{ ( #name { #(#idents2),* } ) },
         true  => quote!{ ( #name ( #(#idents2),* ) ) },
     };
-    let mut parser_tokens = vec![];
-    for (_, ref parser) in s.parsers.iter() {
-        let s = format!("{}",parser);
-        let input : proc_macro2::TokenStream = s.parse().unwrap();
-        parser_tokens.push(input);
-    };
-    // eprintln!("idents: {:?}", idents);
-    // eprintln!("parser_idents: {:?}", parser_idents);
     let tokens = quote! {
         impl#generics #name#generics {
             fn parse(i: &[u8]) -> IResult<&[u8],#name> {
@@ -373,7 +369,6 @@ fn impl_nom(ast: &syn::DeriveInput, debug:bool) -> TokenStream {
             }
         }
     };
-    // eprintln!("tokens: {:#?}", tokens);
     if debug {
         eprintln!("tokens:\n{}", tokens);
     }

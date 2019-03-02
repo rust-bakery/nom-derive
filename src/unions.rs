@@ -13,14 +13,9 @@ struct VariantParserTree{
 
 fn parse_variant(variant: &syn::Variant) -> VariantParserTree {
     // eprintln!("variant: {:?}", variant);
-    // attrs
     let selector = get_selector(&variant.attrs).expect(&format!("The 'Selector' attribute must be used to give the value of selector item (variant {})", variant.ident));
-    // ident
-    // eprintln!("ident: {:?}", variant.ident);
-    // fields
     let struct_def = parse_fields(&variant.fields);
-    // eprintln!("struct_def: {:?}", struct_def);
-    // discriminant
+    // discriminant ?
     VariantParserTree{
         ident: variant.ident.clone(),
         selector,
@@ -38,7 +33,7 @@ fn get_selector(attrs: &[syn::Attribute]) -> Option<String> {
                             syn::Lit::Str(litstr) => {
                                 return Some(litstr.value())
                             },
-                            _ => unimplemented!()
+                            _ => panic!("unsupported namevalue type")
                         }
                     }
                 }
@@ -57,14 +52,7 @@ fn get_selector(attrs: &[syn::Attribute]) -> Option<String> {
                                 _ => panic!("unsupported meta type")
                             }
                         }
-                        // match &namevalue.lit {
-                        //     syn::Lit::Str(litstr) => {
-                        //         return Some(litstr.value())
-                        //     },
-                        //     _ => unimplemented!()
-                        // }
                     }
-                    unimplemented!();
                 }
                 syn::Meta::Word(_) => ()
             }
@@ -129,12 +117,6 @@ pub(crate) fn impl_nom_unions(ast: &syn::DeriveInput, debug:bool) -> TokenStream
                     #(#variants_code)*
                     _ => Err(nom::Err::Error(error_position!(i, nom::ErrorKind::Switch)))
                 }
-                // do_parse!{
-                //     i,
-                //     ( )
-                //     // #(#idents: #parser_tokens >>)*
-                //     // #struct_def
-                // }
             }
         }
     };
