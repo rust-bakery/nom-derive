@@ -347,7 +347,7 @@ pub fn nom(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
 
     // Build the impl
-    let gen = impl_nom(&ast);
+    let gen = impl_nom(&ast, false);
 
     // Return the generated impl
     gen
@@ -510,7 +510,7 @@ fn patch_condition(field: &syn::Field, p: ParserTree) -> ParserTree {
     p
 }
 
-fn impl_nom(ast: &syn::DeriveInput) -> TokenStream {
+fn impl_nom(ast: &syn::DeriveInput, debug:bool) -> TokenStream {
     // eprintln!("ast: {:#?}", ast);
     let mut parsers = vec![];
     let mut is_unnamed = false;
@@ -586,6 +586,23 @@ fn impl_nom(ast: &syn::DeriveInput) -> TokenStream {
         }
     };
     // eprintln!("tokens: {:#?}", tokens);
-    // eprintln!("tokens: {}", tokens);
+    if debug {
+        eprintln!("tokens:\n{}", tokens);
+    }
     tokens.into()
+}
+
+/// This derive macro behaves exactly like [Nom derive](derive.Nom.html), except it
+/// prints the generated parser on stderr.
+/// This is helpful for debugging generated parsers.
+#[proc_macro_derive(NomDeriveDebug, attributes(Parse,Verify,Cond,Count))]
+pub fn nom_derive_debug(input: TokenStream) -> TokenStream {
+    // Parse the input tokens into a syntax tree
+    let ast = parse_macro_input!(input as DeriveInput);
+
+    // Build the impl
+    let gen = impl_nom(&ast, true);
+
+    // Return the generated impl
+    gen
 }
