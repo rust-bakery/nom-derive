@@ -56,6 +56,14 @@ pub enum U3<'a>{
 //     Field2,
 // }
 
+/// An union with a default case
+#[derive(Debug,PartialEq,Nom)]
+#[Selector="MessageType"]
+pub enum U5{
+    #[Selector("MessageType(0)")] Field1(u32),
+    #[Selector("_")] Field2(Option<u32>),
+}
+
 #[test]
 fn test_union_unnamed() {
     let input = b"\x00\x00\x00\x02";
@@ -81,4 +89,11 @@ fn test_union_in_struct() {
     assert_eq!(res, Ok((&input[5..],
                         S1{msg_type:MessageType(0), msg_value:U1::Field1(2)}
                         )));
+}
+
+#[test]
+fn test_union_match_default() {
+    let input = b"\x00\x00\x00\x02";
+    let res = U5::parse(input, MessageType(123));
+    assert_eq!(res, Ok((&input[4..],U5::Field2(Some(2)))));
 }

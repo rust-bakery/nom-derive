@@ -78,9 +78,11 @@ pub(crate) fn impl_nom_unions(ast: &syn::DeriveInput, debug:bool) -> TokenStream
         };
     // parse string items and prepare tokens for each variant
     let selector_type : proc_macro2::TokenStream = selector.parse().unwrap();
+    let mut default_case_handled = false;
     let variants_code : Vec<_> = {
         variant_defs.iter()
             .map(|def| {
+                if def.selector == "_" { default_case_handled = true; }
                 let m : proc_macro2::TokenStream = def.selector.parse().expect("invalid selector value");
                 let variantname = &def.ident;
                 let (idents,parser_tokens) : (Vec<_>,Vec<_>) = def.struct_def.parsers.iter()
@@ -110,12 +112,15 @@ pub(crate) fn impl_nom_unions(ast: &syn::DeriveInput, debug:bool) -> TokenStream
             .collect()
     };
     // generate code
+    let default_case =
+        if default_case_handled { quote!{} }
+        else { quote!{ _ => Err(nom::Err::Error(error_position!(i, nom::ErrorKind::Switch))) } };
     let tokens = quote!{
         impl#generics #name#generics {
             fn parse(i: &[u8], selector: #selector_type) -> IResult<&[u8],#name> {
                 match selector {
                     #(#variants_code)*
-                    _ => Err(nom::Err::Error(error_position!(i, nom::ErrorKind::Switch)))
+                    #default_case
                 }
             }
         }
