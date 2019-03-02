@@ -12,7 +12,7 @@ use nom::*;
 #[derive(Debug,PartialEq,Eq,Clone,Copy,Nom)]
 pub struct MessageType(pub u8);
 
-/// An union with unnamed fields
+/// An enum with unnamed fields
 #[derive(Debug,PartialEq,Nom)]
 #[Selector="MessageType"]
 pub enum U1{
@@ -20,7 +20,7 @@ pub enum U1{
     #[Selector("MessageType(1)")] Field2(Option<u32>),
 }
 
-/// An structure containing an union
+/// An structure containing an enum
 #[derive(Debug,PartialEq,Nom)]
 pub struct S1{
     pub msg_type: MessageType,
@@ -28,7 +28,7 @@ pub struct S1{
     pub msg_value: U1
 }
 
-/// An union with named fields
+/// An enum with named fields
 #[derive(Debug,PartialEq,Nom)]
 #[Selector="MessageType"]
 pub enum U2{
@@ -36,7 +36,7 @@ pub enum U2{
     #[Selector("MessageType(1)")] Field2{ a:Option<u32> },
 }
 
-/// An union with lifetime
+/// An enum with lifetime
 #[derive(Debug,PartialEq,Nom)]
 #[Selector="MessageType"]
 pub enum U3<'a>{
@@ -46,7 +46,7 @@ pub enum U3<'a>{
     Field2(#[Parse="take!(4)"] &'a[u8]),
 }
 
-// /// An union with fields and Parse attribute
+// /// An enum with fields and Parse attribute
 // #[derive(Debug,PartialEq,Nom)]
 // #[Selector="MessageType"]
 // pub enum U4{
@@ -56,7 +56,7 @@ pub enum U3<'a>{
 //     Field2,
 // }
 
-/// An union with a default case
+/// An enum with a default case
 #[derive(Debug,PartialEq,Nom)]
 #[Selector="MessageType"]
 pub enum U5{
@@ -65,7 +65,7 @@ pub enum U5{
 }
 
 #[test]
-fn test_union_unnamed() {
+fn test_enum_unnamed() {
     let input = b"\x00\x00\x00\x02";
     let res = U1::parse(input, MessageType(0));
     assert_eq!(res, Ok((&input[4..],U1::Field1(2))));
@@ -74,7 +74,7 @@ fn test_union_unnamed() {
 }
 
 #[test]
-fn test_union_named() {
+fn test_enum_named() {
     let input = b"\x00\x00\x00\x02";
     let res = U2::parse(input, MessageType(0));
     assert_eq!(res, Ok((&input[4..],U2::Field1{a:2})));
@@ -83,7 +83,7 @@ fn test_union_named() {
 }
 
 #[test]
-fn test_union_in_struct() {
+fn test_enum_in_struct() {
     let input = b"\x00\x00\x00\x00\x02";
     let res = S1::parse(input);
     assert_eq!(res, Ok((&input[5..],
@@ -92,7 +92,7 @@ fn test_union_in_struct() {
 }
 
 #[test]
-fn test_union_match_default() {
+fn test_enum_match_default() {
     let input = b"\x00\x00\x00\x02";
     let res = U5::parse(input, MessageType(123));
     assert_eq!(res, Ok((&input[4..],U5::Field2(Some(2)))));

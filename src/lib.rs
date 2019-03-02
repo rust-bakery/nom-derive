@@ -25,10 +25,10 @@ use syn::export::Span;
 
 mod parsertree;
 mod structs;
-mod unions;
+mod enums;
 
 use structs::parse_struct;
-use unions::impl_nom_unions;
+use enums::impl_nom_enums;
 
 /// The `Nom` derive automatically generates a `parse` function for the structure
 /// using [nom] parsers. It will try to infer parsers for primitive of known
@@ -337,7 +337,7 @@ fn impl_nom(ast: &syn::DeriveInput, debug:bool) -> TokenStream {
     // test if struct has a lifetime
     let s =
         match &ast.data {
-            &syn::Data::Enum(_)       => { return impl_nom_unions(ast, debug); },
+            &syn::Data::Enum(_)       => { return impl_nom_enums(ast, debug); },
             &syn::Data::Struct(ref s) => parse_struct(s),
             &syn::Data::Union(_)       => panic!("Unions not supported"),
     };

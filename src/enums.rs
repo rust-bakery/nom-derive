@@ -61,7 +61,7 @@ fn get_selector(attrs: &[syn::Attribute]) -> Option<String> {
     None
 }
 
-pub(crate) fn impl_nom_unions(ast: &syn::DeriveInput, debug:bool) -> TokenStream {
+pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, debug:bool) -> TokenStream {
     let name = &ast.ident;
     let generics = &ast.generics;
     // eprintln!("{:?}", ast.attrs);
@@ -127,7 +127,7 @@ pub(crate) fn impl_nom_unions(ast: &syn::DeriveInput, debug:bool) -> TokenStream
     };
 
     if debug {
-        eprintln!("impl_nom_unions: {}", tokens);
+        eprintln!("impl_nom_enums: {}", tokens);
     }
 
     tokens.into()
