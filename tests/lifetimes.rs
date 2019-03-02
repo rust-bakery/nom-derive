@@ -4,14 +4,13 @@ extern crate pretty_assertions;
 #[macro_use]
 extern crate nom_derive;
 
-#[macro_use]
 extern crate nom;
 
 use nom::*;
 
 /// A simple structure, with a lifetime
-#[derive(Debug,Nom)]
-struct SubStruct<'a> {
+#[derive(Debug,PartialEq,Nom)]
+struct StructWithLifetime<'a> {
     /// This field provides the parsing code, and calls a macro
     #[Parse="take!(4)"]
     s: &'a[u8],
@@ -27,6 +26,13 @@ struct StructWithLifetimes<'a,'b> {
 }
 
 
+
+#[test]
+fn test_struct_with_lifetime() {
+    let input = b"\x00\x00\x00\x01";
+    let res = StructWithLifetime::parse(input);
+    assert_eq!(res, Ok((&input[4..],StructWithLifetime{s:&input[0..4]})));
+}
 
 #[test]
 fn test_struct_with_lifetimes() {

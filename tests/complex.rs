@@ -5,7 +5,6 @@ extern crate pretty_assertions;
 #[macro_use]
 extern crate nom_derive;
 
-#[macro_use]
 extern crate nom;
 
 use nom::*;
