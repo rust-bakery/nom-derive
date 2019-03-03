@@ -64,6 +64,16 @@ pub enum U5{
     #[Selector("_")] Field2(Option<u32>),
 }
 
+/// A fieldless enum with values
+#[derive(Debug,PartialEq,Nom)]
+#[repr(u8)]
+pub enum U6{
+    A,
+    B = 2,
+    C,
+}
+
+
 #[test]
 fn test_enum_unnamed() {
     let input = b"\x00\x00\x00\x02";
@@ -96,4 +106,20 @@ fn test_enum_match_default() {
     let input = b"\x00\x00\x00\x02";
     let res = U5::parse(input, MessageType(123));
     assert_eq!(res, Ok((&input[4..],U5::Field2(Some(2)))));
+}
+
+#[test]
+fn test_enum_fieldless() {
+    let empty : &[u8] = b"";
+    assert_eq!(
+        U6::parse(b"\x00"),
+        Ok((empty,U6::A))
+    );
+    assert!(
+        U6::parse(b"\x01").is_err()
+    );
+    assert_eq!(
+        U6::parse(b"\x02"),
+        Ok((empty,U6::B))
+    );
 }

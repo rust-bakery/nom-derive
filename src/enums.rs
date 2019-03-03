@@ -2,6 +2,7 @@ use proc_macro::TokenStream;
 use syn;
 use syn::export::Span;
 
+use crate::parsertree::ParserTree;
 use crate::structs::{parse_fields,StructParserTree};
 
 #[derive(Debug)]
@@ -61,11 +62,119 @@ fn get_selector(attrs: &[syn::Attribute]) -> Option<String> {
     None
 }
 
+fn get_repr(attrs: &[syn::Attribute]) -> Option<String> {
+    for attr in attrs {
+        if let Ok(ref meta) = attr.parse_meta() {
+            match meta {
+                syn::Meta::NameValue(_) => (),
+                syn::Meta::List(ref metalist) => {
+                    if &metalist.ident == &"repr" {
+                        for n in metalist.nested.iter() {
+                            match n {
+                                syn::NestedMeta::Meta(meta) => {
+                                    match meta {
+                                        syn::Meta::Word(word) => {
+                                            return Some(word.to_string())
+                                        },
+                                        _ => panic!("unsupported nested type for 'repr'")
+                                    }
+                                },
+                                _ => panic!("unsupported meta type for 'repr'")
+                            }
+                        }
+                    }
+                }
+                syn::Meta::Word(_) => ()
+            }
+        }
+    }
+    None
+}
+
+fn is_input_fieldless_enum(ast: &syn::DeriveInput) -> bool {
+    match ast.data {
+        syn::Data::Enum(ref data_enum) => {
+            // eprintln!("{:?}", data_enum);
+            data_enum.variants.iter()
+                .fold(true,
+                      |acc, v| {
+                          if let syn::Fields::Unit = v.fields { acc } else { false }
+                      })
+        },
+        _ => false
+    }
+}
+
+fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, debug:bool) -> TokenStream {
+    let parser = match repr.as_ref() {
+        "u8"  |
+        "u16" |
+        "u32" |
+        "u64" |
+        "i8"  |
+        "i16" |
+        "i32" |
+        "i64"    => ParserTree::Raw(format!("be_{}", repr)),
+        _ => panic!("Cannot parse 'repr' content")
+    };
+    let variant_names : Vec<_> =
+        match ast.data {
+            syn::Data::Enum(ref data_enum) => {
+                // eprintln!("{:?}", data_enum);
+                data_enum.variants.iter()
+                    .map(|v| {
+                        v.ident.to_string()
+                    })
+                    .collect()
+            },
+            _ => { panic!("expect enum"); }
+        };
+    let generics = &ast.generics;
+    let name = &ast.ident;
+    let ty = syn::Ident::new(&repr, Span::call_site());
+    let variants_code : Vec<_> =
+        variant_names.iter()
+            .map(|variant_name| {
+                let id = syn::Ident::new(variant_name, Span::call_site());
+                quote!{ if selector == #name::#id as #ty { return Some(#name::#id); } }
+            })
+            .collect();
+    let tokens = quote!{
+        impl#generics #name#generics {
+            fn parse(i: &[u8]) -> IResult<&[u8],#name> {
+                map_opt!(
+                    i,
+                    #parser,
+                    |selector| {
+                        #(#variants_code)*
+                        None
+                    }
+                )
+            }
+        }
+    };
+    if debug {
+        eprintln!("impl_nom_enums: {}", tokens);
+    }
+
+    tokens.into()
+}
+
 pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, debug:bool) -> TokenStream {
     let name = &ast.ident;
-    let generics = &ast.generics;
     // eprintln!("{:?}", ast.attrs);
-    let selector = get_selector(&ast.attrs).expect("The 'Selector' attribute must be used to give the type of selector item");
+    let selector = match get_selector(&ast.attrs) { //.expect("The 'Selector' attribute must be used to give the type of selector item");
+        Some(s) => s,
+        None    => {
+            if is_input_fieldless_enum(ast) {
+                // check that we have a repr attribute
+                let repr = get_repr(&ast.attrs).expect("Nom-derive: fieldless enums must have a 'repr' attribute");
+                return impl_nom_fieldless_enums(ast, repr, debug);
+            } else {
+                panic!("Nom-derive: enums must specify the 'selector' attribute");
+            }
+        }
+    };
     let variant_defs : Vec<_> =
         match ast.data {
             syn::Data::Enum(ref data_enum) => {
@@ -77,6 +186,7 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, debug:bool) -> TokenStream 
             _ => { panic!("expect enum"); }
         };
     // parse string items and prepare tokens for each variant
+    let generics = &ast.generics;
     let selector_type : proc_macro2::TokenStream = selector.parse().unwrap();
     let mut default_case_handled = false;
     let variants_code : Vec<_> = {
