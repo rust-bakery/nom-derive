@@ -347,9 +347,7 @@ fn impl_nom(ast: &syn::DeriveInput, debug:bool) -> TokenStream {
     let (idents,parser_tokens) : (Vec<_>,Vec<_>) = s.parsers.iter()
         .map(|(name,parser)| {
             let id = syn::Ident::new(name, Span::call_site());
-            let s = format!("{}",parser);
-            let input : proc_macro2::TokenStream = s.parse().unwrap();
-            (id,input)
+            (id,parser)
         })
         .unzip();
     let idents2 = idents.clone();

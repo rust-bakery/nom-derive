@@ -1,4 +1,5 @@
 use std::fmt;
+use quote::ToTokens;
 
 #[derive(Debug)]
 pub enum ParserTree {
@@ -27,4 +28,10 @@ impl fmt::Display for ParserTree {
     }
 }
 
-
+impl ToTokens for ParserTree {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        let s = format!("{}",self);
+        let input : proc_macro2::TokenStream = s.parse().expect("Unable to tokenize ParserTree");
+        input.to_tokens(tokens);
+    }
+}
