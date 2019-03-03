@@ -36,7 +36,7 @@ use enums::impl_nom_enums;
 ///
 /// [nom]: https://github.com/Geal/nom
 ///
-/// # Deriving parsers
+/// # Deriving parsers for `Struct`
 ///
 /// For simple structures, the parsers are automatically generated:
 ///
@@ -80,7 +80,7 @@ use enums::impl_nom_enums;
 ///
 /// `nom-derive` is also able to derive default parsers for some usual types:
 ///
-/// # Option types
+/// ## Option types
 ///
 /// If a field is an `Option<T>`, the generated parser is `opt!(complete!(T::parse))`
 ///
@@ -102,7 +102,7 @@ use enums::impl_nom_enums;
 /// # }
 /// ```
 ///
-/// # Vec types
+/// ## Vec types
 ///
 /// If a field is an `Vec<T>`, the generated parser is `many0!(complete!(T::parse))`
 ///
@@ -150,7 +150,7 @@ use enums::impl_nom_enums;
 /// # }
 /// ```
 ///
-/// # Default parsing function
+/// ## Default parsing function
 ///
 /// If a field with type `T` is not a primitive or known type, the generated parser is
 /// `call!(T::parse)`.
@@ -219,7 +219,7 @@ use enums::impl_nom_enums;
 /// # }
 /// ```
 ///
-/// # Specifying parsers
+/// ## Specifying parsers
 ///
 /// Sometimes, the default parsers generated automatically are not those you
 /// want.
@@ -266,7 +266,7 @@ use enums::impl_nom_enums;
 /// ```
 /// Note that you are responsible from providing correct code.
 ///
-/// # Adding conditions
+/// ## Adding conditions
 ///
 /// The `Cond` custom attribute allows for specifying a condition.
 /// The generated parser will use the `cond!` combinator, which calls the
@@ -292,7 +292,7 @@ use enums::impl_nom_enums;
 /// # }
 /// ```
 ///
-/// # Adding verifications
+/// ## Adding verifications
 ///
 /// The `Verify` custom attribute allows for specifying a verifying function.
 /// The generated parser will use the `verify!` combinator, which calls the
@@ -316,10 +316,209 @@ use enums::impl_nom_enums;
 /// # }
 /// ```
 ///
-/// # Known problems
+/// ## Known problems
 ///
 /// The generated parsers use the [nom] combinators directly, so they must be
 /// visible in the current namespace (*i.e* imported in a `use` statement).
+///
+/// # Deriving parsers for `Enum`
+///
+/// The `Nom` attribute can also used to generate parser for `Enum` types.
+/// The generated parser will used a value (called *selector*) to determine
+/// which attribute variant is parsed.
+/// Named and unnamed enums are supported.
+///
+/// In addition of `derive(Nom)`, a `Selector` attribute must be used:
+///   - on the structure, to specify the type of selector to match
+///   - on each variant, to specify the value associated with this variant.
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// # use nom::*;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// #[Selector="u8"]
+/// pub enum U1{
+///     #[Selector("0")] Field1(u32),
+///     #[Selector("1")] Field2(Option<u32>),
+/// }
+/// #
+/// # fn main() {
+/// # let input = b"\x00\x00\x00\x02";
+/// # let res = U1::parse(input, 0);
+/// # assert_eq!(res, Ok((&input[4..],U1::Field1(2))));
+/// # }
+/// ```
+///
+/// The generated function will look like:
+///
+/// <pre>
+/// impl U1{
+///     pub fn parse(i:&[u8), selector: u8) -> IResult<&[u8],U1> {
+///         match selector {
+///             ...
+///         }
+///     }
+/// }
+/// </pre>
+///
+/// It can be called either directly (`U1::parse(n)`) or using nom
+/// (`call!(U1::parse,n)`).
+///
+/// The selector can be a primitive type (`u8`), or any other type implementing the `PartialEq`
+/// trait.
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// # use nom::*;
+/// #
+/// #[derive(Debug,PartialEq,Eq,Clone,Copy,Nom)]
+/// pub struct MessageType(pub u8);
+///
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// #[Selector="MessageType"]
+/// pub enum U1{
+///     #[Selector("MessageType(0)")] Field1(u32),
+///     #[Selector("MessageType(1)")] Field2(Option<u32>),
+/// }
+///
+/// // Example of call from a struct:
+/// #[derive(Nom)]
+/// pub struct S1{
+///     pub msg_type: MessageType,
+///     #[Parse="call!(U1::parse,msg_type)"]
+///     pub msg_value: U1
+/// }
+/// #
+/// # fn main() {
+/// # let input = b"\x00\x00\x00\x02";
+/// # let res = U1::parse(input, MessageType(0));
+/// # assert_eq!(res, Ok((&input[4..],U1::Field1(2))));
+/// # }
+/// ```
+///
+/// ## Default case
+///
+/// By default, if no value of the selector matches the input value, a nom error
+/// `ErrorKind::Switch` is raised. This can be changed by using `_` as selector
+/// value for one the variants.
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// # use nom::*;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// #[Selector="u8"]
+/// pub enum U2{
+///     #[Selector("0")] Field1(u32),
+///     #[Selector("_")] Field2(u32),
+/// }
+/// #
+/// # fn main() {
+/// # let input = b"\x00\x00\x00\x02";
+/// # let res = U2::parse(input, 123);
+/// # assert_eq!(res, Ok((&input[4..],U2::Field2(2))));
+/// # }
+/// ```
+///
+/// The `_` selector should be the last, or the compiler will complain that
+/// following cases are unreachable.
+///
+/// ## Special case: specifying parsers for fields
+///
+/// Sometimes, an unnamed field requires a custom parser. In that case, the
+/// *field* (not the variant) must be annotated with attribute `Parse`.
+///
+/// Named fields:
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// # use nom::*;
+/// #
+/// # #[derive(Debug,PartialEq,Eq,Clone,Copy,Nom)]
+/// # pub struct MessageType(pub u8);
+/// #
+/// #[derive(Nom)]
+/// #[Selector="MessageType"]
+/// pub enum U3<'a>{
+///     #[Selector("MessageType(0)")] Field1{a:u32},
+///     #[Selector("MessageType(1)")] Field2{
+///         #[Parse="take!(4)"]
+///         a: &'a[u8]
+///     },
+/// }
+/// ```
+///
+/// Unnamed fields:
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// # use nom::*;
+/// #
+/// # #[derive(Debug,PartialEq,Eq,Clone,Copy,Nom)]
+/// # pub struct MessageType(pub u8);
+/// #
+/// #[derive(Nom)]
+/// #[Selector="MessageType"]
+/// pub enum U3<'a>{
+///     #[Selector("MessageType(0)")] Field1(u32),
+///     #[Selector("MessageType(1)")] Field2(
+///         #[Parse="take!(4)"] &'a[u8]
+///     ),
+/// }
+/// ```
+///
+/// ## Special case: fieldless enums
+///
+/// If the entire enum is fieldless (a list of constant integer values), a
+/// parser can be derived if
+///   - the `Enum` has a `repr(ty)` attribute, with `ty` an integer type
+///   - the `Enum` implements the `Eq` trait
+///
+/// In that case, the `Selector` attribute must *not* be specified.
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// # use nom::*;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[repr(u8)]
+/// #[derive(Eq,Nom)]
+/// pub enum U3{
+///     A,
+///     B = 2,
+///     C
+/// }
+/// #
+/// # fn main() {
+/// # let empty : &[u8] = b"";
+/// # assert_eq!(
+/// #     U3::parse(b"\x00"),
+/// #     Ok((empty,U3::A))
+/// # );
+/// # assert!(
+/// #     U3::parse(b"\x01").is_err()
+/// # );
+/// # assert_eq!(
+/// #     U3::parse(b"\x02"),
+/// #     Ok((empty,U3::B))
+/// # );
+/// # }
+/// ```
+///
+/// The generated parser will parse an element of type `ty` (as Big Endian), try
+/// to match to enum values, and return an instance of `Enum` if it succeeds
+/// (wrapped in an `IResult`).
+///
+/// For ex, `U3::parse(b"\x02")` will return `Ok((&b""[..],U3::B))`.
+///
+/// ## Limitations
+///
+/// Except if the entire enum is fieldless (a list of constant integer values),
+/// unit fields are not supported.
 #[proc_macro_derive(Nom, attributes(Parse,Verify,Cond,Count,Selector))]
 pub fn nom(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree

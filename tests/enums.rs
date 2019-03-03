@@ -20,6 +20,14 @@ pub enum U1{
     #[Selector("MessageType(1)")] Field2(Option<u32>),
 }
 
+/// An enum with unnamed fields and primitive selector
+#[derive(Debug,PartialEq,Nom)]
+#[Selector="u8"]
+pub enum U1b{
+    #[Selector("0")] Field1(u32),
+    #[Selector("1")] Field2(Option<u32>),
+}
+
 /// An structure containing an enum
 #[derive(Debug,PartialEq,Nom)]
 pub struct S1{
@@ -81,6 +89,8 @@ fn test_enum_unnamed() {
     assert_eq!(res, Ok((&input[4..],U1::Field1(2))));
     let res = U1::parse(input, MessageType(1));
     assert_eq!(res, Ok((&input[4..],U1::Field2(Some(2)))));
+    let res = U1b::parse(input, 0);
+    assert_eq!(res, Ok((&input[4..],U1b::Field1(2))));
 }
 
 #[test]
