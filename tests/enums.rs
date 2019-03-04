@@ -89,6 +89,19 @@ pub enum U7{
     #[Selector("MessageType(0)")] Field1(u32),
 }
 
+/// An unnamed enum with a structure in fields (common case)
+#[derive(Debug,PartialEq,Nom)]
+#[Selector="u8"]
+pub enum U8 {
+    #[Selector("0")] Field1(U8S1),
+    #[Selector("1")] Field2(u32),
+}
+
+#[derive(Debug,PartialEq,Nom)]
+pub struct U8S1 {
+    pub a: u32,
+}
+
 
 #[test]
 fn test_enum_unnamed() {
@@ -149,4 +162,17 @@ fn test_enum_match_default_before_end() {
     assert_eq!(res, Ok((&input[4..],U7::Field2(2))));
     let res = U7::parse(input, MessageType(0));
     assert_eq!(res, Ok((&input[4..],U7::Field1(2))));
+}
+
+#[test]
+fn test_struct_in_enum() {
+    let input = b"\x00\x00\x00\x02";
+    let res = U8::parse(input, 0);
+    assert_eq!(res, Ok((&input[4..],
+                        U8::Field1(U8S1{a:2})
+                        )));
+    let res = U8::parse(input, 1);
+    assert_eq!(res, Ok((&input[4..],
+                        U8::Field2(2)
+                        )));
 }
