@@ -424,8 +424,8 @@ use enums::impl_nom_enums;
 /// # }
 /// ```
 ///
-/// The `_` selector should be the last, or the compiler will complain that
-/// following cases are unreachable.
+/// If the `_` selector is not the last variant, the generated code will use it
+/// as the last match to avoid unreachable code.
 ///
 /// ## Special case: specifying parsers for fields
 ///

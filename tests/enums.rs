@@ -81,6 +81,14 @@ pub enum U6{
     C,
 }
 
+/// An enum with a default case, before the end
+#[derive(Debug,PartialEq,Nom)]
+#[Selector="MessageType"]
+pub enum U7{
+    #[Selector("_")] Field2(u32),
+    #[Selector("MessageType(0)")] Field1(u32),
+}
+
 
 #[test]
 fn test_enum_unnamed() {
@@ -132,4 +140,13 @@ fn test_enum_fieldless() {
         U6::parse(b"\x02"),
         Ok((empty,U6::B))
     );
+}
+
+#[test]
+fn test_enum_match_default_before_end() {
+    let input = b"\x00\x00\x00\x02";
+    let res = U7::parse(input, MessageType(123));
+    assert_eq!(res, Ok((&input[4..],U7::Field2(2))));
+    let res = U7::parse(input, MessageType(0));
+    assert_eq!(res, Ok((&input[4..],U7::Field1(2))));
 }

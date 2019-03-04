@@ -175,7 +175,7 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, debug:bool) -> TokenStream 
             }
         }
     };
-    let variant_defs : Vec<_> =
+    let mut variants_defs : Vec<_> =
         match ast.data {
             syn::Data::Enum(ref data_enum) => {
                 // eprintln!("{:?}", data_enum);
@@ -189,8 +189,8 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, debug:bool) -> TokenStream 
     let generics = &ast.generics;
     let selector_type : proc_macro2::TokenStream = selector.parse().unwrap();
     let mut default_case_handled = false;
-    let variants_code : Vec<_> = {
-        variant_defs.iter()
+    let mut variants_code : Vec<_> = {
+        variants_defs.iter()
             .map(|def| {
                 if def.selector == "_" { default_case_handled = true; }
                 let m : proc_macro2::TokenStream = def.selector.parse().expect("invalid selector value");
@@ -219,6 +219,17 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, debug:bool) -> TokenStream 
             })
             .collect()
     };
+    // if we have a default case, make sure it is the last entry
+    if default_case_handled {
+        let pos = variants_defs.iter()
+            .position(|def| def.selector == "_")
+            .expect("default case is handled but couldn't find index");
+        let last_index = variants_defs.len() - 1;
+        if pos != last_index {
+            variants_defs.swap(pos, last_index);
+            variants_code.swap(pos, last_index);
+        }
+    }
     // generate code
     let default_case =
         if default_case_handled { quote!{} }
