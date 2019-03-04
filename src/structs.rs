@@ -61,9 +61,12 @@ fn get_type_parser(ty: &Type) -> Option<ParserTree> {
                         _ => panic!("Unsupported Vec/parameterized type"),
                     }
                 },
+                "PhantomData" => {
+                    Some(ParserTree::Raw("value!(PhantomData)".to_owned()))
+                }
                 s        => {
                     Some(ParserTree::CallParse(s.to_owned()))
-                }
+                },
             }
         },
         _ => None
