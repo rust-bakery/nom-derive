@@ -34,7 +34,7 @@ The goal of this project is that:
 
 ## Changes
 
-### 0.4.0 (unreleased)
+### 0.4.0
 
 - Add support for `Enum` parser generator
   - Enums require a selector to choose the variant
