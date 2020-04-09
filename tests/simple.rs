@@ -5,9 +5,8 @@ extern crate pretty_assertions;
 #[macro_use]
 extern crate nom_derive;
 
-extern crate nom;
-
 use nom::*;
+use nom::number::streaming::*;
 
 /// A simple structure, deriving a trivial parser
 #[derive(Debug,PartialEq,Nom)]
@@ -41,7 +40,7 @@ struct StructWithSubStruct {
 /// A simple structure with a verification
 #[derive(Debug,PartialEq,Nom)]
 struct StructWithVerify {
-    #[Verify="a == 1"]
+    #[Verify="*a == 1"]
     pub a: u32,
 }
 
@@ -89,7 +88,7 @@ fn test_struct_with_verify() {
     assert_eq!(res, Ok((&input[4..],StructWithVerify{a:1})));
 
     let res = StructWithVerify::parse(&input[4..]);
-    assert_eq!(res, Err(Err::Error(error_position!(&input[4..], ErrorKind::Verify))));
+    assert_eq!(res, Err(Err::Error(error_position!(&input[4..], nom::error::ErrorKind::Verify))));
 }
 
 #[test]

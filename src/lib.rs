@@ -2,7 +2,8 @@
 //!
 //! ```rust
 //! # use nom_derive::Nom;
-//! # use nom::{do_parse,IResult,be_u32,call};
+//! # use nom::{do_parse,IResult,call};
+//! # use nom::number::streaming::be_u32;
 //! #
 //! #[derive(Nom)]
 //! # struct S(u32);
@@ -42,7 +43,8 @@ use enums::impl_nom_enums;
 ///
 /// ```rust
 /// use nom_derive::Nom;
-/// use nom::{do_parse,IResult,be_u16,be_u32,call};
+/// use nom::{do_parse,IResult,call};
+/// use nom::number::streaming::{be_u16, be_u32};
 ///
 /// #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -63,7 +65,8 @@ use enums::impl_nom_enums;
 ///
 /// ```rust
 /// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,be_u16,be_u32,call};
+/// # use nom::{do_parse,IResult,call};
+/// # use nom::number::streaming::{be_u16, be_u32};
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -87,7 +90,8 @@ use enums::impl_nom_enums;
 /// For ex:
 /// ```rust
 /// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,opt,complete,be_u32};
+/// # use nom::{do_parse,IResult,opt,complete};
+/// # use nom::number::streaming::be_u32;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -109,7 +113,8 @@ use enums::impl_nom_enums;
 /// For ex:
 /// ```rust
 /// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,many0,complete,be_u16};
+/// # use nom::{do_parse,IResult,many0,complete};
+/// # use nom::number::streaming::be_u16;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -133,7 +138,8 @@ use enums::impl_nom_enums;
 /// For ex:
 /// ```rust
 /// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,call,count,be_u16};
+/// # use nom::{do_parse,IResult,call,count};
+/// # use nom::number::streaming::be_u16;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -162,7 +168,8 @@ use enums::impl_nom_enums;
 /// Example (using `Nom` derive):
 /// ```rust
 /// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,call,be_u16};
+/// # use nom::{do_parse,IResult,call};
+/// # use nom::number::streaming::be_u16;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -187,7 +194,8 @@ use enums::impl_nom_enums;
 /// Example (defining `parse` method):
 /// ```rust
 /// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,call,map,be_u16,le_u16};
+/// # use nom::{do_parse,IResult,call,map};
+/// # use nom::number::streaming::{be_u16, le_u16};
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// // no Nom derive
@@ -229,7 +237,8 @@ use enums::impl_nom_enums;
 ///
 /// ```rust
 /// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,call,le_u16};
+/// # use nom::{do_parse,IResult,call};
+/// # use nom::number::streaming::le_u16;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -248,7 +257,8 @@ use enums::impl_nom_enums;
 /// The `Parse` argument can be a complex expression:
 /// ```rust
 /// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,be_u8,be_u16,call,cond};
+/// # use nom::{do_parse,IResult,call,cond};
+/// # use nom::number::streaming::{be_u8, be_u16};
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -275,7 +285,8 @@ use enums::impl_nom_enums;
 ///
 /// ```rust
 /// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,cond,complete,be_u8,be_u16,call};
+/// # use nom::{do_parse,IResult,cond,complete,call};
+/// # use nom::number::streaming::{be_u8, be_u16};
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -298,14 +309,17 @@ use enums::impl_nom_enums;
 /// The generated parser will use the `verify!` combinator, which calls the
 /// child parser only if is verifies a condition (and otherwise raises an error).
 ///
+/// The argument used in verify function is passed as a reference.
+///
 /// ```rust
 /// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,verify,complete,be_u8,be_u16,call};
+/// # use nom::{do_parse,IResult,verify,complete,call};
+/// # use nom::number::streaming::{be_u8, be_u16};
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
 /// struct S{
-///     #[Verify="a == 1"]
+///     #[Verify="*a == 1"]
 ///     pub a: u8,
 /// }
 /// #
@@ -335,6 +349,7 @@ use enums::impl_nom_enums;
 /// ```rust
 /// # use nom_derive::Nom;
 /// # use nom::*;
+/// # use nom::number::streaming::{be_u8, be_u32};
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -372,6 +387,7 @@ use enums::impl_nom_enums;
 /// ```rust
 /// # use nom_derive::Nom;
 /// # use nom::*;
+/// # use nom::number::streaming::{be_u8, be_u32};
 /// #
 /// #[derive(Debug,PartialEq,Eq,Clone,Copy,Nom)]
 /// pub struct MessageType(pub u8);
@@ -408,6 +424,7 @@ use enums::impl_nom_enums;
 /// ```rust
 /// # use nom_derive::Nom;
 /// # use nom::*;
+/// # use nom::number::streaming::{be_u8, be_u32};
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -437,6 +454,7 @@ use enums::impl_nom_enums;
 /// ```rust
 /// # use nom_derive::Nom;
 /// # use nom::*;
+/// # use nom::number::streaming::{be_u8, be_u32};
 /// #
 /// # #[derive(Debug,PartialEq,Eq,Clone,Copy,Nom)]
 /// # pub struct MessageType(pub u8);
@@ -457,6 +475,7 @@ use enums::impl_nom_enums;
 /// ```rust
 /// # use nom_derive::Nom;
 /// # use nom::*;
+/// # use nom::number::streaming::{be_u8, be_u32};
 /// #
 /// # #[derive(Debug,PartialEq,Eq,Clone,Copy,Nom)]
 /// # pub struct MessageType(pub u8);
@@ -483,6 +502,7 @@ use enums::impl_nom_enums;
 /// ```rust
 /// # use nom_derive::Nom;
 /// # use nom::*;
+/// # use nom::number::streaming::be_u8;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[repr(u8)]
@@ -557,7 +577,7 @@ fn impl_nom(ast: &syn::DeriveInput, debug:bool) -> TokenStream {
     };
     let tokens = quote! {
         impl#generics #name#generics {
-            fn parse(i: &[u8]) -> IResult<&[u8],#name> {
+            pub fn parse(i: &[u8]) -> IResult<&[u8],#name> {
                 do_parse!{
                     i,
                     #(#idents: #parser_tokens >>)*

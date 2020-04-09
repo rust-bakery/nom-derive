@@ -4,9 +4,8 @@ extern crate pretty_assertions;
 #[macro_use]
 extern crate nom_derive;
 
-extern crate nom;
-
 use nom::*;
+use nom::number::streaming::*;
 use std::marker::PhantomData;
 
 /// A simple structure, with a lifetime

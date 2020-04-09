@@ -233,7 +233,7 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, debug:bool) -> TokenStream 
     // generate code
     let default_case =
         if default_case_handled { quote!{} }
-        else { quote!{ _ => Err(nom::Err::Error(error_position!(i, nom::ErrorKind::Switch))) } };
+        else { quote!{ _ => Err(nom::Err::Error(error_position!(i, nom::error::ErrorKind::Switch))) } };
     let tokens = quote!{
         impl#generics #name#generics {
             fn parse(i: &[u8], selector: #selector_type) -> IResult<&[u8],#name> {

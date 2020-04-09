@@ -5,9 +5,8 @@ extern crate pretty_assertions;
 #[macro_use]
 extern crate nom_derive;
 
-extern crate nom;
-
 use nom::*;
+use nom::number::streaming::*;
 
 /// A simple structure, with a complex sub-parser expression
 #[derive(Debug,PartialEq,Nom)]
