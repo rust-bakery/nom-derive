@@ -29,33 +29,37 @@ fn get_selector(attrs: &[syn::Attribute]) -> Option<String> {
         if let Ok(ref meta) = attr.parse_meta() {
             match meta {
                 syn::Meta::NameValue(ref namevalue) => {
-                    if &namevalue.ident == &"Selector" {
-                        match &namevalue.lit {
-                            syn::Lit::Str(litstr) => {
-                                return Some(litstr.value())
-                            },
-                            _ => panic!("unsupported namevalue type")
-                        }
-                    }
-                }
-                syn::Meta::List(ref metalist) => {
-                    if &metalist.ident == &"Selector" {
-                        for n in metalist.nested.iter() {
-                            match n {
-                                syn::NestedMeta::Literal(lit) => {
-                                    match lit {
-                                        syn::Lit::Str(litstr) => {
-                                            return Some(litstr.value())
-                                        },
-                                        _ => panic!("unsupported literal type")
-                                    }
+                    if let Some(ident) = namevalue.path.get_ident() {
+                        if &ident == &"Selector" {
+                            match &namevalue.lit {
+                                syn::Lit::Str(litstr) => {
+                                    return Some(litstr.value())
                                 },
-                                _ => panic!("unsupported meta type")
+                                _ => panic!("unsupported namevalue type")
                             }
                         }
                     }
                 }
-                syn::Meta::Word(_) => ()
+                syn::Meta::List(ref metalist) => {
+                    if let Some(ident) = metalist.path.get_ident() {
+                        if &ident == &"Selector" {
+                            for n in metalist.nested.iter() {
+                                match n {
+                                    syn::NestedMeta::Lit(lit) => {
+                                        match lit {
+                                            syn::Lit::Str(litstr) => {
+                                                return Some(litstr.value())
+                                            },
+                                            _ => panic!("unsupported literal type")
+                                        }
+                                    },
+                                    _ => panic!("unsupported meta type")
+                                }
+                            }
+                        }
+                    }
+                }
+                syn::Meta::Path(_) => ()
             }
         }
     }
@@ -68,23 +72,29 @@ fn get_repr(attrs: &[syn::Attribute]) -> Option<String> {
             match meta {
                 syn::Meta::NameValue(_) => (),
                 syn::Meta::List(ref metalist) => {
-                    if &metalist.ident == &"repr" {
-                        for n in metalist.nested.iter() {
-                            match n {
-                                syn::NestedMeta::Meta(meta) => {
-                                    match meta {
-                                        syn::Meta::Word(word) => {
-                                            return Some(word.to_string())
-                                        },
-                                        _ => panic!("unsupported nested type for 'repr'")
-                                    }
-                                },
-                                _ => panic!("unsupported meta type for 'repr'")
+                    if let Some(ident) = metalist.path.get_ident() {
+                        if &ident == &"repr" {
+                            for n in metalist.nested.iter() {
+                                match n {
+                                    syn::NestedMeta::Meta(meta) => {
+                                        match meta {
+                                            syn::Meta::Path(path) => {
+                                                if let Some(word) = path.get_ident() {
+                                                    return Some(word.to_string())
+                                                } else {
+                                                    panic!("unsupported nested type for 'repr'")
+                                                }
+                                            },
+                                            _ => panic!("unsupported nested type for 'repr'")
+                                        }
+                                    },
+                                    _ => panic!("unsupported meta type for 'repr'")
+                                }
                             }
                         }
                     }
                 }
-                syn::Meta::Word(_) => ()
+                syn::Meta::Path(_) => ()
             }
         }
     }

@@ -34,6 +34,12 @@ The goal of this project is that:
 
 ## Changes
 
+### 0.5.0
+
+- Upgrade to nom 5.0
+- The `parse` method is now public
+- Upgrade dependencies (syn, quote, proc-macro2)
+
 ### 0.4.0
 
 - Add support for `Enum` parser generator

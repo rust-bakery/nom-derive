@@ -15,8 +15,7 @@ fn get_type_parser(ty: &Type) -> Option<ParserTree> {
             if path.segments.len() != 1 {
                 panic!("Multiple segments in type path are not supported");
             }
-            let pair = path.segments.last().expect("empty segments list");
-            let segment = pair.value();
+            let segment = path.segments.last().expect("empty segments list");
             let ident_s = segment.ident.to_string();
             match ident_s.as_ref() {
                 "u8"  |
@@ -83,30 +82,32 @@ fn get_parser(field: &::syn::Field) -> Option<ParserTree> {
         if let Ok(ref meta) = attr.parse_meta() {
             match meta {
                 Meta::NameValue(ref namevalue) => {
-                    if &namevalue.ident == &"Parse" {
-                        match &namevalue.lit {
-                            Lit::Str(s) => {
-                                return Some(ParserTree::Raw(s.value()))
-                            },
-                            _ => panic!("Invalid 'Parse' attribute type/value")
+                    if let Some(ident) = namevalue.path.get_ident() {
+                        if &ident == &"Parse" {
+                            match &namevalue.lit {
+                                Lit::Str(s) => {
+                                    return Some(ParserTree::Raw(s.value()))
+                                },
+                                _ => panic!("Invalid 'Parse' attribute type/value")
+                            }
                         }
-                    }
-                    if &namevalue.ident == &"Count" {
-                        match &namevalue.lit {
-                            Lit::Str(s) => {
-                                // try to infer subparser
-                                let sub = get_type_parser(ty);
-                                let s1 = match sub {
-                                    Some(ParserTree::Many0(m)) => { m },
-                                    _ => panic!("Unable to infer parser for 'Count' attribute. Is item type a Vec ?")
-                                };
-                                let s2 = match *s1 {
-                                    ParserTree::Complete(m) => { m },
-                                    _ => panic!("Unable to infer parser for 'Count' attribute. Is item type a Vec ?")
-                                };
-                                return Some(ParserTree::Count(s2, s.value()));
-                            },
-                            _ => panic!("Invalid 'Count' attribute type/value")
+                        if &ident == &"Count" {
+                            match &namevalue.lit {
+                                Lit::Str(s) => {
+                                    // try to infer subparser
+                                    let sub = get_type_parser(ty);
+                                    let s1 = match sub {
+                                        Some(ParserTree::Many0(m)) => { m },
+                                        _ => panic!("Unable to infer parser for 'Count' attribute. Is item type a Vec ?")
+                                    };
+                                    let s2 = match *s1 {
+                                        ParserTree::Complete(m) => { m },
+                                        _ => panic!("Unable to infer parser for 'Count' attribute. Is item type a Vec ?")
+                                    };
+                                    return Some(ParserTree::Count(s2, s.value()));
+                                },
+                                _ => panic!("Invalid 'Count' attribute type/value")
+                            }
                         }
                     }
                 }
@@ -125,12 +126,14 @@ fn add_verify(field: &syn::Field, p: ParserTree) -> ParserTree {
         if let Ok(ref meta) = attr.parse_meta() {
             match meta {
                 Meta::NameValue(ref namevalue) => {
-                    if &namevalue.ident == &"Verify" {
-                        match &namevalue.lit {
-                            Lit::Str(s) => {
-                                return ParserTree::Verify(Box::new(p), format!("{}",ident), s.value())
-                            },
-                            _ => panic!("Invalid 'Verify' attribute type/value")
+                    if let Some(attr_name) = namevalue.path.get_ident() {
+                        if &attr_name == &"Verify" {
+                            match &namevalue.lit {
+                                Lit::Str(s) => {
+                                    return ParserTree::Verify(Box::new(p), format!("{}",ident), s.value())
+                                },
+                                _ => panic!("Invalid 'Verify' attribute type/value")
+                            }
                         }
                     }
                 },
@@ -148,17 +151,19 @@ fn patch_condition(field: &syn::Field, p: ParserTree) -> ParserTree {
         if let Ok(ref meta) = attr.parse_meta() {
             match meta {
                 Meta::NameValue(ref namevalue) => {
-                    if &namevalue.ident == &"Cond" {
-                        match &namevalue.lit {
-                            Lit::Str(s) => {
-                                match p {
-                                    ParserTree::Opt(sub) => {
-                                        return ParserTree::Cond(sub, s.value());
+                    if let Some(attr_name) = namevalue.path.get_ident() {
+                        if &attr_name == &"Cond" {
+                            match &namevalue.lit {
+                                Lit::Str(s) => {
+                                    match p {
+                                        ParserTree::Opt(sub) => {
+                                            return ParserTree::Cond(sub, s.value());
+                                        }
+                                        _ => panic!("A condition was given on field {}, which is not an option type. Hint: use Option<...>", ident),
                                     }
-                                    _ => panic!("A condition was given on field {}, which is not an option type. Hint: use Option<...>", ident),
-                                }
-                            },
-                            _ => panic!("Invalid 'Cond' attribute type/value")
+                                },
+                                _ => panic!("Invalid 'Cond' attribute type/value")
+                            }
                         }
                     }
                 },
