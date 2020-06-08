@@ -5,6 +5,8 @@ extern crate pretty_assertions;
 extern crate nom_derive;
 
 use nom::*;
+use nom::bytes::complete::take;
+use nom::combinator::map;
 use nom::number::streaming::*;
 use std::marker::PhantomData;
 
@@ -12,23 +14,23 @@ use std::marker::PhantomData;
 #[derive(Debug,PartialEq,Nom)]
 struct StructWithLifetime<'a> {
     /// This field provides the parsing code, and calls a macro
-    #[Parse="take!(4)"]
+    #[Parse="take(4 as usize)"]
     s: &'a[u8],
 }
 
 /// A structure with different lifetimes
 #[derive(Debug,PartialEq,Nom)]
 struct StructWithLifetimes<'a,'b> {
-    #[Parse="take!(4)"]
+    #[Parse="take(4 as usize)"]
     s: &'a[u8],
-    #[Parse="take!(4)"]
+    #[Parse="take(4 as usize)"]
     t: &'b[u8],
 }
 
 // /// A structure with PhantomData
 #[derive(Debug,PartialEq,Nom)]
 struct StructWithPhantomData<'a> {
-    #[Parse="map!(be_u64, |x| x as *const u8)"]
+    #[Parse="map(be_u64, |x| x as *const u8)"]
     start: *const u8,
     phantom: PhantomData<&'a u8>,
 }

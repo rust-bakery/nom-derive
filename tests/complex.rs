@@ -6,13 +6,14 @@ extern crate pretty_assertions;
 extern crate nom_derive;
 
 use nom::*;
+use nom::combinator::cond;
 use nom::number::streaming::*;
 
 /// A simple structure, with a complex sub-parser expression
 #[derive(Debug,PartialEq,Nom)]
 struct StructWithComplexParser {
     pub a: u32,
-    #[Parse="cond!(a > 0,be_u64)"]
+    #[Parse="cond(a > 0,be_u64)"]
     pub b: Option<u64>,
 }
 

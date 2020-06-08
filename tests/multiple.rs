@@ -6,6 +6,7 @@ extern crate pretty_assertions;
 extern crate nom_derive;
 
 use nom::*;
+use nom::multi::count;
 use nom::number::streaming::*;
 
 /// A structure with a length and a Vec

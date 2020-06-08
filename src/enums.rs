@@ -218,11 +218,9 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, debug:bool) -> TokenStream 
                 };
                 quote!{
                     #m => {
-                        do_parse!{
-                            i,
-                            #(#idents: #parser_tokens >>)*
-                            #struct_def
-                        }
+                        #(let (i, #idents) = #parser_tokens (i) ?;)*
+                        let struct_def = #struct_def;
+                        Ok((i, struct_def))
                         // Err(nom::Err::Error(error_position!(i, nom::ErrorKind::Switch)))
                     },
                 }

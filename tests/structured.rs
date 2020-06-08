@@ -6,6 +6,8 @@ extern crate pretty_assertions;
 extern crate nom_derive;
 
 use nom::*;
+use nom::combinator::{complete, opt};
+use nom::multi::many0;
 use nom::number::streaming::*;
 
 /// A simple structure with an Option type

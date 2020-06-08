@@ -5,7 +5,8 @@ extern crate pretty_assertions;
 #[macro_use]
 extern crate nom_derive;
 
-use nom::*;
+use nom::{error_position, Err, IResult};
+use nom::combinator::{complete, cond, opt, verify};
 use nom::number::streaming::*;
 
 /// A simple structure, deriving a trivial parser
@@ -25,7 +26,7 @@ struct StructWithParser {
 /// A simple structure, giving the parser explicitly
 #[derive(Debug,PartialEq,Nom)]
 struct StructWithParser2 {
-    #[Parse="opt!(le_u32)"]
+    #[Parse="opt(le_u32)"]
     pub a: Option<u32>,
 }
 

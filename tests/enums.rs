@@ -6,6 +6,8 @@ extern crate pretty_assertions;
 extern crate nom_derive;
 
 use nom::*;
+use nom::bytes::streaming::take;
+use nom::combinator::{complete, opt};
 use nom::number::streaming::*;
 
 #[derive(Debug,PartialEq,Eq,Clone,Copy,Nom)]
@@ -31,7 +33,7 @@ pub enum U1b{
 #[derive(Debug,PartialEq,Nom)]
 pub struct S1{
     pub msg_type: MessageType,
-    #[Parse="call!(U1::parse,msg_type)"]
+    #[Parse="{ |i| U1::parse(i, msg_type) }"]
     pub msg_value: U1
 }
 
@@ -50,7 +52,7 @@ pub enum U3<'a>{
     #[Selector("MessageType(0)")] Field1(u32),
     // next variant has to be annotated for parsing (inside variant definition, not outside!)
     #[Selector("MessageType(1)")]
-    Field2(#[Parse="take!(4)"] &'a[u8]),
+    Field2(#[Parse="take(4 as usize)"] &'a[u8]),
 }
 
 // /// An enum with fields and Parse attribute

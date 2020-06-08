@@ -61,7 +61,7 @@ fn get_type_parser(ty: &Type) -> Option<ParserTree> {
                     }
                 },
                 "PhantomData" => {
-                    Some(ParserTree::Raw("value!(PhantomData)".to_owned()))
+                    Some(ParserTree::PhantomData)
                 }
                 s        => {
                     Some(ParserTree::CallParse(s.to_owned()))

@@ -89,10 +89,11 @@ use enums::impl_nom_enums;
 ///
 /// For ex:
 /// ```rust
-/// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,opt,complete};
-/// # use nom::number::streaming::be_u32;
-/// #
+/// use nom_derive::Nom;
+/// use nom::IResult;
+/// use nom::combinator::{complete, opt};
+/// use nom::number::streaming::be_u32;
+///
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
 /// struct S {
@@ -112,10 +113,12 @@ use enums::impl_nom_enums;
 ///
 /// For ex:
 /// ```rust
-/// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,many0,complete};
-/// # use nom::number::streaming::be_u16;
-/// #
+/// use nom_derive::Nom;
+/// use nom::IResult;
+/// use nom::combinator::complete;
+/// use nom::multi::many0;
+/// use nom::number::streaming::be_u16;
+///
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
 /// struct S {
@@ -137,10 +140,11 @@ use enums::impl_nom_enums;
 ///
 /// For ex:
 /// ```rust
-/// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,call,count};
-/// # use nom::number::streaming::be_u16;
-/// #
+/// use nom_derive::Nom;
+/// use nom::IResult;
+/// use nom::multi::count;
+/// use nom::number::streaming::be_u16;
+///
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
 /// struct S {
@@ -256,15 +260,16 @@ use enums::impl_nom_enums;
 ///
 /// The `Parse` argument can be a complex expression:
 /// ```rust
-/// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,call,cond};
-/// # use nom::number::streaming::{be_u8, be_u16};
-/// #
+/// use nom_derive::Nom;
+/// use nom::IResult;
+/// use nom::combinator::cond;
+/// use nom::number::streaming::{be_u8, be_u16};
+///
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
 /// struct S{
 ///     pub a: u8,
-///     #[Parse="cond!(a > 0,be_u16)"]
+///     #[Parse="cond(a > 0,be_u16)"]
 ///     pub b: Option<u16>,
 /// }
 /// #
@@ -284,10 +289,11 @@ use enums::impl_nom_enums;
 /// The type with this attribute must be an `Option` type.
 ///
 /// ```rust
-/// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,cond,complete,call};
-/// # use nom::number::streaming::{be_u8, be_u16};
-/// #
+/// use nom_derive::Nom;
+/// use nom::IResult;
+/// use nom::combinator::{complete, cond};
+/// use nom::number::streaming::{be_u8, be_u16};
+///
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
 /// struct S{
@@ -312,10 +318,11 @@ use enums::impl_nom_enums;
 /// The argument used in verify function is passed as a reference.
 ///
 /// ```rust
-/// # use nom_derive::Nom;
-/// # use nom::{do_parse,IResult,verify,complete,call};
-/// # use nom::number::streaming::{be_u8, be_u16};
-/// #
+/// use nom_derive::Nom;
+/// use nom::IResult;
+/// use nom::combinator::verify;
+/// use nom::number::streaming::{be_u8, be_u16};
+///
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
 /// struct S{
@@ -347,10 +354,11 @@ use enums::impl_nom_enums;
 ///   - on each variant, to specify the value associated with this variant.
 ///
 /// ```rust
-/// # use nom_derive::Nom;
-/// # use nom::*;
-/// # use nom::number::streaming::{be_u8, be_u32};
-/// #
+/// use nom_derive::Nom;
+/// use nom::{error_position, Err, IResult};
+/// use nom::combinator::{complete, opt};
+/// use nom::number::streaming::{be_u8, be_u32};
+///
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
 /// #[Selector="u8"]
@@ -385,10 +393,11 @@ use enums::impl_nom_enums;
 /// trait.
 ///
 /// ```rust
-/// # use nom_derive::Nom;
-/// # use nom::*;
-/// # use nom::number::streaming::{be_u8, be_u32};
-/// #
+/// use nom_derive::Nom;
+/// use nom::{error_position, Err, IResult};
+/// use nom::combinator::{complete, opt};
+/// use nom::number::streaming::{be_u8, be_u32};
+///
 /// #[derive(Debug,PartialEq,Eq,Clone,Copy,Nom)]
 /// pub struct MessageType(pub u8);
 ///
@@ -404,7 +413,7 @@ use enums::impl_nom_enums;
 /// #[derive(Nom)]
 /// pub struct S1{
 ///     pub msg_type: MessageType,
-///     #[Parse="call!(U1::parse,msg_type)"]
+///     #[Parse="{ |i| U1::parse(i, msg_type) }"]
 ///     pub msg_value: U1
 /// }
 /// #
@@ -422,10 +431,10 @@ use enums::impl_nom_enums;
 /// value for one the variants.
 ///
 /// ```rust
-/// # use nom_derive::Nom;
-/// # use nom::*;
-/// # use nom::number::streaming::{be_u8, be_u32};
-/// #
+/// use nom_derive::Nom;
+/// use nom::{error_position, Err, IResult};
+/// use nom::number::streaming::{be_u8, be_u32};
+///
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
 /// #[Selector="u8"]
@@ -452,10 +461,11 @@ use enums::impl_nom_enums;
 /// Named fields:
 ///
 /// ```rust
-/// # use nom_derive::Nom;
-/// # use nom::*;
-/// # use nom::number::streaming::{be_u8, be_u32};
-/// #
+/// use nom_derive::Nom;
+/// use nom::{error_position, Err, IResult};
+/// use nom::bytes::streaming::take;
+/// use nom::number::streaming::{be_u8, be_u32};
+///
 /// # #[derive(Debug,PartialEq,Eq,Clone,Copy,Nom)]
 /// # pub struct MessageType(pub u8);
 /// #
@@ -464,7 +474,7 @@ use enums::impl_nom_enums;
 /// pub enum U3<'a>{
 ///     #[Selector("MessageType(0)")] Field1{a:u32},
 ///     #[Selector("MessageType(1)")] Field2{
-///         #[Parse="take!(4)"]
+///         #[Parse="take(4 as usize)"]
 ///         a: &'a[u8]
 ///     },
 /// }
@@ -473,10 +483,11 @@ use enums::impl_nom_enums;
 /// Unnamed fields:
 ///
 /// ```rust
-/// # use nom_derive::Nom;
-/// # use nom::*;
-/// # use nom::number::streaming::{be_u8, be_u32};
-/// #
+/// use nom_derive::Nom;
+/// use nom::{error_position, Err, IResult};
+/// use nom::bytes::streaming::take;
+/// use nom::number::streaming::{be_u8, be_u32};
+///
 /// # #[derive(Debug,PartialEq,Eq,Clone,Copy,Nom)]
 /// # pub struct MessageType(pub u8);
 /// #
@@ -485,7 +496,7 @@ use enums::impl_nom_enums;
 /// pub enum U3<'a>{
 ///     #[Selector("MessageType(0)")] Field1(u32),
 ///     #[Selector("MessageType(1)")] Field2(
-///         #[Parse="take!(4)"] &'a[u8]
+///         #[Parse="take(4 as usize)"] &'a[u8]
 ///     ),
 /// }
 /// ```
@@ -578,11 +589,9 @@ fn impl_nom(ast: &syn::DeriveInput, debug:bool) -> TokenStream {
     let tokens = quote! {
         impl#generics #name#generics {
             pub fn parse(i: &[u8]) -> IResult<&[u8],#name> {
-                do_parse!{
-                    i,
-                    #(#idents: #parser_tokens >>)*
-                    #struct_def
-                }
+                #(let (i, #idents) = #parser_tokens (i) ?;)*
+                let struct_def = #struct_def;
+                Ok((i, struct_def))
             }
         }
     };
