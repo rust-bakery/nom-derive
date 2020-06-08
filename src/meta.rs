@@ -1,9 +1,9 @@
 #[derive(Debug, Eq, PartialEq)]
 pub enum Meta {
     /// Big-endian
-    Big,
+    BigEndian,
     /// Little-endian
-    Little,
+    LittleEndian,
 }
 
 #[derive(Debug)]
@@ -22,8 +22,8 @@ pub(crate) fn parse_nom_meta(meta: &syn::Meta) -> Result<Vec<Meta>, MetaError> {
                         let path = m.path();
                         if let Some(ident) = path.get_ident() {
                             let m = match ident.to_string().as_ref() {
-                                "Big" => Meta::Big,
-                                "Little" => Meta::Little,
+                                "BigEndian" => Meta::BigEndian,
+                                "LittleEndian" => Meta::LittleEndian,
                                 _ => return Err(MetaError),
                             };
                             v.push(m);

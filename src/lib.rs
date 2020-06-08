@@ -580,8 +580,8 @@ fn impl_nom(ast: &syn::DeriveInput, debug:bool) -> TokenStream {
     // test if struct has a lifetime
     let s =
         match &ast.data {
-            &syn::Data::Enum(_)       => { return impl_nom_enums(ast, debug); },
-            &syn::Data::Struct(ref s) => parse_struct(s),
+            &syn::Data::Enum(_)       => { return impl_nom_enums(ast, debug, &config); },
+            &syn::Data::Struct(ref s) => parse_struct(s, &config),
             &syn::Data::Union(_)      => panic!("Unions not supported"),
     };
     // parse string items and prepare tokens for each field parser
