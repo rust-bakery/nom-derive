@@ -23,7 +23,8 @@ use proc_macro::TokenStream;
 use syn::*;
 use syn::export::Span;
 
-
+mod config;
+mod meta;
 mod parsertree;
 mod structs;
 mod enums;
@@ -550,7 +551,7 @@ use enums::impl_nom_enums;
 ///
 /// Except if the entire enum is fieldless (a list of constant integer values),
 /// unit fields are not supported.
-#[proc_macro_derive(Nom, attributes(Parse,Verify,Cond,Count,Selector))]
+#[proc_macro_derive(Nom, attributes(Parse,Verify,Cond,Count,Selector,nom))]
 pub fn nom(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
     let ast = parse_macro_input!(input as DeriveInput);
@@ -563,13 +564,25 @@ pub fn nom(input: TokenStream) -> TokenStream {
 }
 
 fn impl_nom(ast: &syn::DeriveInput, debug:bool) -> TokenStream {
+    use crate::config::Config;
     // eprintln!("ast: {:#?}", ast);
+    let mut config = Config::default();
+    for attr in &ast.attrs {
+        if let Some(ident) = attr.path.get_ident() {
+            if "nom" == &ident.to_string() {
+                // parse content
+                let meta = attr.parse_meta().expect("Parsing the 'nom' meta attribute failed");
+                let res = meta::parse_nom_meta(&meta).expect("Unknown keywords in 'nom' meta attribute");
+                config = Config::from_meta_list(&res).expect("Could not build config");
+            }
+        }
+    }
     // test if struct has a lifetime
     let s =
         match &ast.data {
             &syn::Data::Enum(_)       => { return impl_nom_enums(ast, debug); },
             &syn::Data::Struct(ref s) => parse_struct(s),
-            &syn::Data::Union(_)       => panic!("Unions not supported"),
+            &syn::Data::Union(_)      => panic!("Unions not supported"),
     };
     // parse string items and prepare tokens for each field parser
     let generics = &ast.generics;
@@ -604,7 +617,7 @@ fn impl_nom(ast: &syn::DeriveInput, debug:bool) -> TokenStream {
 /// This derive macro behaves exactly like [Nom derive](derive.Nom.html), except it
 /// prints the generated parser on stderr.
 /// This is helpful for debugging generated parsers.
-#[proc_macro_derive(NomDeriveDebug, attributes(Parse,Verify,Cond,Count,Selector))]
+#[proc_macro_derive(NomDeriveDebug, attributes(Parse,Verify,Cond,Count,Selector,nom))]
 pub fn nom_derive_debug(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
     let ast = parse_macro_input!(input as DeriveInput);
