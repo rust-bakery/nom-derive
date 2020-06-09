@@ -150,7 +150,7 @@ use enums::impl_nom_enums;
 /// #[derive(Nom)]
 /// struct S {
 ///   a: u16,
-///   #[Count="a"]
+///   #[nom(Count="a")]
 ///   b: Vec<u16>
 /// }
 /// #
@@ -248,7 +248,7 @@ use enums::impl_nom_enums;
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
 /// struct S{
-///     #[Parse="le_u16"]
+///     #[nom(Parse="le_u16")]
 ///     a: u16
 /// }
 /// #
@@ -270,7 +270,7 @@ use enums::impl_nom_enums;
 /// #[derive(Nom)]
 /// struct S{
 ///     pub a: u8,
-///     #[Parse="cond(a > 0,be_u16)"]
+///     #[nom(Parse="cond(a > 0,be_u16)")]
 ///     pub b: Option<u16>,
 /// }
 /// #
@@ -299,7 +299,7 @@ use enums::impl_nom_enums;
 /// #[derive(Nom)]
 /// struct S{
 ///     pub a: u8,
-///     #[Cond="a == 1"]
+///     #[nom(Cond="a == 1")]
 ///     pub b: Option<u16>,
 /// }
 /// #
@@ -327,7 +327,7 @@ use enums::impl_nom_enums;
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
 /// struct S{
-///     #[Verify="*a == 1"]
+///     #[nom(Verify="*a == 1")]
 ///     pub a: u8,
 /// }
 /// #
@@ -362,10 +362,10 @@ use enums::impl_nom_enums;
 ///
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
-/// #[Selector="u8"]
+/// #[nom(Selector="u8")]
 /// pub enum U1{
-///     #[Selector("0")] Field1(u32),
-///     #[Selector("1")] Field2(Option<u32>),
+///     #[nom(Selector="0")] Field1(u32),
+///     #[nom(Selector="1")] Field2(Option<u32>),
 /// }
 /// #
 /// # fn main() {
@@ -404,17 +404,17 @@ use enums::impl_nom_enums;
 ///
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
-/// #[Selector="MessageType"]
+/// #[nom(Selector="MessageType")]
 /// pub enum U1{
-///     #[Selector("MessageType(0)")] Field1(u32),
-///     #[Selector("MessageType(1)")] Field2(Option<u32>),
+///     #[nom(Selector="MessageType(0)")] Field1(u32),
+///     #[nom(Selector="MessageType(1)")] Field2(Option<u32>),
 /// }
 ///
 /// // Example of call from a struct:
 /// #[derive(Nom)]
 /// pub struct S1{
 ///     pub msg_type: MessageType,
-///     #[Parse="{ |i| U1::parse(i, msg_type) }"]
+///     #[nom(Parse="{ |i| U1::parse(i, msg_type) }")]
 ///     pub msg_value: U1
 /// }
 /// #
@@ -438,10 +438,10 @@ use enums::impl_nom_enums;
 ///
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
-/// #[Selector="u8"]
+/// #[nom(Selector="u8")]
 /// pub enum U2{
-///     #[Selector("0")] Field1(u32),
-///     #[Selector("_")] Field2(u32),
+///     #[nom(Selector="0")] Field1(u32),
+///     #[nom(Selector="_")] Field2(u32),
 /// }
 /// #
 /// # fn main() {
@@ -471,11 +471,11 @@ use enums::impl_nom_enums;
 /// # pub struct MessageType(pub u8);
 /// #
 /// #[derive(Nom)]
-/// #[Selector="MessageType"]
+/// #[nom(Selector="MessageType")]
 /// pub enum U3<'a>{
-///     #[Selector("MessageType(0)")] Field1{a:u32},
-///     #[Selector("MessageType(1)")] Field2{
-///         #[Parse="take(4 as usize)"]
+///     #[nom(Selector="MessageType(0)")] Field1{a:u32},
+///     #[nom(Selector="MessageType(1)")] Field2{
+///         #[nom(Parse="take(4 as usize)")]
 ///         a: &'a[u8]
 ///     },
 /// }
@@ -493,11 +493,11 @@ use enums::impl_nom_enums;
 /// # pub struct MessageType(pub u8);
 /// #
 /// #[derive(Nom)]
-/// #[Selector="MessageType"]
+/// #[nom(Selector="MessageType")]
 /// pub enum U3<'a>{
-///     #[Selector("MessageType(0)")] Field1(u32),
-///     #[Selector("MessageType(1)")] Field2(
-///         #[Parse="take(4 as usize)"] &'a[u8]
+///     #[nom(Selector="MessageType(0)")] Field1(u32),
+///     #[nom(Selector="MessageType(1)")] Field2(
+///         #[nom(Parse="take(4 as usize)")] &'a[u8]
 ///     ),
 /// }
 /// ```
@@ -551,7 +551,7 @@ use enums::impl_nom_enums;
 ///
 /// Except if the entire enum is fieldless (a list of constant integer values),
 /// unit fields are not supported.
-#[proc_macro_derive(Nom, attributes(Parse,Verify,Cond,Count,Selector,nom))]
+#[proc_macro_derive(Nom, attributes(nom))]
 pub fn nom(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
     let ast = parse_macro_input!(input as DeriveInput);
@@ -566,21 +566,14 @@ pub fn nom(input: TokenStream) -> TokenStream {
 fn impl_nom(ast: &syn::DeriveInput, debug:bool) -> TokenStream {
     use crate::config::Config;
     // eprintln!("ast: {:#?}", ast);
-    let mut config = Config::default();
-    for attr in &ast.attrs {
-        if let Some(ident) = attr.path.get_ident() {
-            if "nom" == &ident.to_string() {
-                // parse content
-                let meta = attr.parse_meta().expect("Parsing the 'nom' meta attribute failed");
-                let res = meta::parse_nom_meta(&meta).expect("Unknown keywords in 'nom' meta attribute");
-                config = Config::from_meta_list(&res).expect("Could not build config");
-            }
-        }
-    }
+    let struct_name = ast.ident.to_string();
+    let meta = meta::parse_nom_attribute(&ast.attrs).expect("Parsing the 'nom' meta attribute failed");
+    let mut config = Config::from_meta_list(struct_name, &meta).expect("Could not build config");
+    config.debug |= debug;
     // test if struct has a lifetime
     let s =
         match &ast.data {
-            &syn::Data::Enum(_)       => { return impl_nom_enums(ast, debug, &config); },
+            &syn::Data::Enum(_)       => { return impl_nom_enums(ast, &config); },
             &syn::Data::Struct(ref s) => parse_struct(s, &config),
             &syn::Data::Union(_)      => panic!("Unions not supported"),
     };
@@ -608,7 +601,7 @@ fn impl_nom(ast: &syn::DeriveInput, debug:bool) -> TokenStream {
             }
         }
     };
-    if debug {
+    if config.debug {
         eprintln!("tokens:\n{}", tokens);
     }
     tokens.into()
@@ -617,7 +610,7 @@ fn impl_nom(ast: &syn::DeriveInput, debug:bool) -> TokenStream {
 /// This derive macro behaves exactly like [Nom derive](derive.Nom.html), except it
 /// prints the generated parser on stderr.
 /// This is helpful for debugging generated parsers.
-#[proc_macro_derive(NomDeriveDebug, attributes(Parse,Verify,Cond,Count,Selector,nom))]
+#[proc_macro_derive(NomDeriveDebug, attributes(nom))]
 pub fn nom_derive_debug(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
     let ast = parse_macro_input!(input as DeriveInput);

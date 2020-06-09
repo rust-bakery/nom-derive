@@ -13,7 +13,7 @@ use nom::number::streaming::*;
 #[derive(Debug,PartialEq,Nom)]
 struct S1 {
     pub a: u32,
-    #[Count="a"]
+    #[nom(Count="a")]
     pub b: Vec<u32>,
     pub c: u32,
 }
@@ -25,7 +25,7 @@ struct NewType(pub u8);
 #[derive(Debug,PartialEq,Nom)]
 struct S2 {
     pub a: u8,
-    #[Count="a"]
+    #[nom(Count="a")]
     pub b: Vec<NewType>,
 }
 

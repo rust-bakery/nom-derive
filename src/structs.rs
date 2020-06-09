@@ -1,6 +1,7 @@
 use syn::*;
 
 use crate::config::Config;
+use crate::meta;
 use crate::parsertree::ParserTree;
 
 #[derive(Debug)]
@@ -79,103 +80,65 @@ fn get_type_parser(ty: &Type, config: &Config) -> Option<ParserTree> {
     }
 }
 
-fn get_parser(field: &::syn::Field, config: &Config) -> Option<ParserTree> {
+fn get_parser(field: &::syn::Field, meta_list: &[meta::Meta], config: &Config) -> Option<ParserTree> {
     // eprintln!("field: {:?}", field);
     let ty = &field.ty;
-    // first check if we have an attribute
+    // first check if we have attributes set
     // eprintln!("attrs: {:?}", field.attrs);
-    for attr in &field.attrs {
-        // eprintln!("meta: {:?}", attr.parse_meta());
-        if let Ok(ref meta) = attr.parse_meta() {
-            match meta {
-                Meta::NameValue(ref namevalue) => {
-                    if let Some(ident) = namevalue.path.get_ident() {
-                        if &ident == &"Parse" {
-                            match &namevalue.lit {
-                                Lit::Str(s) => {
-                                    return Some(ParserTree::Raw(s.value()))
-                                },
-                                _ => panic!("Invalid 'Parse' attribute type/value")
-                            }
-                        }
-                        if &ident == &"Count" {
-                            match &namevalue.lit {
-                                Lit::Str(s) => {
-                                    // try to infer subparser
-                                    let sub = get_type_parser(ty, config);
-                                    let s1 = match sub {
-                                        Some(ParserTree::Many0(m)) => { m },
-                                        _ => panic!("Unable to infer parser for 'Count' attribute. Is item type a Vec ?")
-                                    };
-                                    let s2 = match *s1 {
-                                        ParserTree::Complete(m) => { m },
-                                        _ => panic!("Unable to infer parser for 'Count' attribute. Is item type a Vec ?")
-                                    };
-                                    return Some(ParserTree::Count(s2, s.value()));
-                                },
-                                _ => panic!("Invalid 'Count' attribute type/value")
-                            }
-                        }
-                    }
-                }
-                _ => ()
+    // eprintln!("meta_list: {:?}", meta_list);
+    for meta in meta_list {
+        match meta {
+            meta::Meta::Parse(s) => {
+                return Some(ParserTree::Raw(s.clone()));
             }
+            meta::Meta::Count(s) => {
+                // try to infer subparser
+                let sub = get_type_parser(ty, config);
+                let s1 = match sub {
+                    Some(ParserTree::Many0(m)) => { m },
+                    _ => panic!("Unable to infer parser for 'Count' attribute. Is item type a Vec ?")
+                };
+                let s2 = match *s1 {
+                    ParserTree::Complete(m) => { m },
+                    _ => panic!("Unable to infer parser for 'Count' attribute. Is item type a Vec ?")
+                };
+                return Some(ParserTree::Count(s2, s.clone()));
+            }
+            _ => (),
         }
     }
     // else try primitive types knowledge
     get_type_parser(ty, config)
 }
 
-fn add_verify(field: &syn::Field, p: ParserTree) -> ParserTree {
+fn add_verify(field: &syn::Field, p: ParserTree, meta_list: &[meta::Meta]) -> ParserTree {
     if field.ident == None { return p; }
     let ident = field.ident.as_ref().expect("empty field ident (add_verify)");
-    for attr in &field.attrs {
-        if let Ok(ref meta) = attr.parse_meta() {
-            match meta {
-                Meta::NameValue(ref namevalue) => {
-                    if let Some(attr_name) = namevalue.path.get_ident() {
-                        if &attr_name == &"Verify" {
-                            match &namevalue.lit {
-                                Lit::Str(s) => {
-                                    return ParserTree::Verify(Box::new(p), format!("{}",ident), s.value())
-                                },
-                                _ => panic!("Invalid 'Verify' attribute type/value")
-                            }
-                        }
-                    }
-                },
-                _ => ()
-            }
+    for meta in meta_list {
+        match meta {
+            meta::Meta::Verify(s) => {
+                return ParserTree::Verify(Box::new(p), format!("{}",ident), s.clone())
+            },
+            _ => ()
         }
     }
     p
 }
 
-fn patch_condition(field: &syn::Field, p: ParserTree) -> ParserTree {
+fn patch_condition(field: &syn::Field, p: ParserTree, meta_list: &[meta::Meta]) -> ParserTree {
     if field.ident == None { return p; }
     let ident = field.ident.as_ref().expect("empty field ident (patch condition)");
-    for attr in &field.attrs {
-        if let Ok(ref meta) = attr.parse_meta() {
-            match meta {
-                Meta::NameValue(ref namevalue) => {
-                    if let Some(attr_name) = namevalue.path.get_ident() {
-                        if &attr_name == &"Cond" {
-                            match &namevalue.lit {
-                                Lit::Str(s) => {
-                                    match p {
-                                        ParserTree::Opt(sub) => {
-                                            return ParserTree::Cond(sub, s.value());
-                                        }
-                                        _ => panic!("A condition was given on field {}, which is not an option type. Hint: use Option<...>", ident),
-                                    }
-                                },
-                                _ => panic!("Invalid 'Cond' attribute type/value")
-                            }
-                        }
+    for meta in meta_list {
+        match meta {
+            meta::Meta::Cond(s) => {
+                match p {
+                    ParserTree::Opt(sub) => {
+                        return ParserTree::Cond(sub, s.clone());
                     }
-                },
-                _ => ()
-            }
+                    _ => panic!("A condition was given on field {}, which is not an option type. Hint: use Option<...>", ident),
+                }
+            },
+            _ => (),
         }
     }
     p
@@ -196,13 +159,15 @@ pub(crate) fn parse_fields(f: &Fields, config: &Config) -> StructParserTree {
             Some(s) => s.to_string(),
             None    => format!("_{}",idx)
         };
-        let opt_parser = get_parser(&field, config);
+        let meta_list = meta::parse_nom_attribute(&field.attrs).expect("Parsing the 'nom' meta attribute failed");
+        // eprintln!("meta_list: {:?}", meta_list);
+        let opt_parser = get_parser(&field, &meta_list, config);
         match opt_parser {
             Some(p) => {
                 // Check if a condition was given, and set it
-                let p = patch_condition(&field, p);
+                let p = patch_condition(&field, p, &meta_list);
                 // add verify field, if present
-                let p = add_verify(&field, p);
+                let p = add_verify(&field, p, &meta_list);
                 parsers.push( (ident_str, p) )
             },
             None    => panic!("Could not infer parser for field {}", ident_str)

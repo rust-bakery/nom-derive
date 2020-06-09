@@ -19,14 +19,14 @@ struct SimpleStruct {
 /// A simple structure, giving the parser explicitly
 #[derive(Debug,PartialEq,Nom)]
 struct StructWithParser {
-    #[Parse="le_u32"]
+    #[nom(Parse="le_u32")]
     pub a: u32,
 }
 
 /// A simple structure, giving the parser explicitly
 #[derive(Debug,PartialEq,Nom)]
 struct StructWithParser2 {
-    #[Parse="opt(le_u32)"]
+    #[nom(Parse="opt(le_u32)")]
     pub a: Option<u32>,
 }
 
@@ -41,7 +41,7 @@ struct StructWithSubStruct {
 /// A simple structure with a verification
 #[derive(Debug,PartialEq,Nom)]
 struct StructWithVerify {
-    #[Verify="*a == 1"]
+    #[nom(Verify="*a == 1")]
     pub a: u32,
 }
 
@@ -49,7 +49,7 @@ struct StructWithVerify {
 #[derive(Debug,PartialEq,Nom)]
 struct StructWithCondition {
     pub a: u32,
-    #[Cond="a == 1"]
+    #[nom(Cond="a == 1")]
     pub b: Option<u32>,
 }
 

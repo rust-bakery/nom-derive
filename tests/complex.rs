@@ -13,7 +13,7 @@ use nom::number::streaming::*;
 #[derive(Debug,PartialEq,Nom)]
 struct StructWithComplexParser {
     pub a: u32,
-    #[Parse="cond(a > 0,be_u64)"]
+    #[nom(Parse="cond(a > 0,be_u64)")]
     pub b: Option<u64>,
 }
 

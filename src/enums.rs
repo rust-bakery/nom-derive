@@ -3,6 +3,7 @@ use syn;
 use syn::export::Span;
 
 use crate::config::Config;
+use crate::meta;
 use crate::parsertree::ParserTree;
 use crate::structs::{parse_fields,StructParserTree};
 
@@ -15,7 +16,8 @@ struct VariantParserTree{
 
 fn parse_variant(variant: &syn::Variant, config: &Config) -> VariantParserTree {
     // eprintln!("variant: {:?}", variant);
-    let selector = get_selector(&variant.attrs).expect(&format!("The 'Selector' attribute must be used to give the value of selector item (variant {})", variant.ident));
+    let meta_list = meta::parse_nom_attribute(&variant.attrs).expect("Parsing the 'nom' meta attribute failed");
+    let selector = get_selector(&meta_list).expect(&format!("The 'Selector' attribute must be used to give the value of selector item (variant {})", variant.ident));
     let struct_def = parse_fields(&variant.fields, config);
     // discriminant ?
     VariantParserTree{
@@ -25,43 +27,13 @@ fn parse_variant(variant: &syn::Variant, config: &Config) -> VariantParserTree {
     }
 }
 
-fn get_selector(attrs: &[syn::Attribute]) -> Option<String> {
-    for attr in attrs {
-        if let Ok(ref meta) = attr.parse_meta() {
-            match meta {
-                syn::Meta::NameValue(ref namevalue) => {
-                    if let Some(ident) = namevalue.path.get_ident() {
-                        if &ident == &"Selector" {
-                            match &namevalue.lit {
-                                syn::Lit::Str(litstr) => {
-                                    return Some(litstr.value())
-                                },
-                                _ => panic!("unsupported namevalue type")
-                            }
-                        }
-                    }
-                }
-                syn::Meta::List(ref metalist) => {
-                    if let Some(ident) = metalist.path.get_ident() {
-                        if &ident == &"Selector" {
-                            for n in metalist.nested.iter() {
-                                match n {
-                                    syn::NestedMeta::Lit(lit) => {
-                                        match lit {
-                                            syn::Lit::Str(litstr) => {
-                                                return Some(litstr.value())
-                                            },
-                                            _ => panic!("unsupported literal type")
-                                        }
-                                    },
-                                    _ => panic!("unsupported meta type")
-                                }
-                            }
-                        }
-                    }
-                }
-                syn::Meta::Path(_) => ()
+fn get_selector(meta_list: &[meta::Meta]) -> Option<String> {
+    for meta in meta_list {
+        match meta {
+            meta::Meta::Selector(s) => {
+                return Some(s.clone());
             }
+            _ => (),
         }
     }
     None
@@ -116,7 +88,7 @@ fn is_input_fieldless_enum(ast: &syn::DeriveInput) -> bool {
     }
 }
 
-fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, debug:bool, config: &Config) -> TokenStream {
+fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, config: &Config) -> TokenStream {
     let parser = match repr.as_ref() {
         "u8"  |
         "u16" |
@@ -170,23 +142,24 @@ fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, debug:bool, con
             }
         }
     };
-    if debug {
+    if config.debug {
         eprintln!("impl_nom_enums: {}", tokens);
     }
 
     tokens.into()
 }
 
-pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, debug:bool, config: &Config) -> TokenStream {
+pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &Config) -> TokenStream {
     let name = &ast.ident;
     // eprintln!("{:?}", ast.attrs);
-    let selector = match get_selector(&ast.attrs) { //.expect("The 'Selector' attribute must be used to give the type of selector item");
+    let meta_list = meta::parse_nom_attribute(&ast.attrs).expect("Parsing the 'nom' meta attribute failed");
+    let selector = match get_selector(&meta_list) { //.expect("The 'Selector' attribute must be used to give the type of selector item");
         Some(s) => s,
         None    => {
             if is_input_fieldless_enum(ast) {
                 // check that we have a repr attribute
                 let repr = get_repr(&ast.attrs).expect("Nom-derive: fieldless enums must have a 'repr' attribute");
-                return impl_nom_fieldless_enums(ast, repr, debug, config);
+                return impl_nom_fieldless_enums(ast, repr, config);
             } else {
                 panic!("Nom-derive: enums must specify the 'selector' attribute");
             }
@@ -260,7 +233,7 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, debug:bool, config: &Config
         }
     };
 
-    if debug {
+    if config.debug {
         eprintln!("impl_nom_enums: {}", tokens);
     }
 

@@ -15,44 +15,44 @@ pub struct MessageType(pub u8);
 
 /// An enum with unnamed fields
 #[derive(Debug,PartialEq,Nom)]
-#[Selector="MessageType"]
+#[nom(Selector="MessageType")]
 pub enum U1{
-    #[Selector("MessageType(0)")] Field1(u32),
-    #[Selector("MessageType(1)")] Field2(Option<u32>),
+    #[nom(Selector="MessageType(0)")] Field1(u32),
+    #[nom(Selector="MessageType(1)")] Field2(Option<u32>),
 }
 
 /// An enum with unnamed fields and primitive selector
 #[derive(Debug,PartialEq,Nom)]
-#[Selector="u8"]
+#[nom(Selector="u8")]
 pub enum U1b{
-    #[Selector("0")] Field1(u32),
-    #[Selector("1")] Field2(Option<u32>),
+    #[nom(Selector="0")] Field1(u32),
+    #[nom(Selector="1")] Field2(Option<u32>),
 }
 
 /// An structure containing an enum
 #[derive(Debug,PartialEq,Nom)]
 pub struct S1{
     pub msg_type: MessageType,
-    #[Parse="{ |i| U1::parse(i, msg_type) }"]
+    #[nom(Parse="{ |i| U1::parse(i, msg_type) }")]
     pub msg_value: U1
 }
 
 /// An enum with named fields
 #[derive(Debug,PartialEq,Nom)]
-#[Selector="MessageType"]
+#[nom(Selector="MessageType")]
 pub enum U2{
-    #[Selector("MessageType(0)")] Field1{ a: u32 },
-    #[Selector("MessageType(1)")] Field2{ a:Option<u32> },
+    #[nom(Selector="MessageType(0)")] Field1{ a: u32 },
+    #[nom(Selector="MessageType(1)")] Field2{ a:Option<u32> },
 }
 
 /// An enum with lifetime
 #[derive(Debug,PartialEq,Nom)]
-#[Selector="MessageType"]
+#[nom(Selector="MessageType")]
 pub enum U3<'a>{
-    #[Selector("MessageType(0)")] Field1(u32),
+    #[nom(Selector="MessageType(0)")] Field1(u32),
     // next variant has to be annotated for parsing (inside variant definition, not outside!)
-    #[Selector("MessageType(1)")]
-    Field2(#[Parse="take(4 as usize)"] &'a[u8]),
+    #[nom(Selector="MessageType(1)")]
+    Field2(#[nom(Parse="take(4 as usize)")] &'a[u8]),
 }
 
 // /// An enum with fields and Parse attribute
@@ -67,10 +67,10 @@ pub enum U3<'a>{
 
 /// An enum with a default case
 #[derive(Debug,PartialEq,Nom)]
-#[Selector="MessageType"]
+#[nom(Selector="MessageType")]
 pub enum U5{
-    #[Selector("MessageType(0)")] Field1(u32),
-    #[Selector("_")] Field2(Option<u32>),
+    #[nom(Selector="MessageType(0)")] Field1(u32),
+    #[nom(Selector="_")] Field2(Option<u32>),
 }
 
 /// A fieldless enum with values
@@ -84,18 +84,18 @@ pub enum U6{
 
 /// An enum with a default case, before the end
 #[derive(Debug,PartialEq,Nom)]
-#[Selector="MessageType"]
+#[nom(Selector="MessageType")]
 pub enum U7{
-    #[Selector("_")] Field2(u32),
-    #[Selector("MessageType(0)")] Field1(u32),
+    #[nom(Selector="_")] Field2(u32),
+    #[nom(Selector="MessageType(0)")] Field1(u32),
 }
 
 /// An unnamed enum with a structure in fields (common case)
 #[derive(Debug,PartialEq,Nom)]
-#[Selector="u8"]
+#[nom(Selector="u8")]
 pub enum U8 {
-    #[Selector("0")] Field1(U8S1),
-    #[Selector("1")] Field2(u32),
+    #[nom(Selector="0")] Field1(U8S1),
+    #[nom(Selector="1")] Field2(u32),
 }
 
 #[derive(Debug,PartialEq,Nom)]
