@@ -116,7 +116,7 @@ fn is_input_fieldless_enum(ast: &syn::DeriveInput) -> bool {
     }
 }
 
-fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, debug:bool) -> TokenStream {
+fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, debug:bool, config: &Config) -> TokenStream {
     let parser = match repr.as_ref() {
         "u8"  |
         "u16" |
@@ -125,7 +125,13 @@ fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, debug:bool) -> 
         "i8"  |
         "i16" |
         "i32" |
-        "i64"    => ParserTree::Raw(format!("be_{}", repr)),
+        "i64" => {
+            if config.big_endian {
+                Some(ParserTree::Raw(format!("be_{}", repr)))
+            } else {
+                Some(ParserTree::Raw(format!("le_{}", repr)))
+            }
+        }
         _ => panic!("Cannot parse 'repr' content")
     };
     let variant_names : Vec<_> =
@@ -180,7 +186,7 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, debug:bool, config: &Config
             if is_input_fieldless_enum(ast) {
                 // check that we have a repr attribute
                 let repr = get_repr(&ast.attrs).expect("Nom-derive: fieldless enums must have a 'repr' attribute");
-                return impl_nom_fieldless_enums(ast, repr, debug);
+                return impl_nom_fieldless_enums(ast, repr, debug, config);
             } else {
                 panic!("Nom-derive: enums must specify the 'selector' attribute");
             }

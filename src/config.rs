@@ -1,6 +1,6 @@
 use crate::meta::Meta;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Config {
     pub big_endian: bool,
 }
@@ -22,5 +22,13 @@ impl Config {
         Ok(Config {
             big_endian
         })
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            big_endian: true,
+        }
     }
 }
