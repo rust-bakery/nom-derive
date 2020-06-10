@@ -99,6 +99,7 @@ use enums::impl_nom_enums;
 /// | [BigEndian](#byteorder) | all | Set the endianness to big endian
 /// | [Cond](#conditional-values) | fields | Used on an `Option<T>` to read a value of type `T` only if the condition is met
 /// | [Count](#count) | fields | Set the expected number of items to parse
+/// | [Debug](#debug) | top-level | Print the generated code to stderr during build
 /// | [Default](#default) | fields | Do not parse, set a field to the default value for the type
 /// | [If](#conditional-values) | fields | Similar to `Cond`
 /// | [Ignore](#default) | fields | An alias for `default`
@@ -667,6 +668,22 @@ use enums::impl_nom_enums;
 ///
 /// Except if the entire enum is fieldless (a list of constant integer values),
 /// unit fields are not supported.
+///
+/// ## Debug
+///
+/// Errors in generated parsers may be hard to understand and debug.
+/// The `Debug` attribute, if applied to top-level, makes the generator print the
+/// generated code to `stderr`.
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// #
+/// #[derive(Nom)]
+/// #[nom(Debug)]
+/// pub struct S {
+///     pub a: u32,
+/// }
+/// ```
 #[proc_macro_derive(Nom, attributes(nom))]
 pub fn nom(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
