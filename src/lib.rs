@@ -36,6 +36,8 @@ use enums::impl_nom_enums;
 /// using [nom] parsers. It will try to infer parsers for primitive of known
 /// types, but also allows you to specify parsers using custom attributes.
 ///
+/// Deriving parsers supports `struct` and `enum` types.
+///
 /// [nom]: https://github.com/Geal/nom
 ///
 /// # Deriving parsers for `Struct`
@@ -80,9 +82,83 @@ use enums::impl_nom_enums;
 /// # }
 /// ```
 ///
+/// **Important**: combinators from nom must be imported manually in the code, so the
+/// `use nom::{ xxx };` statements have to be added manually. This may change in the future.
+///
+/// ## Attributes
+///
+/// Derived parsers can be controlled using the `nom` attribute, with a sub-attribute.
+///
+/// Fow example, it is possible to [change endianness](#endianness),
+/// [add conditions](#adding-conditions) or [verifications](#adding-verifications)
+/// functions, or even
+/// [override entirely the parser for a field](#specifying-parsers).
+///
+/// See below for examples.
+///
+/// ## Endianness
+///
 /// By default, integers are parsed are Big Endian.
 ///
-/// `nom-derive` is also able to derive default parsers for some usual types:
+/// The `LittleEndian` attribute can be applied to a struct to change all integer parsers:
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// # use nom::{do_parse,IResult,call};
+/// # use nom::number::streaming::{le_u16, le_u32};
+///
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// #[nom(LittleEndian)]
+/// struct LittleEndianStruct {
+///   a: u32,
+///   b: u16,
+///   c: u16
+/// }
+///
+/// # fn main() {
+/// let input = b"\x00\x00\x00\x01\x12\x34\x56\x78";
+/// let res = LittleEndianStruct::parse(input);
+/// assert_eq!(res, Ok((&input[8..],
+///     LittleEndianStruct{a:0x0100_0000,b:0x3412,c:0x7856}))
+/// );
+/// # }
+/// ```
+///
+/// The `BigEndian` and `LittleEndian` attributes can be specified for struct fields.
+/// If both per-struct and per-field attributes are present, the more specific wins.
+///
+/// For example, the all fields of the following struct will be parsed as big-endian,
+/// except `b`:
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// # use nom::{do_parse,IResult,call};
+/// # use nom::number::streaming::{be_u16, be_u32, le_u16};
+///
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// #[nom(BigEndian)]
+/// struct MixedEndianStruct {
+///   a: u32,
+///   #[nom(LittleEndian)]
+///   b: u16,
+///   c: u16
+/// }
+///
+/// # fn main() {
+/// # let input = b"\x00\x00\x00\x01\x12\x34\x56\x78";
+/// # let res = MixedEndianStruct::parse(input);
+/// # assert_eq!(res, Ok((&input[8..],
+/// #     MixedEndianStruct{a:0x1,b:0x3412,c:0x5678}))
+/// # );
+/// # }
+/// ```
+///
+/// # Deriving Parsers
+///
+/// `nom-derive` is also able to derive default parsers for some usual types: `Option`, `Vec`, etc.
+/// (see next sections).
 ///
 /// ## Option types
 ///
@@ -164,7 +240,7 @@ use enums::impl_nom_enums;
 /// ## Default parsing function
 ///
 /// If a field with type `T` is not a primitive or known type, the generated parser is
-/// `call!(T::parse)`.
+/// `T::parse(input)`.
 ///
 /// This function can be automatically derived, or specified as a method for the struct.
 /// In that case, the function must be a static method with the same API as a
@@ -237,8 +313,20 @@ use enums::impl_nom_enums;
 /// Sometimes, the default parsers generated automatically are not those you
 /// want.
 ///
-/// The `Parse` custom attribute allows for specifying the parser, using code that
-/// will be inserted in the `do_parse` block of the nom parser.
+/// The `Parse` custom attribute allows for specifying the parser that
+/// will be inserted in the nom parser.
+///
+/// The parser is called with input as argument, so the signature of the parser
+/// must be equivalent to:
+///
+/// ```rust,ignore
+/// # use nom::IResult
+/// fn parser(i: &[u8]) -> IResult<T> {
+/// // ...
+/// }
+/// ```
+///
+/// For example, to specify the parser of a field:
 ///
 /// ```rust
 /// # use nom_derive::Nom;
@@ -261,11 +349,11 @@ use enums::impl_nom_enums;
 ///
 /// The `Parse` argument can be a complex expression:
 /// ```rust
-/// use nom_derive::Nom;
-/// use nom::IResult;
-/// use nom::combinator::cond;
-/// use nom::number::streaming::{be_u8, be_u16};
-///
+/// # use nom_derive::Nom;
+/// # use nom::IResult;
+/// # use nom::combinator::cond;
+/// # use nom::number::streaming::{be_u8, be_u16};
+/// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
 /// struct S{
