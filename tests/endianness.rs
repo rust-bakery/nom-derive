@@ -5,7 +5,6 @@ extern crate pretty_assertions;
 #[macro_use]
 extern crate nom_derive;
 
-use nom::map_opt;
 use nom::number::streaming::*;
 use nom::IResult;
 

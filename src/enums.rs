@@ -132,20 +132,16 @@ fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[me
         variant_names.iter()
             .map(|variant_name| {
                 let id = syn::Ident::new(variant_name, Span::call_site());
-                quote!{ if selector == #name::#id as #ty { return Some(#name::#id); } }
+                quote!{ if selector == #name::#id as #ty { return Ok((i, #name::#id)); } }
             })
             .collect();
     let tokens = quote!{
         impl#generics #name#generics {
             fn parse(i: &[u8]) -> IResult<&[u8],#name> {
-                map_opt!(
-                    i,
-                    #parser,
-                    |selector| {
-                        #(#variants_code)*
-                        None
-                    }
-                )
+                let orig_i = i;
+                let (i, selector) = #parser(i)?;
+                #(#variants_code)*
+                Err(::nom::Err::Error((orig_i, ::nom::error::ErrorKind::Switch)))
             }
         }
     };
