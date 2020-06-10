@@ -151,6 +151,19 @@ fn get_parser(field: &::syn::Field, meta_list: &[meta::Meta], config: &Config) -
     get_type_parser(ty, meta_list, config)
 }
 
+fn add_map(field: &syn::Field, p: ParserTree, meta_list: &[meta::Meta]) -> ParserTree {
+    if field.ident == None { return p; }
+    for meta in meta_list {
+        match meta {
+            meta::Meta::Map(s) => {
+                return ParserTree::Map(Box::new(p), s.clone())
+            },
+            _ => ()
+        }
+    }
+    p
+}
+
 fn add_verify(field: &syn::Field, p: ParserTree, meta_list: &[meta::Meta]) -> ParserTree {
     if field.ident == None { return p; }
     let ident = field.ident.as_ref().expect("empty field ident (add_verify)");
@@ -206,6 +219,8 @@ pub(crate) fn parse_fields(f: &Fields, config: &Config) -> StructParserTree {
             Some(p) => {
                 // Check if a condition was given, and set it
                 let p = patch_condition(&field, p, &meta_list);
+                // add mapping function, if present
+                let p = add_map(&field, p, &meta_list);
                 // add verify field, if present
                 let p = add_verify(&field, p, &meta_list);
                 parsers.push( (ident_str, p) )

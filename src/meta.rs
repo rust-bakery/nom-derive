@@ -9,6 +9,7 @@ pub enum Meta {
     Parse(String),
     Count(String),
     Cond(String),
+    Map(String),
     Selector(String),
     Verify(String),
 }
@@ -91,6 +92,7 @@ pub(crate) fn parse_nom_meta(meta: &syn::Meta) -> Result<Vec<Meta>, MetaError> {
                                     "Cond" => Meta::Cond(value),
                                     "Count" => Meta::Count(value),
                                     "If" => Meta::Cond(value),
+                                    "Map" => Meta::Map(value),
                                     "Parse" => Meta::Parse(value),
                                     "Selector" => Meta::Selector(value),
                                     "Verify" => Meta::Verify(value),

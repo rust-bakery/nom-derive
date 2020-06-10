@@ -103,6 +103,7 @@ use enums::impl_nom_enums;
 /// | [If](#conditional-values) | fields | Similar to `Cond`
 /// | [Ignore](#default) | fields | An alias for `default`
 /// | [LittleEndian](#byteorder) | all | Set the endianness to little endian
+/// | [Map](#map) | fields | Parse field, then apply a function
 /// | [Parse](#custom-parsers) | fields | Use a custom parser function for reading from a file
 /// | [Selector](#deriving-parser-for-enum) | all | Used to specify the value matching an enum variant
 /// | [Verify](#verifications) | fields | After parsing, check that condition is true and return an error if false.
@@ -392,6 +393,31 @@ use enums::impl_nom_enums;
 /// # let input = b"\x01\x00\x01";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[1..],S{a:1,b:None})));
+/// # }
+/// ```
+///
+/// ## Map
+///
+/// The `Map` attribute can be used to apply a function to the result
+/// of the parser.
+/// It is often used combined with the `Parse` attribute.
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// # use nom::number::streaming::be_u8;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// struct S{
+///     pub a: u8,
+///     #[nom(Parse="be_u8", Map = "|x: u8| x.to_string()")]
+///     pub b: String,
+/// }
+/// #
+/// # fn main() {
+/// # let input = b"\x01\x00\x01";
+/// # let res = S::parse(input);
+/// # assert_eq!(res, Ok((&input[2..],S{a:1,b:"0".to_string()})));
 /// # }
 /// ```
 ///
