@@ -87,6 +87,36 @@ fn get_type_parser(ty: &Type, meta_list: &[meta::Meta], config: &Config) -> Opti
     }
 }
 
+fn get_type_default(ty: &Type) -> Option<ParserTree> {
+    match ty {
+        Type::Path(ref typepath) => {
+            let path = &typepath.path;
+            if path.segments.len() != 1 {
+                panic!("Multiple segments in type path are not supported");
+            }
+            let segment = path.segments.last().expect("empty segments list");
+            let ident_s = segment.ident.to_string();
+            let default = match ident_s.as_ref() {
+                "u8"  |
+                "u16" |
+                "u32" |
+                "u64" |
+                "i8"  |
+                "i16" |
+                "i32" |
+                "i64" => "0".to_string(),
+                "Option" => "None".to_string(),
+                "Vec" => "Vec::new()".to_string(),
+                s => format!("{}::default()", s)
+            };
+            Some(ParserTree::Raw(
+                format!("{{ |i| Ok((i, {})) }}", default)
+            ))
+        }
+        _ => None
+    }
+}
+
 fn get_parser(field: &::syn::Field, meta_list: &[meta::Meta], config: &Config) -> Option<ParserTree> {
     // eprintln!("field: {:?}", field);
     let ty = &field.ty;
@@ -97,6 +127,9 @@ fn get_parser(field: &::syn::Field, meta_list: &[meta::Meta], config: &Config) -
         match meta {
             meta::Meta::Parse(s) => {
                 return Some(ParserTree::Raw(s.clone()));
+            }
+            meta::Meta::Ignore => {
+                return get_type_default(ty);
             }
             meta::Meta::Count(s) => {
                 // try to infer subparser

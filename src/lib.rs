@@ -99,7 +99,9 @@ use enums::impl_nom_enums;
 /// | [BigEndian](#byteorder) | all | Set the endianness to big endian
 /// | [Cond](#conditional-values) | fields | Used on an `Option<T>` to read a value of type `T` only if the condition is met
 /// | [Count](#count) | fields | Set the expected number of items to parse
+/// | [Default](#default) | fields | Do not parse, set a field to the default value for the type
 /// | [If](#conditional-values) | fields | Similar to `Cond`
+/// | [Ignore](#default) | fields | An alias for `default`
 /// | [LittleEndian](#byteorder) | all | Set the endianness to little endian
 /// | [Parse](#custom-parsers) | fields | Use a custom parser function for reading from a file
 /// | [Selector](#deriving-parser-for-enum) | all | Used to specify the value matching an enum variant
@@ -367,6 +369,31 @@ use enums::impl_nom_enums;
 /// # }
 /// ```
 /// Note that you are responsible from providing correct code.
+///
+/// ## Default
+///
+/// If a field is marked as `Ignore` (or `Default`), it will not be parsed.
+/// Its value will be the default value for the field type.
+///
+/// This is convenient if the structured has more fields than the serialized value.
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// struct S{
+///     pub a: u8,
+///     #[nom(Ignore)]
+///     pub b: Option<u16>,
+/// }
+/// #
+/// # fn main() {
+/// # let input = b"\x01\x00\x01";
+/// # let res = S::parse(input);
+/// # assert_eq!(res, Ok((&input[1..],S{a:1,b:None})));
+/// # }
+/// ```
 ///
 /// ## Conditional Values
 ///

@@ -4,6 +4,7 @@ use syn::Lit;
 pub enum Meta {
     Debug,
     BigEndian,
+    Ignore,
     LittleEndian,
     Parse(String),
     Count(String),
@@ -58,8 +59,10 @@ pub(crate) fn parse_nom_meta(meta: &syn::Meta) -> Result<Vec<Meta>, MetaError> {
                             // eprintln!("path {:?}", p);
                             if let Some(ident) = p.get_ident() {
                                 let m = match ident.to_string().as_ref() {
-                                    "Debug" => Meta::Debug,
                                     "BigEndian" => Meta::BigEndian,
+                                    "Debug" => Meta::Debug,
+                                    "Default" => Meta::Ignore,
+                                    "Ignore" => Meta::Ignore,
                                     "LittleEndian" => Meta::LittleEndian,
                                     _ => return Err(MetaError),
                                 };
