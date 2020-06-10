@@ -2,13 +2,7 @@
 #[macro_use]
 extern crate pretty_assertions;
 
-#[macro_use]
-extern crate nom_derive;
-
-use nom::*;
-use nom::combinator::{complete, opt};
-use nom::multi::many0;
-use nom::number::streaming::*;
+use nom_derive::Nom;
 
 /// A simple structure with an Option type
 #[derive(Debug,PartialEq,Nom)]

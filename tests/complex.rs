@@ -2,12 +2,10 @@
 #[macro_use]
 extern crate pretty_assertions;
 
-#[macro_use]
-extern crate nom_derive;
+use nom_derive::Nom;
 
-use nom::*;
 use nom::combinator::cond;
-use nom::number::streaming::*;
+use nom::number::streaming::be_u64;
 
 /// A simple structure, with a complex sub-parser expression
 #[derive(Debug,PartialEq,Nom)]

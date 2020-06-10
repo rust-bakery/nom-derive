@@ -1,13 +1,11 @@
 #[macro_use]
 extern crate pretty_assertions;
 
-#[macro_use]
-extern crate nom_derive;
+use nom_derive::Nom;
 
-use nom::*;
 use nom::bytes::complete::take;
 use nom::combinator::map;
-use nom::number::streaming::*;
+use nom::number::streaming::be_u64;
 use std::marker::PhantomData;
 
 /// A simple structure, with a lifetime

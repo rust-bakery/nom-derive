@@ -2,11 +2,7 @@
 #[macro_use]
 extern crate pretty_assertions;
 
-#[macro_use]
-extern crate nom_derive;
-
-use nom::number::streaming::*;
-use nom::IResult;
+use nom_derive::Nom;
 
 #[derive(Debug, PartialEq, Nom)]
 #[nom(BigEndian)]

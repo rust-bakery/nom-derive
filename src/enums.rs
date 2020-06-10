@@ -106,9 +106,9 @@ fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[me
                 config.big_endian
             };
             if is_big_endian {
-                Some(ParserTree::Raw(format!("be_{}", repr)))
+                Some(ParserTree::Raw(format!("nom::number::streaming::be_{}", repr)))
             } else {
-                Some(ParserTree::Raw(format!("le_{}", repr)))
+                Some(ParserTree::Raw(format!("nom::number::streaming::le_{}", repr)))
             }
         }
         _ => panic!("Cannot parse 'repr' content")
@@ -137,7 +137,7 @@ fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[me
             .collect();
     let tokens = quote!{
         impl#generics #name#generics {
-            fn parse(i: &[u8]) -> IResult<&[u8],#name> {
+            fn parse(i: &[u8]) -> nom::IResult<&[u8],#name> {
                 let orig_i = i;
                 let (i, selector) = #parser(i)?;
                 #(#variants_code)*
@@ -224,10 +224,10 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &Config) -> TokenSt
     // generate code
     let default_case =
         if default_case_handled { quote!{} }
-        else { quote!{ _ => Err(nom::Err::Error(error_position!(i, nom::error::ErrorKind::Switch))) } };
+        else { quote!{ _ => Err(nom::Err::Error(nom::error_position!(i, nom::error::ErrorKind::Switch))) } };
     let tokens = quote!{
         impl#generics #name#generics {
-            fn parse(i: &[u8], selector: #selector_type) -> IResult<&[u8],#name> {
+            fn parse(i: &[u8], selector: #selector_type) -> nom::IResult<&[u8],#name> {
                 match selector {
                     #(#variants_code)*
                     #default_case

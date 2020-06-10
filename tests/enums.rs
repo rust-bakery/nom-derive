@@ -2,13 +2,9 @@
 #[macro_use]
 extern crate pretty_assertions;
 
-#[macro_use]
-extern crate nom_derive;
+use nom_derive::Nom;
 
-use nom::*;
 use nom::bytes::streaming::take;
-use nom::combinator::{complete, opt};
-use nom::number::streaming::*;
 
 #[derive(Debug,PartialEq,Eq,Clone,Copy,Nom)]
 pub struct MessageType(pub u8);

@@ -2,12 +2,7 @@
 #[macro_use]
 extern crate pretty_assertions;
 
-#[macro_use]
-extern crate nom_derive;
-
-use nom::*;
-use nom::multi::count;
-use nom::number::streaming::*;
+use nom_derive::Nom;
 
 /// A structure with a length and a Vec
 #[derive(Debug,PartialEq,Nom)]

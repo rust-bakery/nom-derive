@@ -36,9 +36,9 @@ fn get_type_parser(ty: &Type, meta_list: &[meta::Meta], config: &Config) -> Opti
                         config.big_endian
                     };
                     if is_big_endian {
-                        Some(ParserTree::Raw(format!("be_{}", ident_s)))
+                        Some(ParserTree::Raw(format!("nom::number::streaming::be_{}", ident_s)))
                     } else {
-                        Some(ParserTree::Raw(format!("le_{}", ident_s)))
+                        Some(ParserTree::Raw(format!("nom::number::streaming::le_{}", ident_s)))
                     }
                 },
                 "Option" => {
