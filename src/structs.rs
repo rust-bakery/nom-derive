@@ -10,7 +10,7 @@ pub(crate) struct StructParserTree{
     pub parsers: Vec<(String,ParserTree)>,
 }
 
-fn get_type_parser(ty: &Type, config: &Config) -> Option<ParserTree> {
+fn get_type_parser(ty: &Type, meta_list: &[meta::Meta], config: &Config) -> Option<ParserTree> {
     match ty {
         Type::Path(ref typepath) => {
             let path = &typepath.path;
@@ -28,7 +28,14 @@ fn get_type_parser(ty: &Type, config: &Config) -> Option<ParserTree> {
                 "i16" |
                 "i32" |
                 "i64"    => {
-                    if config.big_endian {
+                    let is_big_endian = if meta_list.contains(&meta::Meta::BigEndian) {
+                        true
+                    } else if meta_list.contains(&meta::Meta::LittleEndian) {
+                        false
+                    } else {
+                        config.big_endian
+                    };
+                    if is_big_endian {
                         Some(ParserTree::Raw(format!("be_{}", ident_s)))
                     } else {
                         Some(ParserTree::Raw(format!("le_{}", ident_s)))
@@ -41,7 +48,7 @@ fn get_type_parser(ty: &Type, config: &Config) -> Option<ParserTree> {
                             if ab.args.len() != 1 { panic!("Option type with multiple types are unsupported"); }
                             match &ab.args[0] {
                                 GenericArgument::Type(ref ty) => {
-                                    let s = get_type_parser(ty, config);
+                                    let s = get_type_parser(ty, meta_list, config);
                                     // eprintln!("    recursion: {:?}", s);
                                     s.map(|x| ParserTree::Opt(Box::new(ParserTree::Complete(Box::new(x)))))
                                 },
@@ -58,7 +65,7 @@ fn get_type_parser(ty: &Type, config: &Config) -> Option<ParserTree> {
                             if ab.args.len() != 1 { panic!("Vec type with multiple types are unsupported"); }
                             match &ab.args[0] {
                                 GenericArgument::Type(ref ty) => {
-                                    let s = get_type_parser(ty, config);
+                                    let s = get_type_parser(ty, meta_list, config);
                                     // eprintln!("    recursion: {:?}", s);
                                     s.map(|x| ParserTree::Many0(Box::new(ParserTree::Complete(Box::new(x)))))
                                 },
@@ -93,7 +100,7 @@ fn get_parser(field: &::syn::Field, meta_list: &[meta::Meta], config: &Config) -
             }
             meta::Meta::Count(s) => {
                 // try to infer subparser
-                let sub = get_type_parser(ty, config);
+                let sub = get_type_parser(ty, meta_list, config);
                 let s1 = match sub {
                     Some(ParserTree::Many0(m)) => { m },
                     _ => panic!("Unable to infer parser for 'Count' attribute. Is item type a Vec ?")
@@ -108,7 +115,7 @@ fn get_parser(field: &::syn::Field, meta_list: &[meta::Meta], config: &Config) -
         }
     }
     // else try primitive types knowledge
-    get_type_parser(ty, config)
+    get_type_parser(ty, meta_list, config)
 }
 
 fn add_verify(field: &syn::Field, p: ParserTree, meta_list: &[meta::Meta]) -> ParserTree {
