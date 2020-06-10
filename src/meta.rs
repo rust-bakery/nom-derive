@@ -87,6 +87,7 @@ pub(crate) fn parse_nom_meta(meta: &syn::Meta) -> Result<Vec<Meta>, MetaError> {
                                 let m = match ident.to_string().as_ref() {
                                     "Cond" => Meta::Cond(value),
                                     "Count" => Meta::Count(value),
+                                    "If" => Meta::Cond(value),
                                     "Parse" => Meta::Parse(value),
                                     "Selector" => Meta::Selector(value),
                                     "Verify" => Meta::Verify(value),

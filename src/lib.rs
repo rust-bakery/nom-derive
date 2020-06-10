@@ -92,16 +92,24 @@ use enums::impl_nom_enums;
 ///
 /// Derived parsers can be controlled using the `nom` attribute, with a sub-attribute.
 ///
-/// Fow example, it is possible to [change endianness](#endianness),
-/// [add conditions](#adding-conditions) or [verifications](#adding-verifications)
-/// functions, or even
-/// [override entirely the parser for a field](#specifying-parsers).
+/// The available attributes are:
+///
+/// | Attribute | Supports | Description
+/// |-----------|------------------|------------
+/// | [BigEndian](#byteorder) | all | Set the endianness to big endian
+/// | [Cond](#conditional-values) | fields | Used on an `Option<T>` to read a value of type `T` only if the condition is met
+/// | [Count](#count) | fields | Set the expected number of items to parse
+/// | [If](#conditional-values) | fields | Similar to `Cond`
+/// | [LittleEndian](#byteorder) | all | Set the endianness to little endian
+/// | [Parse](#custom-parsers) | fields | Use a custom parser function for reading from a file
+/// | [Selector](#deriving-parser-for-enum) | all | Used to specify the value matching an enum variant
+/// | [Verify](#verifications) | fields | After parsing, check that condition is true and return an error if false.
 ///
 /// See below for examples.
 ///
-/// ## Endianness
+/// ## Byteorder
 ///
-/// By default, integers are parsed are Big Endian.
+/// By default, integers are parsed are big endian.
 ///
 /// The `LittleEndian` attribute can be applied to a struct to change all integer parsers:
 ///
@@ -301,7 +309,7 @@ use enums::impl_nom_enums;
 /// # }
 /// ```
 ///
-/// ## Specifying parsers
+/// ## Custom parsers
 ///
 /// Sometimes, the default parsers generated automatically are not those you
 /// want.
@@ -360,7 +368,7 @@ use enums::impl_nom_enums;
 /// ```
 /// Note that you are responsible from providing correct code.
 ///
-/// ## Adding conditions
+/// ## Conditional Values
 ///
 /// The `Cond` custom attribute allows for specifying a condition.
 /// The generated parser will use the `cond!` combinator, which calls the
@@ -385,7 +393,7 @@ use enums::impl_nom_enums;
 /// # }
 /// ```
 ///
-/// ## Adding verifications
+/// ## Verifications
 ///
 /// The `Verify` custom attribute allows for specifying a verifying function.
 /// The generated parser will use the `verify!` combinator, which calls the

@@ -52,6 +52,14 @@ struct StructWithCondition {
     pub b: Option<u32>,
 }
 
+/// A simple structure with a condition (If keyword)
+#[derive(Debug,PartialEq,Nom)]
+struct StructWithCondition2 {
+    pub a: u32,
+    #[nom(If="a == 1")]
+    pub b: Option<u32>,
+}
+
 /// A tuple struct with one field (newtype)
 #[derive(Debug,PartialEq,Nom)]
 struct NewType(pub u32);
