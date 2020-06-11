@@ -24,6 +24,13 @@ struct S2 {
     pub b: Vec<NewType>,
 }
 
+/// A structure Vec of structs, count with literal
+#[derive(Debug,PartialEq,Nom)]
+struct S3 {
+    #[nom(Count="2")]
+    pub b: Vec<NewType>,
+}
+
 
 
 #[test]
@@ -38,4 +45,11 @@ fn test_struct_count_newtype() {
     let input = b"\x02\x12\x34";
     let res = S2::parse(input);
     assert_eq!(res, Ok((&input[3..],S2{a:2, b:vec![NewType(0x12),NewType(0x34)]})));
+}
+
+#[test]
+fn test_struct_count_literal() {
+    let input = b"\x12\x34";
+    let res = S3::parse(input);
+    assert_eq!(res, Ok((&input[2..],S3{b:vec![NewType(0x12),NewType(0x34)]})));
 }
