@@ -31,6 +31,15 @@ struct S3 {
     pub b: Vec<NewType>,
 }
 
+#[derive(Debug, PartialEq, Nom)]
+struct S4 {
+    pub a: u8,
+    #[nom(Value="a+1")]
+    pub b: u8,
+    #[nom(Value="b.to_string()")]
+    pub s: String,
+}
+
 
 
 #[test]
@@ -52,4 +61,13 @@ fn test_struct_count_literal() {
     let input = b"\x12\x34";
     let res = S3::parse(input);
     assert_eq!(res, Ok((&input[2..],S3{b:vec![NewType(0x12),NewType(0x34)]})));
+}
+
+#[test]
+fn test_struct_value() {
+    let input = b"\x12\x34";
+    let res = S4::parse(input);
+    assert_eq!(res, Ok((&input[1..],
+        S4{a:0x12, b:0x13, s:"19".to_string()}
+        )));
 }

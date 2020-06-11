@@ -107,6 +107,7 @@ use enums::impl_nom_enums;
 /// | [Map](#map) | fields | Parse field, then apply a function
 /// | [Parse](#custom-parsers) | fields | Use a custom parser function for reading from a file
 /// | [Selector](#deriving-parser-for-enum) | all | Used to specify the value matching an enum variant
+/// | [Value](#value) | fields | Store result of evaluated expression in field
 /// | [Verify](#verifications) | fields | After parsing, check that condition is true and return an error if false.
 ///
 /// See below for examples.
@@ -444,6 +445,32 @@ use enums::impl_nom_enums;
 /// # let input = b"\x01\x00\x01";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[3..],S{a:1,b:Some(1)})));
+/// # }
+/// ```
+///
+/// ## Value
+///
+/// The `Value` attribute does not parse data. It is used to store the result
+/// of the evaluated expression in the variable.
+///
+/// Previous fields can be used in the expression.
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// # use nom::number::streaming::be_u8;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// struct S{
+///     pub a: u8,
+///     #[nom(Value = "a.to_string()")]
+///     pub b: String,
+/// }
+/// #
+/// # fn main() {
+/// # let input = b"\x01\x00\x01";
+/// # let res = S::parse(input);
+/// # assert_eq!(res, Ok((&input[1..],S{a:1,b:"1".to_string()})));
 /// # }
 /// ```
 ///

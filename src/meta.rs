@@ -11,6 +11,7 @@ pub enum Meta {
     Cond(String),
     Map(String),
     Selector(String),
+    Value(String),
     Verify(String),
 }
 
@@ -95,6 +96,7 @@ pub(crate) fn parse_nom_meta(meta: &syn::Meta) -> Result<Vec<Meta>, MetaError> {
                                     "Map" => Meta::Map(value),
                                     "Parse" => Meta::Parse(value),
                                     "Selector" => Meta::Selector(value),
+                                    "Value" => Meta::Value(value),
                                     "Verify" => Meta::Verify(value),
                                     _ => {
                                         eprintln!("Unknown value for attribute nom({})", ident);
