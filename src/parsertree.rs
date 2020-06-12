@@ -4,6 +4,7 @@ use quote::ToTokens;
 #[derive(Debug)]
 pub enum ParserTree {
     Cond(Box<ParserTree>, String),
+    DbgDmp(Box<ParserTree>, String),
     Verify(Box<ParserTree>, String, String),
     Complete(Box<ParserTree>),
     Opt(Box<ParserTree>),
@@ -21,6 +22,7 @@ impl fmt::Display for ParserTree {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ParserTree::Cond(p, c)      => write!(f, "nom::combinator::cond({}, {})", c, p),
+            ParserTree::DbgDmp(s, c)    => write!(f, "nom::dbg_dmp({}, \"{}\")", s, c),
             ParserTree::Verify(p, i, c) => write!(f, "nom::combinator::verify({}, |{}| {{ {} }})", p, i, c),
             ParserTree::Complete(p)     => write!(f, "nom::combinator::complete({})", p),
             ParserTree::Map(p, m)       => write!(f, "nom::combinator::map({}, {})", p, m),

@@ -41,7 +41,6 @@ struct S4 {
 }
 
 
-
 #[test]
 fn test_struct_count() {
     let input = b"\x00\x00\x00\x02\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";

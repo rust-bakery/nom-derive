@@ -4,6 +4,7 @@ use crate::meta::Meta;
 pub struct Config {
     pub struct_name: String,
     pub big_endian: bool,
+    pub debug: bool,
     pub debug_derive: bool,
 }
 
@@ -17,6 +18,7 @@ impl Config {
         } else {
             true
         };
+        let debug = l.contains(&Meta::Debug);
         if l.contains(&Meta::LittleEndian) && l.contains(&Meta::BigEndian) {
             eprintln!("Struct cannot be both big and little endian");
             return Err(ConfigError);
@@ -25,6 +27,7 @@ impl Config {
         Ok(Config {
             struct_name: name,
             big_endian,
+            debug,
             debug_derive,
         })
     }

@@ -99,6 +99,7 @@ use enums::impl_nom_enums;
 /// | [BigEndian](#byteorder) | all | Set the endianness to big endian
 /// | [Cond](#conditional-values) | fields | Used on an `Option<T>` to read a value of type `T` only if the condition is met
 /// | [Count](#count) | fields | Set the expected number of items to parse
+/// | [Debug](#debug) | all | Print error message and input if parser fails (at runtime)
 /// | [DebugDerive](#debugderive) | top-level | Print the generated code to stderr during build
 /// | [Default](#default) | fields | Do not parse, set a field to the default value for the type
 /// | [If](#conditional-values) | fields | Similar to `Cond`
@@ -696,11 +697,33 @@ use enums::impl_nom_enums;
 /// Except if the entire enum is fieldless (a list of constant integer values),
 /// unit fields are not supported.
 ///
-/// ## DebugDerive
+/// ## Debug
 ///
 /// Errors in generated parsers may be hard to understand and debug.
-/// The `Debug` attribute, if applied to top-level, makes the generator print the
+///
+/// The `Debug` attribute insert calls to nom's `dbg_dmp` function, which will print
+/// an error message and the input if the parser fails. This attribute can be applied to either
+/// fields, or at top-level (all sub-parsers will be wrapped).
+///
+/// This helps resolving parse errors (at runtime).
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// #
+/// #[derive(Nom)]
+/// pub struct S {
+///     pub a: u32,
+///     #[nom(Debug)]
+///     pub b: u64,
+/// }
+/// ```
+///
+/// ## DebugDerive
+///
+/// The `DebugDerive` attribute, if applied to top-level, makes the generator print the
 /// generated code to `stderr`.
+///
+/// This helps resolving compiler errors.
 ///
 /// ```rust
 /// # use nom_derive::Nom;

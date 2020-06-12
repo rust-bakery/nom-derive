@@ -154,12 +154,22 @@ fn get_parser(field: &::syn::Field, meta_list: &[meta::Meta], config: &Config) -
     get_type_parser(ty, meta_list, config)
 }
 
+fn add_debug(field: &syn::Field, p: ParserTree, meta_list: &[meta::Meta], config: &Config) -> ParserTree {
+    if let Some(ref ident) = field.ident {
+        if config.debug || meta_list.contains(&meta::Meta::Debug) {
+            let s = format!("{}::{} ({})", &config.struct_name, ident, p);
+            return ParserTree::DbgDmp(Box::new(p), s);
+        }
+    }
+    p
+}
+
 fn add_map(field: &syn::Field, p: ParserTree, meta_list: &[meta::Meta]) -> ParserTree {
     if field.ident == None { return p; }
     for meta in meta_list {
         match meta {
             meta::Meta::Map(s) => {
-                return ParserTree::Map(Box::new(p), s.clone())
+                return ParserTree::Map(Box::new(p), s.clone());
             },
             _ => ()
         }
@@ -173,7 +183,7 @@ fn add_verify(field: &syn::Field, p: ParserTree, meta_list: &[meta::Meta]) -> Pa
     for meta in meta_list {
         match meta {
             meta::Meta::Verify(s) => {
-                return ParserTree::Verify(Box::new(p), format!("{}",ident), s.clone())
+                return ParserTree::Verify(Box::new(p), format!("{}",ident), s.clone());
             },
             _ => ()
         }
@@ -218,18 +228,16 @@ pub(crate) fn parse_fields(f: &Fields, config: &Config) -> StructParserTree {
         let meta_list = meta::parse_nom_attribute(&field.attrs).expect("Parsing the 'nom' meta attribute failed");
         // eprintln!("meta_list: {:?}", meta_list);
         let opt_parser = get_parser(&field, &meta_list, config);
-        match opt_parser {
-            Some(p) => {
-                // Check if a condition was given, and set it
-                let p = patch_condition(&field, p, &meta_list);
-                // add mapping function, if present
-                let p = add_map(&field, p, &meta_list);
-                // add verify field, if present
-                let p = add_verify(&field, p, &meta_list);
-                parsers.push( (ident_str, p) )
-            },
-            None    => panic!("Could not infer parser for field {}", ident_str)
-        }
+        let p = opt_parser.expect(&format!("Could not infer parser for field {}", ident_str));
+        // add debug wrapper, if requested
+        let p = add_debug(&field, p, &meta_list, config);
+        // Check if a condition was given, and set it
+        let p = patch_condition(&field, p, &meta_list);
+        // add mapping function, if present
+        let p = add_map(&field, p, &meta_list);
+        // add verify field, if present
+        let p = add_verify(&field, p, &meta_list);
+        parsers.push( (ident_str, p) )
     }
     StructParserTree{
         unnamed,
