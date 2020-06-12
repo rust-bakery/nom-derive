@@ -99,7 +99,7 @@ use enums::impl_nom_enums;
 /// | [BigEndian](#byteorder) | all | Set the endianness to big endian
 /// | [Cond](#conditional-values) | fields | Used on an `Option<T>` to read a value of type `T` only if the condition is met
 /// | [Count](#count) | fields | Set the expected number of items to parse
-/// | [Debug](#debug) | top-level | Print the generated code to stderr during build
+/// | [DebugDerive](#debugderive) | top-level | Print the generated code to stderr during build
 /// | [Default](#default) | fields | Do not parse, set a field to the default value for the type
 /// | [If](#conditional-values) | fields | Similar to `Cond`
 /// | [Ignore](#default) | fields | An alias for `default`
@@ -696,7 +696,7 @@ use enums::impl_nom_enums;
 /// Except if the entire enum is fieldless (a list of constant integer values),
 /// unit fields are not supported.
 ///
-/// ## Debug
+/// ## DebugDerive
 ///
 /// Errors in generated parsers may be hard to understand and debug.
 /// The `Debug` attribute, if applied to top-level, makes the generator print the
@@ -706,7 +706,7 @@ use enums::impl_nom_enums;
 /// # use nom_derive::Nom;
 /// #
 /// #[derive(Nom)]
-/// #[nom(Debug)]
+/// #[nom(DebugDerive)]
 /// pub struct S {
 ///     pub a: u32,
 /// }
@@ -723,13 +723,13 @@ pub fn nom(input: TokenStream) -> TokenStream {
     gen
 }
 
-fn impl_nom(ast: &syn::DeriveInput, debug:bool) -> TokenStream {
+fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
     use crate::config::Config;
     // eprintln!("ast: {:#?}", ast);
     let struct_name = ast.ident.to_string();
     let meta = meta::parse_nom_attribute(&ast.attrs).expect("Parsing the 'nom' meta attribute failed");
     let mut config = Config::from_meta_list(struct_name, &meta).expect("Could not build config");
-    config.debug |= debug;
+    config.debug_derive |= debug_derive;
     // test if struct has a lifetime
     let s =
         match &ast.data {
@@ -761,7 +761,7 @@ fn impl_nom(ast: &syn::DeriveInput, debug:bool) -> TokenStream {
             }
         }
     };
-    if config.debug {
+    if config.debug_derive {
         eprintln!("tokens:\n{}", tokens);
     }
     tokens.into()

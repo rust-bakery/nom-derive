@@ -2,6 +2,7 @@ use syn::Lit;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum Meta {
+    DebugDerive,
     Debug,
     BigEndian,
     Ignore,
@@ -62,6 +63,7 @@ pub(crate) fn parse_nom_meta(meta: &syn::Meta) -> Result<Vec<Meta>, MetaError> {
                             if let Some(ident) = p.get_ident() {
                                 let m = match ident.to_string().as_ref() {
                                     "BigEndian" => Meta::BigEndian,
+                                    "DebugDerive" => Meta::DebugDerive,
                                     "Debug" => Meta::Debug,
                                     "Default" => Meta::Ignore,
                                     "Ignore" => Meta::Ignore,

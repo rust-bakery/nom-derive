@@ -145,7 +145,7 @@ fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[me
             }
         }
     };
-    if config.debug {
+    if config.debug_derive {
         eprintln!("impl_nom_enums: {}", tokens);
     }
 
@@ -236,7 +236,7 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &Config) -> TokenSt
         }
     };
 
-    if config.debug {
+    if config.debug_derive {
         eprintln!("impl_nom_enums: {}", tokens);
     }
 

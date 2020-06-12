@@ -4,7 +4,7 @@ use crate::meta::Meta;
 pub struct Config {
     pub struct_name: String,
     pub big_endian: bool,
-    pub debug: bool,
+    pub debug_derive: bool,
 }
 
 #[derive(Debug)]
@@ -21,11 +21,11 @@ impl Config {
             eprintln!("Struct cannot be both big and little endian");
             return Err(ConfigError);
         }
-        let debug = l.contains(&Meta::Debug);
+        let debug_derive = l.contains(&Meta::DebugDerive);
         Ok(Config {
             struct_name: name,
             big_endian,
-            debug,
+            debug_derive,
         })
     }
 }
