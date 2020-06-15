@@ -43,6 +43,34 @@ use enums::impl_nom_enums;
 ///
 /// [nom]: https://github.com/Geal/nom
 ///
+/// # Attributes
+///
+/// Derived parsers can be controlled using the `nom` attribute, with a sub-attribute.
+/// For example, `#[nom(Value)]`.
+///
+/// To specify multiple attributes, use a comma-separated list: `#[nom(Debug, Count="4")]`.
+///
+/// The available attributes are:
+///
+/// | Attribute | Supports | Description
+/// |-----------|------------------|------------
+/// | [BigEndian](#byteorder) | all | Set the endianness to big endian
+/// | [Cond](#conditional-values) | fields | Used on an `Option<T>` to read a value of type `T` only if the condition is met
+/// | [Count](#count) | fields | Set the expected number of items to parse
+/// | [Debug](#debug) | all | Print error message and input if parser fails (at runtime)
+/// | [DebugDerive](#debugderive) | top-level | Print the generated code to stderr during build
+/// | [Default](#default) | fields | Do not parse, set a field to the default value for the type
+/// | [If](#conditional-values) | fields | Similar to `Cond`
+/// | [Ignore](#default) | fields | An alias for `default`
+/// | [LittleEndian](#byteorder) | all | Set the endianness to little endian
+/// | [Map](#map) | fields | Parse field, then apply a function
+/// | [Parse](#custom-parsers) | fields | Use a custom parser function for reading from a file
+/// | [Selector](#deriving-parser-for-enum) | all | Used to specify the value matching an enum variant
+/// | [Value](#value) | fields | Store result of evaluated expression in field
+/// | [Verify](#verifications) | fields | After parsing, check that condition is true and return an error if false.
+///
+/// See below for examples.
+///
 /// # Deriving parsers for `Struct`
 ///
 /// Import the `Nom` derive attribute:
@@ -87,31 +115,6 @@ use enums::impl_nom_enums;
 /// # assert_eq!(res, Ok((&input[4..],S(1))));
 /// # }
 /// ```
-///
-/// ## Attributes
-///
-/// Derived parsers can be controlled using the `nom` attribute, with a sub-attribute.
-///
-/// The available attributes are:
-///
-/// | Attribute | Supports | Description
-/// |-----------|------------------|------------
-/// | [BigEndian](#byteorder) | all | Set the endianness to big endian
-/// | [Cond](#conditional-values) | fields | Used on an `Option<T>` to read a value of type `T` only if the condition is met
-/// | [Count](#count) | fields | Set the expected number of items to parse
-/// | [Debug](#debug) | all | Print error message and input if parser fails (at runtime)
-/// | [DebugDerive](#debugderive) | top-level | Print the generated code to stderr during build
-/// | [Default](#default) | fields | Do not parse, set a field to the default value for the type
-/// | [If](#conditional-values) | fields | Similar to `Cond`
-/// | [Ignore](#default) | fields | An alias for `default`
-/// | [LittleEndian](#byteorder) | all | Set the endianness to little endian
-/// | [Map](#map) | fields | Parse field, then apply a function
-/// | [Parse](#custom-parsers) | fields | Use a custom parser function for reading from a file
-/// | [Selector](#deriving-parser-for-enum) | all | Used to specify the value matching an enum variant
-/// | [Value](#value) | fields | Store result of evaluated expression in field
-/// | [Verify](#verifications) | fields | After parsing, check that condition is true and return an error if false.
-///
-/// See below for examples.
 ///
 /// ## Byteorder
 ///
