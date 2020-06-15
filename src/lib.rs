@@ -793,6 +793,10 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
 /// This derive macro behaves exactly like [Nom derive](derive.Nom.html), except it
 /// prints the generated parser on stderr.
 /// This is helpful for debugging generated parsers.
+#[deprecated(
+    since = "0.6.0",
+    note = "Please use the nom(DebugDerive) attribute instead"
+)]
 #[proc_macro_derive(NomDeriveDebug, attributes(nom))]
 pub fn nom_derive_debug(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree

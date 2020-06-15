@@ -75,6 +75,7 @@ tests](https://github.com/rust-bakery/nom-derive/tree/master/tests).
 - Use qualified paths, caller do not have to import nom macros
 - Move all attributes under the 'nom' namespace
 - Add many attributes (LittleEndian, BigEndian, Map, Debug, Value, etc.)
+- Deprecate the `NomDeriveDebug` derive (replaced by `DebugDerive` attribute)
 - Improve documentation, add many examples
 
 ### 0.5.0
