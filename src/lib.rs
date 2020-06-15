@@ -51,7 +51,7 @@
 //! ```
 //!
 //! This adds a static method `parse` to `S`, with the following signature:
-//! ```rust
+//! ```rust,ignore
 //! impl S {
 //! 	pub fn parse(i: &[u8]) -> nom::IResult(&[u8], S);
 //! }
