@@ -32,7 +32,50 @@ The goal of this project is that:
 * it allows using generated parsing functions along with handwritten parsers and
   combining them without efforts
 
+`nom-derive` adds declarative parsing to `nom`. It also allows mixing with
+procedural parsing easily, making writing parsers for byte-encoded formats
+very easy.
+
+For example:
+
+```rust
+use nom_derive::Nom;
+
+#[derive(Nom)]
+struct S {
+  a: u32,
+  b: u16,
+  c: u16
+}
+```
+
+This adds a static method `parse` to `S`, with the following signature:
+```rust
+impl S {
+	pub fn parse(i: &[u8]) -> nom::IResult(&[u8], S);
+}
+```
+
+To parse input, just call `let res = S::parse(input);`.
+
+For extensive documentation of all attributes and examples, see the
+[Nom derive
+attribute](https://docs.rs/nom-derive/latest/nom_derive/derive.Nom.html)
+documentation.
+
+Many examples are provided, and more can be found in the [project
+tests](https://github.com/rust-bakery/nom-derive/tree/master/tests).
+
+
 ## Changes
+
+### 0.6.0
+
+- Switch to nom parsing functions, do not generate macros
+- Use qualified paths, caller do not have to import nom macros
+- Move all attributes under the 'nom' namespace
+- Add many attributes (LittleEndian, BigEndian, Map, Debug, Value, etc.)
+- Improve documentation, add many examples
 
 ### 0.5.0
 
