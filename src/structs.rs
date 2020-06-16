@@ -22,10 +22,12 @@ fn get_type_parser(ty: &Type, meta_list: &[meta::Meta], config: &Config) -> Opti
             match ident_s.as_ref() {
                 "u8"  |
                 "u16" |
+                "u24" |
                 "u32" |
                 "u64" |
                 "i8"  |
                 "i16" |
+                "i24" |
                 "i32" |
                 "i64"    => {
                     let is_big_endian = if meta_list.contains(&meta::Meta::BigEndian) {

@@ -15,6 +15,16 @@ struct SimpleStruct {
     b: u64,
 }
 
+#[allow(non_camel_case_types)]
+type u24 = u32;
+
+/// A simple structure, deriving a trivial parser
+#[derive(Debug,PartialEq,Nom)]
+struct SimpleStructU24 {
+    pub a: u8,
+    b: u24,
+}
+
 /// A simple structure, giving the parser explicitly
 #[derive(Debug,PartialEq,Nom)]
 struct StructWithParser {

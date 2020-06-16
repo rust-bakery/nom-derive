@@ -92,10 +92,12 @@ fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[me
     let parser = match repr.as_ref() {
         "u8"  |
         "u16" |
+        "u24" |
         "u32" |
         "u64" |
         "i8"  |
         "i16" |
+        "i24" |
         "i32" |
         "i64" => {
             let is_big_endian = if meta_list.contains(&meta::Meta::BigEndian) {
