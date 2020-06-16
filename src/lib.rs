@@ -130,6 +130,7 @@ use enums::impl_nom_enums;
 /// | [Map](#map) | fields | Parse field, then apply a function
 /// | [Parse](#custom-parsers) | fields | Use a custom parser function for reading from a file
 /// | [Selector](#deriving-parser-for-enum) | all | Used to specify the value matching an enum variant
+/// | [Take](#take) | fields | Take `n` bytes of input
 /// | [Value](#value) | fields | Store result of evaluated expression in field
 /// | [Verify](#verifications) | fields | After parsing, check that condition is true and return an error if false.
 ///
@@ -310,6 +311,32 @@ use enums::impl_nom_enums;
 /// # let input = b"\x00\x01\x12\x34";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[4..],S{a:1, b:vec![0x1234]})));
+/// # }
+/// ```
+///
+/// ## Take
+///
+/// The `Take="n"` attribute can be used to take `n` bytes of input.
+///
+/// Notes:
+///   - the number of items (`n`) can be any expression, and will be cast to `usize`
+///
+/// For ex:
+/// ```rust
+/// # use nom_derive::Nom;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// struct S<'a> {
+///   a: u16,
+///   #[nom(Take="1")]
+///   b: &'a [u8],
+/// }
+/// #
+/// # fn main() {
+/// # let input = b"\x00\x01\x12\x34";
+/// # let res = S::parse(input);
+/// # assert_eq!(res, Ok((&input[3..],S{a:1, b:&[0x12]})));
 /// # }
 /// ```
 ///

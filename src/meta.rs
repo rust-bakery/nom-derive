@@ -9,6 +9,7 @@ pub enum Meta {
     LittleEndian,
     Parse(String),
     Count(String),
+    Take(String),
     Cond(String),
     Map(String),
     Selector(String),
@@ -98,6 +99,7 @@ pub(crate) fn parse_nom_meta(meta: &syn::Meta) -> Result<Vec<Meta>, MetaError> {
                                     "Map" => Meta::Map(value),
                                     "Parse" => Meta::Parse(value),
                                     "Selector" => Meta::Selector(value),
+                                    "Take" => Meta::Take(value),
                                     "Value" => Meta::Value(value),
                                     "Verify" => Meta::Verify(value),
                                     _ => {

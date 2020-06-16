@@ -13,6 +13,7 @@ pub enum ParserTree {
     CallParse(String),
     Count(Box<ParserTree>, String),
     Raw(String),
+    Take(String),
     Value(String),
     PhantomData,
 
@@ -32,6 +33,7 @@ impl fmt::Display for ParserTree {
             ParserTree::Count(s,n)      => write!(f, "nom::multi::count({}, {{ {} }} as usize)", s, n),
             ParserTree::PhantomData     => write!(f, "{{ |i| Ok((i, PhantomData)) }}"),
             ParserTree::Raw(s)          => f.write_str(s),
+            ParserTree::Take(s)         => write!(f, "nom::bytes::streaming::take({} as usize)", s),
             ParserTree::Value(s)        => write!(f, "{{ |i| Ok((i, {})) }}", s),
         }
     }

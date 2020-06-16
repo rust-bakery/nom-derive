@@ -70,6 +70,12 @@ struct StructWithCondition2 {
     pub b: Option<u32>,
 }
 
+#[derive(Debug,PartialEq,Nom)]
+struct StructWithTake<'a> {
+    #[nom(Take="4")]
+    pub b: &'a [u8],
+}
+
 /// A tuple struct with one field (newtype)
 #[derive(Debug,PartialEq,Nom)]
 struct NewType(pub u32);
@@ -117,6 +123,13 @@ fn test_struct_with_condition() {
 
     let res = StructWithCondition::parse(&input[4..]);
     assert_eq!(res, Ok((&input[8..],StructWithCondition{a:0x12345678,b:None})));
+}
+
+#[test]
+fn test_struct_with_take() {
+    let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
+    let res = StructWithTake::parse(input);
+    assert_eq!(res, Ok((&input[4..],StructWithTake{b:&[0, 0, 0, 1]})));
 }
 
 #[test]

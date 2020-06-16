@@ -127,6 +127,9 @@ fn get_parser(field: &::syn::Field, meta_list: &[meta::Meta], config: &Config) -
     // eprintln!("meta_list: {:?}", meta_list);
     for meta in meta_list {
         match meta {
+            meta::Meta::Take(s) => {
+                return Some(ParserTree::Take(s.clone()));
+            }
             meta::Meta::Value(s) => {
                 return Some(ParserTree::Value(s.clone()));
             }
