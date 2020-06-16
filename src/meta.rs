@@ -49,6 +49,27 @@ fn lit_to_string(lit: &Lit) -> Option<String> {
     }
 }
 
+type MetaBuilder = fn (String) -> Meta;
+
+fn ident_to_meta_builder(ident: &syn::Ident) -> Result<MetaBuilder, MetaError> {
+    let m = match ident.to_string().as_ref() {
+        "Cond" => Meta::Cond,
+        "Count" => Meta::Count,
+        "If" => Meta::Cond,
+        "Map" => Meta::Map,
+        "Parse" => Meta::Parse,
+        "Selector" => Meta::Selector,
+        "Take" => Meta::Take,
+        "Value" => Meta::Value,
+        "Verify" => Meta::Verify,
+        _ => {
+            eprintln!("Unknown value for attribute nom({})", ident);
+            return Err(MetaError);
+        }
+    };
+    Ok(m)
+}
+
 pub(crate) fn parse_nom_meta(meta: &syn::Meta) -> Result<Vec<Meta>, MetaError> {
     let mut v = Vec::new();
 
@@ -77,10 +98,19 @@ pub(crate) fn parse_nom_meta(meta: &syn::Meta) -> Result<Vec<Meta>, MetaError> {
                                 return Err(MetaError);
                             }
                         }
-                        syn::Meta::List(_l) => {
-                            // eprintln!("list {:?}", _l);
-                            eprintln!("Unknown value for attribute nom(List ?)");
-                            return Err(MetaError);
+                        syn::Meta::List(l) => {
+                            // example: Take(4)
+                            // eprintln!("list {:?}", l);
+                            if let Some(ident) = l.path.get_ident() {
+                                let builder = ident_to_meta_builder(ident)?;
+                                // take parens content
+                                let nested = &l.nested;
+                                let t = quote!{ #nested };
+                                v.push(builder(t.to_string()));
+                            } else {
+                                eprintln!("Meta list attribute is not an ident");
+                                return Err(MetaError);
+                            }
                         }
                         syn::Meta::NameValue(n) => {
                             // eprintln!("namevalue {:?}", n);
@@ -92,22 +122,8 @@ pub(crate) fn parse_nom_meta(meta: &syn::Meta) -> Result<Vec<Meta>, MetaError> {
                                         return Err(MetaError);
                                     }
                                 };
-                                let m = match ident.to_string().as_ref() {
-                                    "Cond" => Meta::Cond(value),
-                                    "Count" => Meta::Count(value),
-                                    "If" => Meta::Cond(value),
-                                    "Map" => Meta::Map(value),
-                                    "Parse" => Meta::Parse(value),
-                                    "Selector" => Meta::Selector(value),
-                                    "Take" => Meta::Take(value),
-                                    "Value" => Meta::Value(value),
-                                    "Verify" => Meta::Verify(value),
-                                    _ => {
-                                        eprintln!("Unknown value for attribute nom({})", ident);
-                                        return Err(MetaError);
-                                    }
-                                };
-                                v.push(m);
+                                let builder = ident_to_meta_builder(ident)?;
+                                v.push(builder(value));
                             }
                         }
                     },

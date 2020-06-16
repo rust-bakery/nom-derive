@@ -72,7 +72,7 @@ struct StructWithCondition2 {
 
 #[derive(Debug,PartialEq,Nom)]
 struct StructWithTake<'a> {
-    #[nom(Take="4")]
+    #[nom(Take(4))]
     pub b: &'a [u8],
 }
 
