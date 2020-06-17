@@ -159,6 +159,13 @@ fn get_parser(field: &::syn::Field, meta_list: &[meta::Meta], config: &Config) -
     get_type_parser(ty, meta_list, config)
 }
 
+fn add_complete(p: ParserTree, meta_list: &[meta::Meta], config: &Config) -> ParserTree {
+    if config.debug || meta_list.contains(&meta::Meta::Complete) {
+        return ParserTree::Complete(Box::new(p));
+    }
+    p
+}
+
 fn add_debug(field: &syn::Field, p: ParserTree, meta_list: &[meta::Meta], config: &Config) -> ParserTree {
     if let Some(ref ident) = field.ident {
         if config.debug || meta_list.contains(&meta::Meta::Debug) {
@@ -234,6 +241,8 @@ pub(crate) fn parse_fields(f: &Fields, config: &Config) -> StructParserTree {
         // eprintln!("meta_list: {:?}", meta_list);
         let opt_parser = get_parser(&field, &meta_list, config);
         let p = opt_parser.expect(&format!("Could not infer parser for field {}", ident_str));
+        // add complete wrapper, if requested
+        let p = add_complete(p, &meta_list, config);
         // add debug wrapper, if requested
         let p = add_debug(&field, p, &meta_list, config);
         // Check if a condition was given, and set it

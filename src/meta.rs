@@ -9,8 +9,9 @@ pub enum Meta {
     Count(String),
     Take(String),
     // options and combinators
-    BigEndian,
     Ignore,
+    Complete,
+    BigEndian,
     LittleEndian,
     Cond(String),
     Map(String),
@@ -86,6 +87,7 @@ pub(crate) fn parse_nom_meta(meta: &syn::Meta) -> Result<Vec<Meta>, MetaError> {
                             if let Some(ident) = p.get_ident() {
                                 let m = match ident.to_string().as_ref() {
                                     "BigEndian" => Meta::BigEndian,
+                                    "Complete" => Meta::Complete,
                                     "DebugDerive" => Meta::DebugDerive,
                                     "Debug" => Meta::Debug,
                                     "Default" => Meta::Ignore,

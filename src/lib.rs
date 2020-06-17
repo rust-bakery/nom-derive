@@ -120,6 +120,7 @@ use enums::impl_nom_enums;
 /// |-----------|------------------|------------
 /// | [BigEndian](#byteorder) | all | Set the endianness to big endian
 /// | [Cond](#conditional-values) | fields | Used on an `Option<T>` to read a value of type `T` only if the condition is met
+/// | [Complete](#complete) | fields | Transforms Incomplete into Error
 /// | [Count](#count) | fields | Set the expected number of items to parse
 /// | [Debug](#debug) | all | Print error message and input if parser fails (at runtime)
 /// | [DebugDerive](#debugderive) | top-level | Print the generated code to stderr during build
@@ -490,6 +491,31 @@ use enums::impl_nom_enums;
 /// # let input = b"\x01\x00\x01";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[1..],S{a:1,b:None})));
+/// # }
+/// ```
+///
+/// ## Complete
+///
+/// The `Complete` attribute transforms Incomplete into Error.
+///
+/// Default is to use streaming parsers.
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// # use nom::number::streaming::be_u8;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// struct S{
+///     pub a: u8,
+///     #[nom(Complete)]
+///     pub b: u64,
+/// }
+/// #
+/// # fn main() {
+/// # let input = b"\x01\x00\x01";
+/// # let res = S::parse(input).expect_err("parse error");
+/// # assert!(!res.is_incomplete());
 /// # }
 /// ```
 ///

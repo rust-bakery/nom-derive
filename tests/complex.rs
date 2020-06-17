@@ -23,6 +23,19 @@ struct StructWithIgnore {
     pub b: Option<u64>,
 }
 
+#[derive(Debug,PartialEq,Nom)]
+struct StructWithoutComplete {
+    pub a: u32,
+    pub b: u64,
+}
+
+#[derive(Debug,PartialEq,Nom)]
+struct StructWithComplete {
+    pub a: u32,
+    #[nom(Complete)]
+    pub b: u64,
+}
+
 #[derive(Debug, PartialEq, Nom)]
 struct StructWithMap {
     pub a: u32,
@@ -42,6 +55,17 @@ fn test_struct_complex_parse() {
 fn test_struct_ignore() {
     let res = StructWithIgnore::parse(INPUT_16);
     assert_eq!(res, Ok((&INPUT_16[4..],StructWithIgnore{a:1,b:None})));
+}
+
+#[test]
+fn test_struct_complete() {
+    let input = &INPUT_16[12..];
+    let res= StructWithoutComplete::parse(input).expect_err("parse error");
+    let res_complete = StructWithComplete::parse(input).expect_err("parse error");
+    // res: Error(Incomplete(Size(8)))
+    assert!(res.is_incomplete());
+    // res_complete: Error(Error(([], Complete)))
+    assert!(!res_complete.is_incomplete());
 }
 
 #[test]
