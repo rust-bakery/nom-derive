@@ -2,19 +2,21 @@ use syn::Lit;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum Meta {
-    DebugDerive,
-    Debug,
-    BigEndian,
-    Ignore,
-    LittleEndian,
+    // declarative parsers
+    Selector(String),
+    Value(String),
     Parse(String),
     Count(String),
     Take(String),
+    // options and combinators
+    BigEndian,
+    Ignore,
+    LittleEndian,
     Cond(String),
     Map(String),
-    Selector(String),
-    Value(String),
     Verify(String),
+    Debug,
+    DebugDerive,
 }
 
 #[derive(Debug)]
@@ -37,7 +39,6 @@ pub fn parse_nom_attribute(attrs: &[syn::Attribute]) -> Result<Vec<Meta>, MetaEr
             panic!("could not get ident");
         }
     }
-    // XXX sort v before returning?
     Ok(v)
 }
 
