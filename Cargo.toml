@@ -1,7 +1,7 @@
 [package]
 name = "nom-derive"
 description = "Custom derive nom parsers from struct"
-version = "0.6.0-beta1"
+version = "0.6.0-beta2"
 license = "MIT/Apache-2.0"
 keywords = ["parser","nom"]
 categories = ["parsing"]
@@ -18,6 +18,7 @@ include = [
   ".travis.yml",
   "Cargo.toml",
   "src/*.rs",
+  "src/meta/*.rs",
   "tests/*.rs",
 ]
 

@@ -91,6 +91,7 @@ tests](https://github.com/rust-bakery/nom-derive/tree/master/tests).
 - Add many attributes (LittleEndian, BigEndian, Map, Debug, Value, etc.)
 - Deprecate the `NomDeriveDebug` derive (replaced by `DebugDerive` attribute)
 - Improve documentation, add many examples
+- Rewrite attribute parser, now accepting a more flexible syntax
 
 ### 0.5.0
 
