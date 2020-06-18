@@ -198,6 +198,16 @@ fn quote_align(align: &TokenStream, config: &Config) -> TokenStream {
     }
 }
 
+fn quote_skip(skip: &TokenStream, config: &Config) -> TokenStream {
+    let input_name = syn::Ident::new(&config.input_name, Span::call_site());
+    quote!{
+        let (#input_name, _) = {
+            let skip = #skip as usize;
+            nom::bytes::streaming::take(skip)(#input_name)
+        }?;
+    }
+}
+
 fn get_pre_post_exec(meta_list: &[MetaAttr], config: &Config) -> (Option<TokenStream>, Option<TokenStream>) {
     let mut tk_pre = proc_macro2::TokenStream::new();
     let mut tk_post = proc_macro2::TokenStream::new();
@@ -220,6 +230,16 @@ fn get_pre_post_exec(meta_list: &[MetaAttr], config: &Config) -> (Option<TokenSt
             MetaAttrType::AlignBefore => {
                 let align = m.arg().unwrap();
                 let qq = quote_align(align, &config);
+                tk_pre.extend(qq);
+            }
+            MetaAttrType::SkipAfter => {
+                let skip = m.arg().unwrap();
+                let qq = quote_skip(skip, &config);
+                tk_post.extend(qq);
+            }
+            MetaAttrType::SkipBefore => {
+                let skip = m.arg().unwrap();
+                let qq = quote_skip(skip, &config);
                 tk_pre.extend(qq);
             }
             _ => (),

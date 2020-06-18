@@ -24,6 +24,8 @@ pub enum MetaAttrType {
     PostExec,
     PreExec,
     Selector,
+    SkipAfter,
+    SkipBefore,
     Take,
     Value,
     Verify,
@@ -50,6 +52,8 @@ impl MetaAttrType {
             "PostExec" => Some(MetaAttrType::PostExec),
             "PreExec" => Some(MetaAttrType::PreExec),
             "Selector" => Some(MetaAttrType::Selector),
+            "SkipAfter" => Some(MetaAttrType::SkipAfter),
+            "SkipBefore" => Some(MetaAttrType::SkipBefore),
             "Take" => Some(MetaAttrType::Take),
             "Value" => Some(MetaAttrType::Value),
             "Verify" => Some(MetaAttrType::Verify),
@@ -69,6 +73,8 @@ impl MetaAttrType {
             | MetaAttrType::PostExec
             | MetaAttrType::PreExec
             | MetaAttrType::Selector
+            | MetaAttrType::SkipAfter
+            | MetaAttrType::SkipBefore
             | MetaAttrType::Take
             | MetaAttrType::Value
             | MetaAttrType::Verify => true,
@@ -96,6 +102,8 @@ impl fmt::Display for MetaAttrType {
             MetaAttrType::PostExec => "PostExec",
             MetaAttrType::PreExec => "PreExec",
             MetaAttrType::Selector => "Selector",
+            MetaAttrType::SkipAfter => "SkipAfter",
+            MetaAttrType::SkipBefore => "SkipBefore",
             MetaAttrType::Take => "Take",
             MetaAttrType::Value => "Value",
             MetaAttrType::Verify => "Verify",

@@ -68,6 +68,14 @@ struct StructWithAlignment {
     b: u64,
 }
 
+// order matters!
+#[derive(Debug, PartialEq, Nom)]
+struct StructWithAlignmentAndPadding {
+    #[nom(AlignAfter(4), SkipAfter(2))]
+    pub a: u8,
+    b: u32,
+}
+
 const INPUT_16: &[u8] = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
 
 #[test]
@@ -106,7 +114,9 @@ fn test_struct_postexec() {
 }
 
 #[test]
-fn test_struct_align() {
+fn test_struct_align_and_padding() {
     let res = StructWithAlignment::parse(INPUT_16);
     assert_eq!(res, Ok((&INPUT_16[12..],StructWithAlignment{a:0,b:0x1234_5678_1234_5678})));
+    let res = StructWithAlignmentAndPadding::parse(INPUT_16);
+    assert_eq!(res, Ok((&INPUT_16[10..],StructWithAlignmentAndPadding{a:0,b:0x5678_1234})));
 }

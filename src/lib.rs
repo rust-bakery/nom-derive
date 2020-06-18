@@ -121,8 +121,8 @@ use enums::impl_nom_enums;
 ///
 /// | Attribute | Supports | Description
 /// |-----------|------------------|------------
-/// | [AlignAfter](#alignment) | fields | skip bytes until aligned to a multiple of the provided value, after parsing value
-/// | [AlignBefore](#alignment) | fields | skip bytes until aligned to a multiple of the provided value, before parsing value
+/// | [AlignAfter](#alignment-and-padding) | fields | skip bytes until aligned to a multiple of the provided value, after parsing value
+/// | [AlignBefore](#alignment-and-padding) | fields | skip bytes until aligned to a multiple of the provided value, before parsing value
 /// | [BigEndian](#byteorder) | all | Set the endianness to big endian
 /// | [Cond](#conditional-values) | fields | Used on an `Option<T>` to read a value of type `T` only if the condition is met
 /// | [Complete](#complete) | fields | Transforms Incomplete into Error
@@ -139,6 +139,8 @@ use enums::impl_nom_enums;
 /// | [PreExec](#preexec) | fields | Execute Rust code before parsing field
 /// | [PostExec](#postexec) | fields | Execute Rust code after parsing field
 /// | [Selector](#deriving-parser-for-enum) | all | Used to specify the value matching an enum variant
+/// | [SkipAfter](#alignment-and-padding) | fields | skip the specified number of bytes, after parsing
+/// | [SkipBefore](#alignment-and-padding) | fields | skip the specified number of bytes, before parsing
 /// | [Take](#take) | fields | Take `n` bytes of input
 /// | [Value](#value) | fields | Store result of evaluated expression in field
 /// | [Verify](#verifications) | fields | After parsing, check that condition is true and return an error if false.
@@ -692,10 +694,14 @@ use enums::impl_nom_enums;
 /// # }
 /// ```
 ///
-/// ## Alignment
+/// ## Alignment and Padding
 ///
 ///  - `AlignAfter`/`AlignBefore`: skip bytes until aligned to a multiple of the provided value
 ///    Alignment is calculated to the start of the original parser input
+///  - `SkipAfter`/`SkipBefore`: skip the specified number of bytes
+///
+///  If multiple directives are provided, they are applied in order of appearance of the
+///  attribute.
 ///
 /// Expected value: a valid Rust value (immediate value, or expression)
 ///
