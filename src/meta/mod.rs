@@ -19,7 +19,7 @@ pub fn parse_nom_top_level_attribute(
         .collect();
     // eprintln!("XXX: {:?}", x);
     if let Some(attr) = x.iter().find(|m| !m.acceptable_tla()) {
-        panic!("Attribute {:?} is not valid for top-level", attr);
+        panic!("Attribute {} is not valid for top-level", attr);
     }
     Ok(x)
 }
@@ -43,5 +43,8 @@ pub fn parse_nom_attribute(attrs: &[syn::Attribute]) -> Result<Vec<attr::MetaAtt
         .flatten()
         .collect();
     // eprintln!("****\nXXX: {:?}\n", x);
+    if let Some(attr) = x.iter().find(|m| !m.acceptable_fla()) {
+        panic!("Attribute {} is not valid for field-level", attr);
+    }
     Ok(x)
 }

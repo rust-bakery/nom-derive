@@ -109,6 +109,7 @@ impl MetaAttr {
         MetaAttr { attr_type, arg0 }
     }
 
+    /// Is attribute acceptable for top-level
     pub fn acceptable_tla(&self) -> bool {
         match self.attr_type {
             MetaAttrType::DebugDerive
@@ -118,6 +119,15 @@ impl MetaAttr {
             | MetaAttrType::BigEndian
             | MetaAttrType::Selector => true,
             _ => false,
+        }
+    }
+
+    /// Is attribute acceptable for field-level
+    pub fn acceptable_fla(&self) -> bool {
+        match self.attr_type {
+            MetaAttrType::DebugDerive
+            | MetaAttrType::InputName => false,
+            _ => true,
         }
     }
 
