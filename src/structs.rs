@@ -1,5 +1,6 @@
 use proc_macro2::TokenStream;
 use syn::*;
+use syn::export::Span;
 
 use crate::config::Config;
 use crate::meta;
@@ -184,7 +185,20 @@ fn get_parser(field: &::syn::Field, meta_list: &[MetaAttr], config: &Config) -> 
     get_type_parser(ty, meta_list, config)
 }
 
-fn get_pre_post_exec(meta_list: &[MetaAttr]) -> (Option<TokenStream>, Option<TokenStream>) {
+fn quote_align(align: &TokenStream, config: &Config) -> TokenStream {
+    let input_name = syn::Ident::new(&config.input_name, Span::call_site());
+    let orig_input_name = syn::Ident::new(&("orig_".to_string() + &config.input_name), Span::call_site());
+    quote!{
+        let (#input_name, _) = {
+            let offset = #input_name.as_ptr() as usize - #orig_input_name.as_ptr() as usize;
+            let align = #align as usize;
+            let align = ((align - (offset % align)) % align);
+            nom::bytes::streaming::take(align)(#input_name)
+        }?;
+    }
+}
+
+fn get_pre_post_exec(meta_list: &[MetaAttr], config: &Config) -> (Option<TokenStream>, Option<TokenStream>) {
     let mut tk_pre = proc_macro2::TokenStream::new();
     let mut tk_post = proc_macro2::TokenStream::new();
     for m in meta_list {
@@ -197,6 +211,16 @@ fn get_pre_post_exec(meta_list: &[MetaAttr]) -> (Option<TokenStream>, Option<Tok
             MetaAttrType::PostExec => {
                 // let code = m.arg().unwrap().to_string();
                 tk_post.extend(m.arg().unwrap().clone());
+            }
+            MetaAttrType::AlignAfter => {
+                let align = m.arg().unwrap();
+                let qq = quote_align(align, &config);
+                tk_post.extend(qq);
+            }
+            MetaAttrType::AlignBefore => {
+                let align = m.arg().unwrap();
+                let qq = quote_align(align, &config);
+                tk_pre.extend(qq);
             }
             _ => (),
         }
@@ -309,8 +333,8 @@ pub(crate) fn parse_fields(f: &Fields, config: &Config) -> StructParserTree {
         let p = add_map(&field, p, &meta_list);
         // add verify field, if present
         let p = add_verify(&field, p, &meta_list);
-        // add pre and post code
-        let (pre, post) = get_pre_post_exec(&meta_list);
+        // add pre and post code (also takes care of alignment)
+        let (pre, post) = get_pre_post_exec(&meta_list, config);
         let sp = StructParser::new(ident_str, p, pre, post);
         parsers.push(sp);
     }

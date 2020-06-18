@@ -61,6 +61,13 @@ struct StructWithInputName {
     pub sz: usize,
 }
 
+#[derive(Debug, PartialEq, Nom)]
+struct StructWithAlignment {
+    #[nom(AlignAfter(4))]
+    pub a: u8,
+    b: u64,
+}
+
 const INPUT_16: &[u8] = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
 
 #[test]
@@ -96,4 +103,10 @@ fn test_struct_map() {
 fn test_struct_postexec() {
     let res = StructWithPostExec::parse(INPUT_16);
     assert_eq!(res, Ok((&INPUT_16[5..],StructWithPostExec{a:1,b:18,c:19})));
+}
+
+#[test]
+fn test_struct_align() {
+    let res = StructWithAlignment::parse(INPUT_16);
+    assert_eq!(res, Ok((&INPUT_16[12..],StructWithAlignment{a:0,b:0x1234_5678_1234_5678})));
 }

@@ -91,6 +91,7 @@ fn is_input_fieldless_enum(ast: &syn::DeriveInput) -> bool {
 
 fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[MetaAttr], config: &Config) -> TokenStream {
     let input_name = syn::Ident::new(&config.input_name, Span::call_site());
+    let orig_input_name = syn::Ident::new(&("orig_".to_string() + &config.input_name), Span::call_site());
     let parser = match repr.as_ref() {
         "u8"  |
         "u16" |
@@ -141,11 +142,11 @@ fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[Me
             .collect();
     let tokens = quote!{
         impl#generics #name#generics {
-            fn parse(#input_name: &[u8]) -> nom::IResult<&[u8],#name> {
-                let orig_i = #input_name;
+            fn parse(#orig_input_name: &[u8]) -> nom::IResult<&[u8],#name> {
+                let #input_name = #orig_input_name;
                 let (#input_name, selector) = #parser(#input_name)?;
                 #(#variants_code)*
-                Err(::nom::Err::Error((orig_i, ::nom::error::ErrorKind::Switch)))
+                Err(::nom::Err::Error((#orig_input_name, ::nom::error::ErrorKind::Switch)))
             }
         }
     };
@@ -161,6 +162,7 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &Config) -> TokenSt
     // eprintln!("{:?}", ast.attrs);
     let meta_list = meta::parse_nom_attribute(&ast.attrs).expect("Parsing the 'nom' meta attribute failed");
     let input_name = syn::Ident::new(&config.input_name, Span::call_site());
+    let orig_input_name = syn::Ident::new(&("orig_".to_string() + &config.input_name), Span::call_site());
     let selector = match get_selector(&meta_list) { //.expect("The 'Selector' attribute must be used to give the type of selector item");
         Some(s) => s,
         None    => {
@@ -232,7 +234,8 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &Config) -> TokenSt
         else { quote!{ _ => Err(nom::Err::Error(nom::error_position!(#input_name, nom::error::ErrorKind::Switch))) } };
     let tokens = quote!{
         impl#generics #name#generics {
-            fn parse(#input_name: &[u8], selector: #selector_type) -> nom::IResult<&[u8],#name> {
+            fn parse(#orig_input_name: &[u8], selector: #selector_type) -> nom::IResult<&[u8],#name> {
+                let #input_name = #orig_input_name;
                 match selector {
                     #(#variants_code)*
                     #default_case

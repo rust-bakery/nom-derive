@@ -121,6 +121,8 @@ use enums::impl_nom_enums;
 ///
 /// | Attribute | Supports | Description
 /// |-----------|------------------|------------
+/// | [AlignAfter](#alignment) | fields | skip bytes until aligned to a multiple of the provided value, after parsing value
+/// | [AlignBefore](#alignment) | fields | skip bytes until aligned to a multiple of the provided value, before parsing value
 /// | [BigEndian](#byteorder) | all | Set the endianness to big endian
 /// | [Cond](#conditional-values) | fields | Used on an `Option<T>` to read a value of type `T` only if the condition is met
 /// | [Complete](#complete) | fields | Transforms Incomplete into Error
@@ -690,6 +692,31 @@ use enums::impl_nom_enums;
 /// # }
 /// ```
 ///
+/// ## Alignment
+///
+///  - `AlignAfter`/`AlignBefore`: skip bytes until aligned to a multiple of the provided value
+///    Alignment is calculated to the start of the original parser input
+///
+/// Expected value: a valid Rust value (immediate value, or expression)
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// struct S{
+///     pub a: u8,
+///     #[nom(AlignBefore(4))]
+///     pub b: u8,
+/// }
+/// #
+/// # fn main() {
+/// # let input = b"\x01\x00\x00\x00\x02";
+/// # let res = S::parse(input);
+/// # assert_eq!(res, Ok((&input[5..],S{a:1, b:2})));
+/// # }
+/// ```
+///
 /// # Deriving parsers for `Enum`
 ///
 /// The `Nom` attribute can also used to generate parser for `Enum` types.
@@ -1053,9 +1080,11 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
         true  => quote!{ ( #name ( #(#idents2),* ) ) },
     };
     let input_name = syn::Ident::new(&config.input_name, Span::call_site());
+    let orig_input_name = syn::Ident::new(&("orig_".to_string() + &config.input_name), Span::call_site());
     let tokens = quote! {
         impl#generics #name#generics {
-            pub fn parse(#input_name: &[u8]) -> nom::IResult<&[u8],#name> {
+            pub fn parse(#orig_input_name: &[u8]) -> nom::IResult<&[u8],#name> {
+                let #input_name = #orig_input_name;
                 #(#pre let (#input_name, #idents) = #parser_tokens (#input_name) ?; #post)*
                 let struct_def = #struct_def;
                 Ok((#input_name, struct_def))

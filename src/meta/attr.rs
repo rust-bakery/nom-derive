@@ -8,30 +8,32 @@ use syn::{parenthesized, token, Ident, Token};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MetaAttrType {
-    // declarative parsers
-    Selector,
-    Value,
-    Parse,
-    Count,
-    Take,
-    // options and combinators
-    Ignore,
-    Complete,
+    AlignAfter,
+    AlignBefore,
     BigEndian,
-    LittleEndian,
+    Complete,
     Cond,
-    Map,
-    Verify,
-    PreExec,
-    PostExec,
+    Count,
     Debug,
     DebugDerive,
+    Ignore,
     InputName,
+    LittleEndian,
+    Map,
+    Parse,
+    PostExec,
+    PreExec,
+    Selector,
+    Take,
+    Value,
+    Verify,
 }
 
 impl MetaAttrType {
     pub fn from_ident(ident: &syn::Ident) -> Option<Self> {
         match ident.to_string().as_ref() {
+            "AlignAfter" => Some(MetaAttrType::AlignAfter),
+            "AlignBefore" => Some(MetaAttrType::AlignBefore),
             "BigEndian" => Some(MetaAttrType::BigEndian),
             "Complete" => Some(MetaAttrType::Complete),
             "Cond" => Some(MetaAttrType::Cond),
@@ -40,8 +42,8 @@ impl MetaAttrType {
             "DebugDerive" => Some(MetaAttrType::DebugDerive),
             "Default" => Some(MetaAttrType::Ignore),
             "If" => Some(MetaAttrType::Cond),
-            "InputName" => Some(MetaAttrType::InputName),
             "Ignore" => Some(MetaAttrType::Ignore),
+            "InputName" => Some(MetaAttrType::InputName),
             "LittleEndian" => Some(MetaAttrType::LittleEndian),
             "Map" => Some(MetaAttrType::Map),
             "Parse" => Some(MetaAttrType::Parse),
@@ -57,7 +59,9 @@ impl MetaAttrType {
 
     pub fn takes_argument(&self) -> bool {
         match *self {
-            MetaAttrType::Cond
+            MetaAttrType::AlignAfter
+            | MetaAttrType::AlignBefore
+            | MetaAttrType::Cond
             | MetaAttrType::Count
             | MetaAttrType::InputName
             | MetaAttrType::Map
@@ -76,14 +80,16 @@ impl MetaAttrType {
 impl fmt::Display for MetaAttrType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
+            MetaAttrType::AlignAfter => "AlignAfter",
+            MetaAttrType::AlignBefore => "AlignBefore",
             MetaAttrType::BigEndian => "BigEndian",
             MetaAttrType::Complete => "Complete",
             MetaAttrType::Cond => "Cond",
             MetaAttrType::Count => "Count",
             MetaAttrType::Debug => "Debug",
             MetaAttrType::DebugDerive => "DebugDerive",
-            MetaAttrType::InputName => "InputName",
             MetaAttrType::Ignore => "Ignore",
+            MetaAttrType::InputName => "InputName",
             MetaAttrType::LittleEndian => "LittleEndian",
             MetaAttrType::Map => "Map",
             MetaAttrType::Parse => "Parse",
@@ -125,8 +131,7 @@ impl MetaAttr {
     /// Is attribute acceptable for field-level
     pub fn acceptable_fla(&self) -> bool {
         match self.attr_type {
-            MetaAttrType::DebugDerive
-            | MetaAttrType::InputName => false,
+            MetaAttrType::DebugDerive | MetaAttrType::InputName => false,
             _ => true,
         }
     }
