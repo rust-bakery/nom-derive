@@ -6,6 +6,7 @@ pub struct Config {
     pub big_endian: bool,
     pub debug: bool,
     pub debug_derive: bool,
+    pub input_name: String,
 }
 
 #[derive(Debug)]
@@ -24,11 +25,17 @@ impl Config {
         };
         let debug = l.iter().any(|m| m.is_type(MetaAttrType::Debug));
         let debug_derive = l.iter().any(|m| m.is_type(MetaAttrType::DebugDerive));
+        let input_name = l
+            .iter()
+            .find(|m| m.is_type(MetaAttrType::InputName))
+            .map(|m| m.arg().unwrap().to_string())
+            .unwrap_or("i".to_string());
         Ok(Config {
             struct_name: name,
             big_endian,
             debug,
             debug_derive,
+            input_name,
         })
     }
 }

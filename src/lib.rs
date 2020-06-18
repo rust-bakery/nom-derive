@@ -130,6 +130,7 @@ use enums::impl_nom_enums;
 /// | [Default](#default) | fields | Do not parse, set a field to the default value for the type
 /// | [If](#conditional-values) | fields | Similar to `Cond`
 /// | [Ignore](#default) | fields | An alias for `default`
+/// | [InputName](#input-name) | top-level | Change the internal name of input
 /// | [LittleEndian](#byteorder) | all | Set the endianness to little endian
 /// | [Map](#map) | fields | Parse field, then apply a function
 /// | [Parse](#custom-parsers) | fields | Use a custom parser function for reading from a file
@@ -632,7 +633,7 @@ use enums::impl_nom_enums;
 ///
 /// This attribute can be specified multiple times. Statements will be executed in order.
 ///
-/// Note that the current input can be accessed, in variable `i`.
+/// Note that the current input can be accessed, as a regular variable (see [InputName](#input-name)).
 /// If you create a new variable with the same name, it will be used as input (resulting in
 /// side-effects).
 ///
@@ -664,7 +665,7 @@ use enums::impl_nom_enums;
 ///
 /// This attribute can be specified multiple times. Statements will be executed in order.
 ///
-/// Note that the current input can be accessed, in variable `i`.
+/// Note that the current input can be accessed, as a regular variable (see [InputName](#input-name)).
 /// If you create a new variable with the same name, it will be used as input (resulting in
 /// side-effects).
 ///
@@ -881,6 +882,88 @@ use enums::impl_nom_enums;
 ///
 /// For ex, `U3::parse(b"\x02")` will return `Ok((&b""[..],U3::B))`.
 ///
+/// ## Input Name
+///
+/// Internally, the parser will use a variable to follow the input.
+/// By default, this variable is named `i`.
+///
+/// This can cause problems, for example, if one field of the structure has the same name
+///
+/// The internal variable name can be renamed using the `InputName` top-level attribute.
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// #[nom(InputName(aaa))]
+/// pub struct S {
+///     pub i: u8,
+/// }
+/// #
+/// # fn main() {
+/// # let empty : &[u8] = b"";
+/// # assert_eq!(
+/// #     S::parse(b"\x00"),
+/// #     Ok((empty, S{i:0}))
+/// # );
+/// # }
+/// ```
+///
+/// Note that this variable can be used as usual, for ex. to peek data
+/// without advancing in the current stream, determining the length of
+/// remaining bytes, etc.
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// #[nom(InputName(i))]
+/// pub struct S {
+///     pub a: u8,
+///     #[nom(Value(i.len()))]
+///     pub remaining_len: usize,
+/// }
+/// #
+/// # fn main() {
+/// # let empty : &[u8] = b"";
+/// # assert_eq!(
+/// #     S::parse(b"\x00"),
+/// #     Ok((empty, S{a:0, remaining_len:0}))
+/// # );
+/// # }
+/// ```
+///
+/// **This can create side-effects**: if you create a variable with the same name
+/// as the input, it will shadow it. While this will is generally an error, it can
+/// sometimes be useful.
+///
+/// For example, to skip 2 bytes of input:
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// #[nom(InputName(i))]
+/// pub struct S {
+///     pub a: u8,
+///     // skip 2 bytes
+///     // XXX this will panic if input is smaller than 2 bytes at this points
+///     #[nom(PreExec(let i = &i[2..];))]
+///     pub b: u8,
+/// }
+/// #
+/// # fn main() {
+/// # let empty : &[u8] = b"";
+/// # assert_eq!(
+/// #     S::parse(b"\x00\x01\x02\x03"),
+/// #     Ok((empty, S{a:0, b:3}))
+/// # );
+/// # }
+/// ```
+///
 /// ## Limitations
 ///
 /// Except if the entire enum is fieldless (a list of constant integer values),
@@ -969,12 +1052,13 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
         false => quote!{ ( #name { #(#idents2),* } ) },
         true  => quote!{ ( #name ( #(#idents2),* ) ) },
     };
+    let input_name = syn::Ident::new(&config.input_name, Span::call_site());
     let tokens = quote! {
         impl#generics #name#generics {
-            pub fn parse(i: &[u8]) -> nom::IResult<&[u8],#name> {
-                #(#pre let (i, #idents) = #parser_tokens (i) ?; #post)*
+            pub fn parse(#input_name: &[u8]) -> nom::IResult<&[u8],#name> {
+                #(#pre let (#input_name, #idents) = #parser_tokens (#input_name) ?; #post)*
                 let struct_def = #struct_def;
-                Ok((i, struct_def))
+                Ok((#input_name, struct_def))
             }
         }
     };

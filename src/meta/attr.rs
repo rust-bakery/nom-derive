@@ -26,6 +26,7 @@ pub enum MetaAttrType {
     PostExec,
     Debug,
     DebugDerive,
+    InputName,
 }
 
 impl MetaAttrType {
@@ -39,6 +40,7 @@ impl MetaAttrType {
             "DebugDerive" => Some(MetaAttrType::DebugDerive),
             "Default" => Some(MetaAttrType::Ignore),
             "If" => Some(MetaAttrType::Cond),
+            "InputName" => Some(MetaAttrType::InputName),
             "Ignore" => Some(MetaAttrType::Ignore),
             "LittleEndian" => Some(MetaAttrType::LittleEndian),
             "Map" => Some(MetaAttrType::Map),
@@ -57,6 +59,7 @@ impl MetaAttrType {
         match *self {
             MetaAttrType::Cond
             | MetaAttrType::Count
+            | MetaAttrType::InputName
             | MetaAttrType::Map
             | MetaAttrType::Parse
             | MetaAttrType::PostExec
@@ -79,6 +82,7 @@ impl fmt::Display for MetaAttrType {
             MetaAttrType::Count => "Count",
             MetaAttrType::Debug => "Debug",
             MetaAttrType::DebugDerive => "DebugDerive",
+            MetaAttrType::InputName => "InputName",
             MetaAttrType::Ignore => "Ignore",
             MetaAttrType::LittleEndian => "LittleEndian",
             MetaAttrType::Map => "Map",
@@ -109,6 +113,7 @@ impl MetaAttr {
         match self.attr_type {
             MetaAttrType::DebugDerive
             | MetaAttrType::Debug
+            | MetaAttrType::InputName
             | MetaAttrType::LittleEndian
             | MetaAttrType::BigEndian
             | MetaAttrType::Selector => true,

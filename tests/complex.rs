@@ -53,6 +53,14 @@ struct StructWithPostExec {
     pub c: u8,
 }
 
+#[derive(Debug, PartialEq, Nom)]
+#[nom(DebugDerive, InputName(iii))]
+struct StructWithInputName {
+    pub a: u32,
+    #[nom(Value(iii.len()))]
+    pub sz: usize,
+}
+
 const INPUT_16: &[u8] = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
 
 #[test]

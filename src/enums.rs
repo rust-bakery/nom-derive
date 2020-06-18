@@ -90,6 +90,7 @@ fn is_input_fieldless_enum(ast: &syn::DeriveInput) -> bool {
 }
 
 fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[MetaAttr], config: &Config) -> TokenStream {
+    let input_name = syn::Ident::new(&config.input_name, Span::call_site());
     let parser = match repr.as_ref() {
         "u8"  |
         "u16" |
@@ -135,14 +136,14 @@ fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[Me
         variant_names.iter()
             .map(|variant_name| {
                 let id = syn::Ident::new(variant_name, Span::call_site());
-                quote!{ if selector == #name::#id as #ty { return Ok((i, #name::#id)); } }
+                quote!{ if selector == #name::#id as #ty { return Ok((#input_name, #name::#id)); } }
             })
             .collect();
     let tokens = quote!{
         impl#generics #name#generics {
-            fn parse(i: &[u8]) -> nom::IResult<&[u8],#name> {
-                let orig_i = i;
-                let (i, selector) = #parser(i)?;
+            fn parse(#input_name: &[u8]) -> nom::IResult<&[u8],#name> {
+                let orig_i = #input_name;
+                let (#input_name, selector) = #parser(#input_name)?;
                 #(#variants_code)*
                 Err(::nom::Err::Error((orig_i, ::nom::error::ErrorKind::Switch)))
             }
@@ -159,6 +160,7 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &Config) -> TokenSt
     let name = &ast.ident;
     // eprintln!("{:?}", ast.attrs);
     let meta_list = meta::parse_nom_attribute(&ast.attrs).expect("Parsing the 'nom' meta attribute failed");
+    let input_name = syn::Ident::new(&config.input_name, Span::call_site());
     let selector = match get_selector(&meta_list) { //.expect("The 'Selector' attribute must be used to give the type of selector item");
         Some(s) => s,
         None    => {
@@ -204,10 +206,10 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &Config) -> TokenSt
                 };
                 quote!{
                     #m => {
-                        #(let (i, #idents) = #parser_tokens (i) ?;)*
+                        #(let (#input_name, #idents) = #parser_tokens (#input_name) ?;)*
                         let struct_def = #struct_def;
-                        Ok((i, struct_def))
-                        // Err(nom::Err::Error(error_position!(i, nom::ErrorKind::Switch)))
+                        Ok((#input_name, struct_def))
+                        // Err(nom::Err::Error(error_position!(#input_name, nom::ErrorKind::Switch)))
                     },
                 }
             })
@@ -227,10 +229,10 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &Config) -> TokenSt
     // generate code
     let default_case =
         if default_case_handled { quote!{} }
-        else { quote!{ _ => Err(nom::Err::Error(nom::error_position!(i, nom::error::ErrorKind::Switch))) } };
+        else { quote!{ _ => Err(nom::Err::Error(nom::error_position!(#input_name, nom::error::ErrorKind::Switch))) } };
     let tokens = quote!{
         impl#generics #name#generics {
-            fn parse(i: &[u8], selector: #selector_type) -> nom::IResult<&[u8],#name> {
+            fn parse(#input_name: &[u8], selector: #selector_type) -> nom::IResult<&[u8],#name> {
                 match selector {
                     #(#variants_code)*
                     #default_case

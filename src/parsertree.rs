@@ -31,10 +31,10 @@ impl fmt::Display for ParserTree {
             ParserTree::Many0(p)        => write!(f, "nom::multi::many0({})", p),
             ParserTree::CallParse(s)    => write!(f, "{}::parse", s),
             ParserTree::Count(s,n)      => write!(f, "nom::multi::count({}, {{ {} }} as usize)", s, n),
-            ParserTree::PhantomData     => write!(f, "{{ |i| Ok((i, PhantomData)) }}"),
+            ParserTree::PhantomData     => write!(f, "{{ |__i__| Ok((__i__, PhantomData)) }}"),
             ParserTree::Raw(s)          => f.write_str(s),
             ParserTree::Take(s)         => write!(f, "nom::bytes::streaming::take({} as usize)", s),
-            ParserTree::Value(s)        => write!(f, "{{ |i| Ok((i, {})) }}", s),
+            ParserTree::Value(s)        => write!(f, "{{ |__i__| Ok((__i__, {})) }}", s),
         }
     }
 }
