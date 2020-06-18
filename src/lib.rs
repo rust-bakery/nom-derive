@@ -112,6 +112,9 @@ use enums::impl_nom_enums;
 /// Derived parsers can be controlled using the `nom` attribute, with a sub-attribute.
 /// For example, `#[nom(Value)]`.
 ///
+/// Most combinators support using literal strings `#[nom(Count="4")]` or
+/// parenthesized values `#[nom(Count(4))]`
+///
 /// To specify multiple attributes, use a comma-separated list: `#[nom(Debug, Count="4")]`.
 ///
 /// The available attributes are:
@@ -130,6 +133,8 @@ use enums::impl_nom_enums;
 /// | [LittleEndian](#byteorder) | all | Set the endianness to little endian
 /// | [Map](#map) | fields | Parse field, then apply a function
 /// | [Parse](#custom-parsers) | fields | Use a custom parser function for reading from a file
+/// | [PreExec](#preexec) | fields | Execute Rust code before parsing field
+/// | [PostExec](#postexec) | fields | Execute Rust code after parsing field
 /// | [Selector](#deriving-parser-for-enum) | all | Used to specify the value matching an enum variant
 /// | [Take](#take) | fields | Take `n` bytes of input
 /// | [Value](#value) | fields | Store result of evaluated expression in field
@@ -617,6 +622,70 @@ use enums::impl_nom_enums;
 /// # let input = b"\x01";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[1..],S{a:1})));
+/// # }
+/// ```
+///
+/// ## PreExec
+///
+/// The `PreExec` custom attribute executes the provided code before parsing
+/// the field.
+///
+/// This attribute can be specified multiple times. Statements will be executed in order.
+///
+/// Note that the current input can be accessed, in variable `i`.
+/// If you create a new variable with the same name, it will be used as input (resulting in
+/// side-effects).
+///
+/// Expected value: a valid Rust statement
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// struct S{
+///     #[nom(PreExec="let sz = i.len();")]
+///     pub a: u8,
+///     #[nom(Value(sz))]
+///     pub sz: usize,
+/// }
+/// #
+/// # fn main() {
+/// # let input = b"\x01";
+/// # let res = S::parse(input);
+/// # assert_eq!(res, Ok((&input[1..],S{a:1, sz:1})));
+/// # }
+/// ```
+///
+/// ## PostExec
+///
+/// The `PostExec` custom attribute executes the provided code after parsing
+/// the field.
+///
+/// This attribute can be specified multiple times. Statements will be executed in order.
+///
+/// Note that the current input can be accessed, in variable `i`.
+/// If you create a new variable with the same name, it will be used as input (resulting in
+/// side-effects).
+///
+/// Expected value: a valid Rust statement
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// struct S{
+///     #[nom(PostExec="let b = a + 1;")]
+///     pub a: u8,
+///     #[nom(Value(b))]
+///     pub b: u8,
+/// }
+/// #
+/// # fn main() {
+/// # let input = b"\x01";
+/// # let res = S::parse(input);
+/// # assert_eq!(res, Ok((&input[1..],S{a:1, b:2})));
 /// # }
 /// ```
 ///
