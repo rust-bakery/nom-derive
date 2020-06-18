@@ -1,4 +1,4 @@
-use crate::meta::Meta;
+use crate::meta::attr::{MetaAttr, MetaAttrType};
 
 #[derive(Debug)]
 pub struct Config {
@@ -12,18 +12,18 @@ pub struct Config {
 pub struct ConfigError;
 
 impl Config {
-    pub fn from_meta_list(name: String, l: &[Meta]) -> Result<Self, ConfigError> {
-        let big_endian = if l.contains(&Meta::LittleEndian) {
+    pub fn from_meta_list(name: String, l: &[MetaAttr]) -> Result<Self, ConfigError> {
+        let big_endian = if l.iter().any(|m| m.is_type(MetaAttrType::LittleEndian)) {
+            if l.iter().any(|m| m.is_type(MetaAttrType::BigEndian)) {
+                eprintln!("Struct cannot be both big and little endian");
+                return Err(ConfigError);
+            }
             false
         } else {
             true
         };
-        let debug = l.contains(&Meta::Debug);
-        if l.contains(&Meta::LittleEndian) && l.contains(&Meta::BigEndian) {
-            eprintln!("Struct cannot be both big and little endian");
-            return Err(ConfigError);
-        }
-        let debug_derive = l.contains(&Meta::DebugDerive);
+        let debug = l.iter().any(|m| m.is_type(MetaAttrType::Debug));
+        let debug_derive = l.iter().any(|m| m.is_type(MetaAttrType::DebugDerive));
         Ok(Config {
             struct_name: name,
             big_endian,

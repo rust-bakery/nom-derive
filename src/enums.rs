@@ -4,6 +4,7 @@ use syn::export::Span;
 
 use crate::config::Config;
 use crate::meta;
+use crate::meta::attr::{MetaAttr, MetaAttrType};
 use crate::parsertree::ParserTree;
 use crate::structs::{parse_fields,StructParserTree};
 
@@ -27,11 +28,11 @@ fn parse_variant(variant: &syn::Variant, config: &Config) -> VariantParserTree {
     }
 }
 
-fn get_selector(meta_list: &[meta::Meta]) -> Option<String> {
+fn get_selector(meta_list: &[MetaAttr]) -> Option<String> {
     for meta in meta_list {
-        match meta {
-            meta::Meta::Selector(s) => {
-                return Some(s.clone());
+        match meta.attr_type {
+            MetaAttrType::Selector => {
+                return Some(meta.arg().unwrap().to_string().clone());
             }
             _ => (),
         }
@@ -88,7 +89,7 @@ fn is_input_fieldless_enum(ast: &syn::DeriveInput) -> bool {
     }
 }
 
-fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[meta::Meta], config: &Config) -> TokenStream {
+fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[MetaAttr], config: &Config) -> TokenStream {
     let parser = match repr.as_ref() {
         "u8"  |
         "u16" |
@@ -100,9 +101,9 @@ fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[me
         "i24" |
         "i32" |
         "i64" => {
-            let is_big_endian = if meta_list.contains(&meta::Meta::BigEndian) {
+            let is_big_endian = if meta_list.iter().any(|m| m.is_type(MetaAttrType::BigEndian)) {
                 true
-            } else if meta_list.contains(&meta::Meta::LittleEndian) {
+            } else if meta_list.iter().any(|m| m.is_type(MetaAttrType::LittleEndian)) {
                 false
             } else {
                 config.big_endian
@@ -191,9 +192,9 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &Config) -> TokenSt
                 let m : proc_macro2::TokenStream = def.selector.parse().expect("invalid selector value");
                 let variantname = &def.ident;
                 let (idents,parser_tokens) : (Vec<_>,Vec<_>) = def.struct_def.parsers.iter()
-                    .map(|(name,parser)| {
-                        let id = syn::Ident::new(name, Span::call_site());
-                        (id,parser)
+                    .map(|sp| {
+                        let id = syn::Ident::new(&sp.name, Span::call_site());
+                        (id, &sp.parser)
                     })
                     .unzip();
                 let idents2 = idents.clone();

@@ -1,16 +1,37 @@
+use proc_macro2::TokenStream;
 use syn::*;
 
 use crate::config::Config;
 use crate::meta;
+use crate::meta::attr::{MetaAttr, MetaAttrType};
 use crate::parsertree::ParserTree;
+
+#[derive(Debug)]
+pub(crate) struct StructParser{
+    pub name: String,
+    pub parser: ParserTree,
+    pub pre_exec: Option<TokenStream>,
+    pub post_exec: Option<TokenStream>,
+}
+
+impl StructParser {
+    pub fn new(name: String, parser: ParserTree, pre_exec: Option<TokenStream>, post_exec: Option<TokenStream>) -> Self {
+        StructParser {
+            name,
+            parser,
+            pre_exec,
+            post_exec,
+        }
+    }
+}
 
 #[derive(Debug)]
 pub(crate) struct StructParserTree{
     pub unnamed: bool,
-    pub parsers: Vec<(String,ParserTree)>,
+    pub parsers: Vec<StructParser>,
 }
 
-fn get_type_parser(ty: &Type, meta_list: &[meta::Meta], config: &Config) -> Option<ParserTree> {
+fn get_type_parser(ty: &Type, meta_list: &[MetaAttr], config: &Config) -> Option<ParserTree> {
     match ty {
         Type::Path(ref typepath) => {
             let path = &typepath.path;
@@ -30,9 +51,9 @@ fn get_type_parser(ty: &Type, meta_list: &[meta::Meta], config: &Config) -> Opti
                 "i24" |
                 "i32" |
                 "i64"    => {
-                    let is_big_endian = if meta_list.contains(&meta::Meta::BigEndian) {
+                    let is_big_endian = if meta_list.iter().any(|m| m.is_type(MetaAttrType::BigEndian)) {
                         true
-                    } else if meta_list.contains(&meta::Meta::LittleEndian) {
+                    } else if meta_list.iter().any(|m| m.is_type(MetaAttrType::LittleEndian)) {
                         false
                     } else {
                         config.big_endian
@@ -119,27 +140,30 @@ fn get_type_default(ty: &Type) -> Option<ParserTree> {
     }
 }
 
-fn get_parser(field: &::syn::Field, meta_list: &[meta::Meta], config: &Config) -> Option<ParserTree> {
+fn get_parser(field: &::syn::Field, meta_list: &[MetaAttr], config: &Config) -> Option<ParserTree> {
     // eprintln!("field: {:?}", field);
     let ty = &field.ty;
     // first check if we have attributes set
     // eprintln!("attrs: {:?}", field.attrs);
     // eprintln!("meta_list: {:?}", meta_list);
     for meta in meta_list {
-        match meta {
-            meta::Meta::Take(s) => {
+        match meta.attr_type {
+            MetaAttrType::Take => {
+                let s = meta.arg().unwrap().to_string();
                 return Some(ParserTree::Take(s.clone()));
             }
-            meta::Meta::Value(s) => {
+            MetaAttrType::Value => {
+                let s = meta.arg().unwrap().to_string();
                 return Some(ParserTree::Value(s.clone()));
             }
-            meta::Meta::Parse(s) => {
+            MetaAttrType::Parse => {
+                let s = meta.arg().unwrap().to_string();
                 return Some(ParserTree::Raw(s.clone()));
             }
-            meta::Meta::Ignore => {
+            MetaAttrType::Ignore => {
                 return get_type_default(ty);
             }
-            meta::Meta::Count(s) => {
+            MetaAttrType::Count => {
                 // try to infer subparser
                 let sub = get_type_parser(ty, meta_list, config);
                 let s1 = match sub {
@@ -150,6 +174,7 @@ fn get_parser(field: &::syn::Field, meta_list: &[meta::Meta], config: &Config) -
                     ParserTree::Complete(m) => { m },
                     _ => panic!("Unable to infer parser for 'Count' attribute. Is item type a Vec ?")
                 };
+                let s = meta.arg().unwrap().to_string();
                 return Some(ParserTree::Count(s2, s.clone()));
             }
             _ => (),
@@ -159,16 +184,46 @@ fn get_parser(field: &::syn::Field, meta_list: &[meta::Meta], config: &Config) -
     get_type_parser(ty, meta_list, config)
 }
 
-fn add_complete(p: ParserTree, meta_list: &[meta::Meta], config: &Config) -> ParserTree {
-    if config.debug || meta_list.contains(&meta::Meta::Complete) {
+fn get_pre_post_exec(meta_list: &[MetaAttr]) -> (Option<TokenStream>, Option<TokenStream>) {
+    let mut tk_pre = proc_macro2::TokenStream::new();
+    let mut tk_post = proc_macro2::TokenStream::new();
+    for m in meta_list {
+        match m.attr_type {
+            MetaAttrType::PreExec => {
+                // let code = m.arg().unwrap().to_string();
+                // pre += &code;
+                tk_pre.extend(m.arg().unwrap().clone());
+            }
+            MetaAttrType::PostExec => {
+                // let code = m.arg().unwrap().to_string();
+                tk_post.extend(m.arg().unwrap().clone());
+            }
+            _ => (),
+        }
+    }
+    let pre = if tk_pre.is_empty() {
+        None
+    } else {
+        Some(tk_pre)
+    };
+    let post = if tk_post.is_empty() {
+        None
+    } else {
+        Some(tk_post)
+    };
+    (pre, post)
+}
+
+fn add_complete(p: ParserTree, meta_list: &[MetaAttr], _config: &Config) -> ParserTree {
+    if meta_list.iter().any(|m| m.is_type(MetaAttrType::Complete)) {
         return ParserTree::Complete(Box::new(p));
     }
     p
 }
 
-fn add_debug(field: &syn::Field, p: ParserTree, meta_list: &[meta::Meta], config: &Config) -> ParserTree {
+fn add_debug(field: &syn::Field, p: ParserTree, meta_list: &[MetaAttr], config: &Config) -> ParserTree {
     if let Some(ref ident) = field.ident {
-        if config.debug || meta_list.contains(&meta::Meta::Debug) {
+        if config.debug || meta_list.iter().any(|m| m.is_type(MetaAttrType::Debug)) {
             let s = format!("{}::{} ({})", &config.struct_name, ident, p);
             return ParserTree::DbgDmp(Box::new(p), s);
         }
@@ -176,11 +231,12 @@ fn add_debug(field: &syn::Field, p: ParserTree, meta_list: &[meta::Meta], config
     p
 }
 
-fn add_map(field: &syn::Field, p: ParserTree, meta_list: &[meta::Meta]) -> ParserTree {
+fn add_map(field: &syn::Field, p: ParserTree, meta_list: &[MetaAttr]) -> ParserTree {
     if field.ident == None { return p; }
     for meta in meta_list {
-        match meta {
-            meta::Meta::Map(s) => {
+        match meta.attr_type {
+            MetaAttrType::Map => {
+                let s = meta.arg().unwrap().to_string();
                 return ParserTree::Map(Box::new(p), s.clone());
             },
             _ => ()
@@ -189,12 +245,13 @@ fn add_map(field: &syn::Field, p: ParserTree, meta_list: &[meta::Meta]) -> Parse
     p
 }
 
-fn add_verify(field: &syn::Field, p: ParserTree, meta_list: &[meta::Meta]) -> ParserTree {
+fn add_verify(field: &syn::Field, p: ParserTree, meta_list: &[MetaAttr]) -> ParserTree {
     if field.ident == None { return p; }
     let ident = field.ident.as_ref().expect("empty field ident (add_verify)");
     for meta in meta_list {
-        match meta {
-            meta::Meta::Verify(s) => {
+        match meta.attr_type {
+            MetaAttrType::Verify => {
+                let s = meta.arg().unwrap().to_string();
                 return ParserTree::Verify(Box::new(p), format!("{}",ident), s.clone());
             },
             _ => ()
@@ -203,14 +260,15 @@ fn add_verify(field: &syn::Field, p: ParserTree, meta_list: &[meta::Meta]) -> Pa
     p
 }
 
-fn patch_condition(field: &syn::Field, p: ParserTree, meta_list: &[meta::Meta]) -> ParserTree {
+fn patch_condition(field: &syn::Field, p: ParserTree, meta_list: &[MetaAttr]) -> ParserTree {
     if field.ident == None { return p; }
     let ident = field.ident.as_ref().expect("empty field ident (patch condition)");
     for meta in meta_list {
-        match meta {
-            meta::Meta::Cond(s) => {
+        match meta.attr_type {
+            MetaAttrType::Cond => {
                 match p {
                     ParserTree::Opt(sub) => {
+                        let s = meta.arg().unwrap().to_string();
                         return ParserTree::Cond(sub, s.clone());
                     }
                     _ => panic!("A condition was given on field {}, which is not an option type. Hint: use Option<...>", ident),
@@ -237,7 +295,7 @@ pub(crate) fn parse_fields(f: &Fields, config: &Config) -> StructParserTree {
             Some(s) => s.to_string(),
             None    => format!("_{}",idx)
         };
-        let meta_list = meta::parse_nom_attribute(&field.attrs).expect("Parsing the 'nom' meta attribute failed");
+        let meta_list = meta::parse_nom_attribute(&field.attrs).expect("Parsing the 'nom' attribute failed");
         // eprintln!("meta_list: {:?}", meta_list);
         let opt_parser = get_parser(&field, &meta_list, config);
         let p = opt_parser.expect(&format!("Could not infer parser for field {}", ident_str));
@@ -251,7 +309,10 @@ pub(crate) fn parse_fields(f: &Fields, config: &Config) -> StructParserTree {
         let p = add_map(&field, p, &meta_list);
         // add verify field, if present
         let p = add_verify(&field, p, &meta_list);
-        parsers.push( (ident_str, p) )
+        // add pre and post code
+        let (pre, post) = get_pre_post_exec(&meta_list);
+        let sp = StructParser::new(ident_str, p, pre, post);
+        parsers.push(sp);
     }
     StructParserTree{
         unnamed,

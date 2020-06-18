@@ -870,7 +870,7 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
     use crate::config::Config;
     // eprintln!("ast: {:#?}", ast);
     let struct_name = ast.ident.to_string();
-    let meta = meta::parse_nom_attribute(&ast.attrs).expect("Parsing the 'nom' meta attribute failed");
+    let meta = meta::parse_nom_top_level_attribute(&ast.attrs).expect("Parsing the 'nom' top level attribute failed");
     let mut config = Config::from_meta_list(struct_name, &meta).expect("Could not build config");
     config.debug_derive |= debug_derive;
     // test if struct has a lifetime
@@ -883,10 +883,15 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
     // parse string items and prepare tokens for each field parser
     let generics = &ast.generics;
     let name = &ast.ident;
-    let (idents,parser_tokens) : (Vec<_>,Vec<_>) = s.parsers.iter()
-        .map(|(name,parser)| {
-            let id = syn::Ident::new(name, Span::call_site());
-            (id,parser)
+    let (idents, parser_tokens) : (Vec<_>,Vec<_>) = s.parsers.iter()
+        .map(|sp| {
+            let id = syn::Ident::new(&sp.name, Span::call_site());
+            (id, &sp.parser)
+        })
+        .unzip();
+    let (pre, post) : (Vec<_>,Vec<_>) = s.parsers.iter()
+        .map(|sp| {
+            (sp.pre_exec.as_ref(), sp.post_exec.as_ref())
         })
         .unzip();
     let idents2 = idents.clone();
@@ -898,7 +903,7 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
     let tokens = quote! {
         impl#generics #name#generics {
             pub fn parse(i: &[u8]) -> nom::IResult<&[u8],#name> {
-                #(let (i, #idents) = #parser_tokens (i) ?;)*
+                #(#pre let (i, #idents) = #parser_tokens (i) ?; #post)*
                 let struct_def = #struct_def;
                 Ok((i, struct_def))
             }

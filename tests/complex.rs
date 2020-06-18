@@ -43,6 +43,16 @@ struct StructWithMap {
     int_str: String
 }
 
+#[derive(Debug, PartialEq, Nom)]
+// #[nom(DebugDerive)]
+struct StructWithPostExec {
+    pub a: u32,
+    #[nom(PostExec(let c = b + 1;))]
+    pub b: u8,
+    #[nom(Value(c))]
+    pub c: u8,
+}
+
 const INPUT_16: &[u8] = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
 
 #[test]
@@ -72,4 +82,10 @@ fn test_struct_complete() {
 fn test_struct_map() {
     let res = StructWithMap::parse(INPUT_16);
     assert_eq!(res, Ok((&INPUT_16[5..],StructWithMap{a:1,int_str:"18".to_string()})));
+}
+
+#[test]
+fn test_struct_postexec() {
+    let res = StructWithPostExec::parse(INPUT_16);
+    assert_eq!(res, Ok((&INPUT_16[5..],StructWithPostExec{a:1,b:18,c:19})));
 }

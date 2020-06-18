@@ -1,5 +1,5 @@
-use std::fmt;
 use quote::ToTokens;
+use std::fmt;
 
 #[derive(Debug)]
 pub enum ParserTree {
