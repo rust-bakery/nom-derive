@@ -16,6 +16,7 @@ pub enum MetaAttrType {
     Count,
     Debug,
     DebugDerive,
+    ErrorIf,
     Ignore,
     InputName,
     LittleEndian,
@@ -43,6 +44,7 @@ impl MetaAttrType {
             "Debug" => Some(MetaAttrType::Debug),
             "DebugDerive" => Some(MetaAttrType::DebugDerive),
             "Default" => Some(MetaAttrType::Ignore),
+            "ErrorIf" => Some(MetaAttrType::ErrorIf),
             "If" => Some(MetaAttrType::Cond),
             "Ignore" => Some(MetaAttrType::Ignore),
             "InputName" => Some(MetaAttrType::InputName),
@@ -67,6 +69,7 @@ impl MetaAttrType {
             | MetaAttrType::AlignBefore
             | MetaAttrType::Cond
             | MetaAttrType::Count
+            | MetaAttrType::ErrorIf
             | MetaAttrType::InputName
             | MetaAttrType::Map
             | MetaAttrType::Parse
@@ -94,6 +97,7 @@ impl fmt::Display for MetaAttrType {
             MetaAttrType::Count => "Count",
             MetaAttrType::Debug => "Debug",
             MetaAttrType::DebugDerive => "DebugDerive",
+            MetaAttrType::ErrorIf => "ErrorIf",
             MetaAttrType::Ignore => "Ignore",
             MetaAttrType::InputName => "InputName",
             MetaAttrType::LittleEndian => "LittleEndian",

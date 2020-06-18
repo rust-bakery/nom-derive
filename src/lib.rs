@@ -130,6 +130,7 @@ use enums::impl_nom_enums;
 /// | [Debug](#debug) | all | Print error message and input if parser fails (at runtime)
 /// | [DebugDerive](#debugderive) | top-level | Print the generated code to stderr during build
 /// | [Default](#default) | fields | Do not parse, set a field to the default value for the type
+/// | [ErrorIf](#verifications) | fields | Before parsing, check condition is true and return an error if false.
 /// | [If](#conditional-values) | fields | Similar to `Cond`
 /// | [Ignore](#default) | fields | An alias for `default`
 /// | [InputName](#input-name) | top-level | Change the internal name of input
@@ -608,7 +609,7 @@ use enums::impl_nom_enums;
 /// ## Verifications
 ///
 /// The `Verify` custom attribute allows for specifying a verifying function.
-/// The generated parser will use the `verify!` combinator, which calls the
+/// The generated parser will use the `verify` combinator, which calls the
 /// child parser only if is verifies a condition (and otherwise raises an error).
 ///
 /// The argument used in verify function is passed as a reference.
@@ -627,6 +628,33 @@ use enums::impl_nom_enums;
 /// # let input = b"\x01";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[1..],S{a:1})));
+/// # }
+/// ```
+///
+/// The `ErrorIf` checks the provided condition, and return an error if the
+/// test returns false.
+/// The condition is tested before any parsing occurs for this field, and does not
+/// change the input pointer.
+///
+/// Error has type `ErrorKind::Verify` (nom).
+///
+/// The argument used in verify function is passed as a reference.
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// struct S{
+///     pub a: u8,
+///     #[nom(ErrorIf(a != 1))]
+///     pub b: u8,
+/// }
+/// #
+/// # fn main() {
+/// # let input = b"\x01\x02";
+/// # let res = S::parse(input);
+/// # assert_eq!(res, Ok((&input[2..],S{a:1, b:2})));
 /// # }
 /// ```
 ///

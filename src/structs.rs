@@ -208,6 +208,15 @@ fn quote_skip(skip: &TokenStream, config: &Config) -> TokenStream {
     }
 }
 
+fn quote_error_if(cond: &TokenStream, config: &Config) -> TokenStream {
+    let input_name = syn::Ident::new(&config.input_name, Span::call_site());
+    quote!{
+        if #cond {
+            return Err(nom::Err::Error((#input_name, nom::error::ErrorKind::Verify)));
+        }
+    }
+}
+
 fn get_pre_post_exec(meta_list: &[MetaAttr], config: &Config) -> (Option<TokenStream>, Option<TokenStream>) {
     let mut tk_pre = proc_macro2::TokenStream::new();
     let mut tk_post = proc_macro2::TokenStream::new();
@@ -240,6 +249,11 @@ fn get_pre_post_exec(meta_list: &[MetaAttr], config: &Config) -> (Option<TokenSt
             MetaAttrType::SkipBefore => {
                 let skip = m.arg().unwrap();
                 let qq = quote_skip(skip, &config);
+                tk_pre.extend(qq);
+            }
+            MetaAttrType::ErrorIf => {
+                let cond = m.arg().unwrap();
+                let qq = quote_error_if(cond, &config);
                 tk_pre.extend(qq);
             }
             _ => (),

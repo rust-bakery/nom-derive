@@ -88,7 +88,8 @@ tests](https://github.com/rust-bakery/nom-derive/tree/master/tests).
 - Switch to nom parsing functions, do not generate macros
 - Use qualified paths, caller do not have to import nom macros
 - Move all attributes under the 'nom' namespace
-- Add many attributes (LittleEndian, BigEndian, Map, Debug, Value, etc.)
+- Add many attributes (LittleEndian, BigEndian, Map, Debug, Value, Take,
+  AlignAfter/AlignBefore, SkipAfter/SkipBefore, ErrorIf, etc.)
 - Deprecate the `NomDeriveDebug` derive (replaced by `DebugDerive` attribute)
 - Improve documentation, add many examples
 - Rewrite attribute parser, now accepting a more flexible syntax
