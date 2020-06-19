@@ -727,6 +727,8 @@ use enums::impl_nom_enums;
 /// If applied to the top-level element, the statement is executing after the entire element
 /// is parsed.
 ///
+/// *Note*: due to some limitations, `PostExec` has no effect on enums
+///
 /// If parsing a structure, the built structure is available in the `struct_def` variable.
 ///
 /// ```rust
@@ -1152,8 +1154,8 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
     let tokens = quote! {
         impl#generics #name#generics {
             pub fn parse(#orig_input_name: &[u8]) -> nom::IResult<&[u8],#name> {
-                #tl_pre
                 let #input_name = #orig_input_name;
+                #tl_pre
                 #(#pre let (#input_name, #idents) = #parser_tokens (#input_name) ?; #post)*
                 let struct_def = #struct_def;
                 #tl_post
