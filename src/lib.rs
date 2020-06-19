@@ -93,7 +93,7 @@ mod parsertree;
 mod structs;
 mod enums;
 
-use structs::parse_struct;
+use structs::{get_pre_post_exec, parse_struct};
 use enums::impl_nom_enums;
 
 /// The `Nom` derive automatically generates a `parse` function for the structure
@@ -139,8 +139,8 @@ use enums::impl_nom_enums;
 /// | [Move](#alignment-and-padding) | fields | add the specified offset to current position, before parsing
 /// | [MoveAbs](#alignment-and-padding) | fields | go to the specified absoluted position, before parsing
 /// | [Parse](#custom-parsers) | fields | Use a custom parser function for reading from a file
-/// | [PreExec](#preexec) | fields | Execute Rust code before parsing field
-/// | [PostExec](#postexec) | fields | Execute Rust code after parsing field
+/// | [PreExec](#preexec) | all | Execute Rust code before parsing field or struct
+/// | [PostExec](#postexec) | all | Execute Rust code after parsing field or struct
 /// | [Selector](#deriving-parser-for-enum) | all | Used to specify the value matching an enum variant
 /// | [SkipAfter](#alignment-and-padding) | fields | skip the specified number of bytes, after parsing
 /// | [SkipBefore](#alignment-and-padding) | fields | skip the specified number of bytes, before parsing
@@ -663,7 +663,7 @@ use enums::impl_nom_enums;
 /// ## PreExec
 ///
 /// The `PreExec` custom attribute executes the provided code before parsing
-/// the field.
+/// the field or structure.
 ///
 /// This attribute can be specified multiple times. Statements will be executed in order.
 ///
@@ -695,7 +695,7 @@ use enums::impl_nom_enums;
 /// ## PostExec
 ///
 /// The `PostExec` custom attribute executes the provided code after parsing
-/// the field.
+/// the field or structure.
 ///
 /// This attribute can be specified multiple times. Statements will be executed in order.
 ///
@@ -721,6 +721,30 @@ use enums::impl_nom_enums;
 /// # let input = b"\x01";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[1..],S{a:1, b:2})));
+/// # }
+/// ```
+///
+/// If applied to the top-level element, the statement is executing after the entire element
+/// is parsed.
+///
+/// If parsing a structure, the built structure is available in the `struct_def` variable.
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// #
+/// # #[derive(PartialEq)] // for assert_eq!
+/// #[derive(Debug)]
+/// #[derive(Nom)]
+/// #[nom(PostExec(println!("parsing done: {:?}", struct_def);))]
+/// struct S{
+///     pub a: u8,
+///     pub b: u8,
+/// }
+/// #
+/// # fn main() {
+/// # let input = b"\x01\x02";
+/// # let res = S::parse(input);
+/// # assert_eq!(res, Ok((&input[2..],S{a:1, b:2})));
 /// # }
 /// ```
 ///
@@ -1091,9 +1115,11 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
     use crate::config::Config;
     // eprintln!("ast: {:#?}", ast);
     let struct_name = ast.ident.to_string();
+    // parse top-level attributes and prepare tokens for each field parser
     let meta = meta::parse_nom_top_level_attribute(&ast.attrs).expect("Parsing the 'nom' top level attribute failed");
     let mut config = Config::from_meta_list(struct_name, &meta).expect("Could not build config");
     config.debug_derive |= debug_derive;
+    let (tl_pre, tl_post) = get_pre_post_exec(&meta, &config);
     // test if struct has a lifetime
     let s =
         match &ast.data {
@@ -1101,7 +1127,7 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
             &syn::Data::Struct(ref s) => parse_struct(s, &config),
             &syn::Data::Union(_)      => panic!("Unions not supported"),
     };
-    // parse string items and prepare tokens for each field parser
+    // prepare tokens
     let generics = &ast.generics;
     let name = &ast.ident;
     let (idents, parser_tokens) : (Vec<_>,Vec<_>) = s.parsers.iter()
@@ -1126,9 +1152,11 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
     let tokens = quote! {
         impl#generics #name#generics {
             pub fn parse(#orig_input_name: &[u8]) -> nom::IResult<&[u8],#name> {
+                #tl_pre
                 let #input_name = #orig_input_name;
                 #(#pre let (#input_name, #idents) = #parser_tokens (#input_name) ?; #post)*
                 let struct_def = #struct_def;
+                #tl_post
                 Ok((#input_name, struct_def))
             }
         }

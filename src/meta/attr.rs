@@ -143,6 +143,8 @@ impl MetaAttr {
             | MetaAttrType::InputName
             | MetaAttrType::LittleEndian
             | MetaAttrType::BigEndian
+            | MetaAttrType::PreExec
+            | MetaAttrType::PostExec
             | MetaAttrType::Selector => true,
             _ => false,
         }

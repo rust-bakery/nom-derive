@@ -54,7 +54,17 @@ struct StructWithPostExec {
 }
 
 #[derive(Debug, PartialEq, Nom)]
-#[nom(DebugDerive, InputName(iii))]
+// #[nom(DebugDerive)]
+#[nom(PostExec(println!("parsing done: {:?}", struct_def);))]
+struct TopLevelPostExec {
+    pub a: u32,
+    pub b: u8,
+    pub c: u8,
+}
+
+#[derive(Debug, PartialEq, Nom)]
+// #[nom(DebugDerive)]
+#[nom(InputName(iii))]
 struct StructWithInputName {
     pub a: u32,
     #[nom(Value(iii.len()))]
@@ -141,6 +151,8 @@ fn test_struct_map() {
 fn test_struct_postexec() {
     let res = StructWithPostExec::parse(INPUT_16);
     assert_eq!(res, Ok((&INPUT_16[5..],StructWithPostExec{a:1,b:18,c:19})));
+    let res = TopLevelPostExec::parse(INPUT_16);
+    assert_eq!(res, Ok((&INPUT_16[6..],TopLevelPostExec{a:1,b:0x12,c:0x34})));
 }
 
 #[test]

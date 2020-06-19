@@ -259,7 +259,7 @@ fn quote_error_if(cond: &TokenStream, config: &Config) -> TokenStream {
     }
 }
 
-fn get_pre_post_exec(meta_list: &[MetaAttr], config: &Config) -> (Option<TokenStream>, Option<TokenStream>) {
+pub(crate) fn get_pre_post_exec(meta_list: &[MetaAttr], config: &Config) -> (Option<TokenStream>, Option<TokenStream>) {
     let mut tk_pre = proc_macro2::TokenStream::new();
     let mut tk_post = proc_macro2::TokenStream::new();
     for m in meta_list {
