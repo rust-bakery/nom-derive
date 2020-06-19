@@ -198,6 +198,48 @@ fn quote_align(align: &TokenStream, config: &Config) -> TokenStream {
     }
 }
 
+// like quote_skip, but offset is an isize
+fn quote_move(offset: &TokenStream, config: &Config) -> TokenStream {
+    let input_name = syn::Ident::new(&config.input_name, Span::call_site());
+    let orig_input_name = syn::Ident::new(&("orig_".to_string() + &config.input_name), Span::call_site());
+    quote!{
+        let #input_name = {
+            let start = #orig_input_name.as_ptr() as usize;
+            let pos = #input_name.as_ptr() as usize - start;
+            let offset = #offset as isize;
+            let offset_u = offset.abs() as usize;
+            let new_offset = if offset < 0 {
+                if offset_u > pos {
+                    return Err(nom::Err::Error((#input_name, nom::error::ErrorKind::TooLarge)));
+                }
+                pos - offset_u
+            } else {
+                if pos + offset_u > #orig_input_name.len() {
+                    return Err(nom::Err::Incomplete(nom::Needed::Size(offset_u)));
+                }
+                pos + offset_u
+            };
+            &#orig_input_name[new_offset..]
+        };
+    }
+}
+
+// like quote_move, with absolute value as offset
+fn quote_move_abs(offset: &TokenStream, config: &Config) -> TokenStream {
+    let input_name = syn::Ident::new(&config.input_name, Span::call_site());
+    let orig_input_name = syn::Ident::new(&("orig_".to_string() + &config.input_name), Span::call_site());
+    quote!{
+        let #input_name = {
+            let start = #input_name.as_ptr() as usize;
+            let offset = #offset as usize;
+            if offset > #orig_input_name.len() {
+                return Err(nom::Err::Incomplete(nom::Needed::Size(offset)));
+            }
+            &#orig_input_name[offset..]
+        };
+    }
+}
+
 fn quote_skip(skip: &TokenStream, config: &Config) -> TokenStream {
     let input_name = syn::Ident::new(&config.input_name, Span::call_site());
     quote!{
@@ -249,6 +291,16 @@ fn get_pre_post_exec(meta_list: &[MetaAttr], config: &Config) -> (Option<TokenSt
             MetaAttrType::SkipBefore => {
                 let skip = m.arg().unwrap();
                 let qq = quote_skip(skip, &config);
+                tk_pre.extend(qq);
+            }
+            MetaAttrType::Move => {
+                let offset = m.arg().unwrap();
+                let qq = quote_move(offset, &config);
+                tk_pre.extend(qq);
+            }
+            MetaAttrType::MoveAbs => {
+                let offset = m.arg().unwrap();
+                let qq = quote_move_abs(offset, &config);
                 tk_pre.extend(qq);
             }
             MetaAttrType::ErrorIf => {

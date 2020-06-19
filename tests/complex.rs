@@ -77,6 +77,29 @@ struct StructWithAlignmentAndPadding {
 }
 
 #[derive(Debug, PartialEq, Nom)]
+struct StructWithLongSkip {
+    #[nom(SkipAfter(200))]
+    pub a: u8,
+    b: u32,
+}
+
+#[derive(Debug, PartialEq, Nom)]
+struct StructWithOffset {
+    pub a: u8,
+    #[nom(Move(3))]
+    b: u32,
+    #[nom(Move(-4))]
+    b2 : u32,
+}
+
+#[derive(Debug, PartialEq, Nom)]
+struct StructWithOffsetAbs {
+    pub a: u8,
+    #[nom(MoveAbs(4))]
+    pub a2: u8,
+}
+
+#[derive(Debug, PartialEq, Nom)]
 struct StructWithPossibleError {
     pub a: u8,
     #[nom(ErrorIf(a != 0))]
@@ -126,6 +149,16 @@ fn test_struct_align_and_padding() {
     assert_eq!(res, Ok((&INPUT_16[12..],StructWithAlignment{a:0,b:0x1234_5678_1234_5678})));
     let res = StructWithAlignmentAndPadding::parse(INPUT_16);
     assert_eq!(res, Ok((&INPUT_16[10..],StructWithAlignmentAndPadding{a:0,b:0x5678_1234})));
+    let res = StructWithLongSkip::parse(INPUT_16).expect_err("parse error");
+    if let nom::Err::Incomplete(sz) = res {
+        assert_eq!(sz, nom::Needed::Size(200));
+    } else {
+        panic!("wrong error type");
+    }
+    let res = StructWithOffset::parse(INPUT_16);
+    assert_eq!(res, Ok((&INPUT_16[8..],StructWithOffset{a:0,b:0x1234_5678,b2:0x1234_5678})));
+    let res = StructWithOffsetAbs::parse(INPUT_16);
+    assert_eq!(res, Ok((&INPUT_16[5..],StructWithOffsetAbs{a:0,a2:0x12})));
 }
 
 #[test]

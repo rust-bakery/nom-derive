@@ -136,6 +136,8 @@ use enums::impl_nom_enums;
 /// | [InputName](#input-name) | top-level | Change the internal name of input
 /// | [LittleEndian](#byteorder) | all | Set the endianness to little endian
 /// | [Map](#map) | fields | Parse field, then apply a function
+/// | [Move](#alignment-and-padding) | fields | add the specified offset to current position, before parsing
+/// | [MoveAbs](#alignment-and-padding) | fields | go to the specified absoluted position, before parsing
 /// | [Parse](#custom-parsers) | fields | Use a custom parser function for reading from a file
 /// | [PreExec](#preexec) | fields | Execute Rust code before parsing field
 /// | [PostExec](#postexec) | fields | Execute Rust code after parsing field
@@ -727,9 +729,15 @@ use enums::impl_nom_enums;
 ///  - `AlignAfter`/`AlignBefore`: skip bytes until aligned to a multiple of the provided value
 ///    Alignment is calculated to the start of the original parser input
 ///  - `SkipAfter`/`SkipBefore`: skip the specified number of bytes
+///  - `Move`: add the speficied offset to current position, before parsing. Offset can be negative.
+///  - `MoveAbs`: go to specified absolute position (relative to the start of original parser
+///     input), before parsing
 ///
 ///  If multiple directives are provided, they are applied in order of appearance of the
 ///  attribute.
+///
+///  If the new position would be before the start of the slice or beyond its end,
+///  an error is raised (`TooLarge` or `Incomplete`, depending on the case).
 ///
 /// Expected value: a valid Rust value (immediate value, or expression)
 ///

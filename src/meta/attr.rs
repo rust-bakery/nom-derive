@@ -21,6 +21,8 @@ pub enum MetaAttrType {
     InputName,
     LittleEndian,
     Map,
+    Move,
+    MoveAbs,
     Parse,
     PostExec,
     PreExec,
@@ -50,6 +52,8 @@ impl MetaAttrType {
             "InputName" => Some(MetaAttrType::InputName),
             "LittleEndian" => Some(MetaAttrType::LittleEndian),
             "Map" => Some(MetaAttrType::Map),
+            "Move" => Some(MetaAttrType::Move),
+            "MoveAbs" => Some(MetaAttrType::MoveAbs),
             "Parse" => Some(MetaAttrType::Parse),
             "PostExec" => Some(MetaAttrType::PostExec),
             "PreExec" => Some(MetaAttrType::PreExec),
@@ -72,6 +76,8 @@ impl MetaAttrType {
             | MetaAttrType::ErrorIf
             | MetaAttrType::InputName
             | MetaAttrType::Map
+            | MetaAttrType::Move
+            | MetaAttrType::MoveAbs
             | MetaAttrType::Parse
             | MetaAttrType::PostExec
             | MetaAttrType::PreExec
@@ -102,6 +108,8 @@ impl fmt::Display for MetaAttrType {
             MetaAttrType::InputName => "InputName",
             MetaAttrType::LittleEndian => "LittleEndian",
             MetaAttrType::Map => "Map",
+            MetaAttrType::Move => "Move",
+            MetaAttrType::MoveAbs => "MoveAbs",
             MetaAttrType::Parse => "Parse",
             MetaAttrType::PostExec => "PostExec",
             MetaAttrType::PreExec => "PreExec",
