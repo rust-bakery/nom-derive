@@ -138,6 +138,13 @@ struct StructWithPossibleError {
     b: u32,
 }
 
+#[derive(Debug, PartialEq, Nom)]
+#[nom(Exact)]
+struct StructExact {
+    pub a: u32,
+    pub b: u32,
+}
+
 const INPUT_16: &[u8] = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
 
 #[test]
@@ -202,6 +209,20 @@ fn test_struct_error_if() {
     assert!(res.is_ok());
     // test with verification error
     let res = StructWithPossibleError::parse(&INPUT_16[4..]).expect_err("parsing failed");
+    if let nom::Err::Error((_, error_kind)) = res {
+        assert_eq!(error_kind, nom::error::ErrorKind::Verify);
+    } else {
+        panic!("wrong error type");
+    }
+}
+
+#[test]
+fn test_struct_exact() {
+    // test without verification error
+    let res = StructExact::parse(&INPUT_16[8..]);
+    assert!(res.is_ok());
+    // test with verification error
+    let res = StructExact::parse(INPUT_16).expect_err("parsing failed");
     if let nom::Err::Error((_, error_kind)) = res {
         assert_eq!(error_kind, nom::error::ErrorKind::Verify);
     } else {

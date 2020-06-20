@@ -131,6 +131,7 @@ use enums::impl_nom_enums;
 /// | [DebugDerive](#debugderive) | top-level | Print the generated code to stderr during build
 /// | [Default](#default) | fields | Do not parse, set a field to the default value for the type
 /// | [ErrorIf](#verifications) | fields | Before parsing, check condition is true and return an error if false.
+/// | [Exact](#exact) | top-level | Check that input was entirely consumed by parser
 /// | [If](#conditional-values) | fields | Similar to `Cond`
 /// | [Ignore](#default) | fields | An alias for `default`
 /// | [InputName](#input-name) | top-level | Change the internal name of input
@@ -657,6 +658,30 @@ use enums::impl_nom_enums;
 /// # let input = b"\x01\x02";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[2..],S{a:1, b:2})));
+/// # }
+/// ```
+///
+/// ## Exact
+///
+/// The `Exact` custom attribute adds a verification after parsing the entire element.
+/// It succeeds if the input has been entirely consumed by the parser.
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// #[nom(Exact)]
+/// struct S{
+///     pub a: u8,
+/// }
+/// #
+/// # fn main() {
+/// # let input = b"\x01\x01";
+/// # let res = S::parse(&input[1..]);
+/// # assert!(res.is_ok());
+/// # let res = S::parse(input);
+/// # assert!(res.is_err());
 /// # }
 /// ```
 ///

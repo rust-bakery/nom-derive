@@ -17,6 +17,7 @@ pub enum MetaAttrType {
     Debug,
     DebugDerive,
     ErrorIf,
+    Exact,
     Ignore,
     InputName,
     LittleEndian,
@@ -47,6 +48,7 @@ impl MetaAttrType {
             "DebugDerive" => Some(MetaAttrType::DebugDerive),
             "Default" => Some(MetaAttrType::Ignore),
             "ErrorIf" => Some(MetaAttrType::ErrorIf),
+            "Exact" => Some(MetaAttrType::Exact),
             "If" => Some(MetaAttrType::Cond),
             "Ignore" => Some(MetaAttrType::Ignore),
             "InputName" => Some(MetaAttrType::InputName),
@@ -104,6 +106,7 @@ impl fmt::Display for MetaAttrType {
             MetaAttrType::Debug => "Debug",
             MetaAttrType::DebugDerive => "DebugDerive",
             MetaAttrType::ErrorIf => "ErrorIf",
+            MetaAttrType::Exact => "Exact",
             MetaAttrType::Ignore => "Ignore",
             MetaAttrType::InputName => "InputName",
             MetaAttrType::LittleEndian => "LittleEndian",
@@ -145,6 +148,7 @@ impl MetaAttr {
             | MetaAttrType::BigEndian
             | MetaAttrType::PreExec
             | MetaAttrType::PostExec
+            | MetaAttrType::Exact
             | MetaAttrType::Selector => true,
             _ => false,
         }
@@ -153,7 +157,7 @@ impl MetaAttr {
     /// Is attribute acceptable for field-level
     pub fn acceptable_fla(&self) -> bool {
         match self.attr_type {
-            MetaAttrType::DebugDerive | MetaAttrType::InputName => false,
+            MetaAttrType::DebugDerive | MetaAttrType::InputName | MetaAttrType::Exact => false,
             _ => true,
         }
     }

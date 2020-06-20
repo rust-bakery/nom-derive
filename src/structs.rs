@@ -308,6 +308,12 @@ pub(crate) fn get_pre_post_exec(meta_list: &[MetaAttr], config: &Config) -> (Opt
                 let qq = quote_error_if(cond, &config);
                 tk_pre.extend(qq);
             }
+            MetaAttrType::Exact => {
+                let input_name = syn::Ident::new(&config.input_name, Span::call_site());
+                let cond = quote!{ !#input_name.is_empty() };
+                let qq = quote_error_if(&cond, &config);
+                tk_post.extend(qq);
+            }
             _ => (),
         }
     }
