@@ -727,9 +727,9 @@ use enums::impl_nom_enums;
 /// If applied to the top-level element, the statement is executing after the entire element
 /// is parsed.
 ///
-/// *Note*: due to some limitations, `PostExec` has no effect on enums
-///
 /// If parsing a structure, the built structure is available in the `struct_def` variable.
+///
+/// If parsing an enum, the built structure is available in the `enum_def` variable.
 ///
 /// ```rust
 /// # use nom_derive::Nom;

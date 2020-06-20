@@ -63,6 +63,28 @@ struct TopLevelPostExec {
 }
 
 #[derive(Debug, PartialEq, Nom)]
+#[repr(u8)]
+// #[nom(DebugDerive)]
+#[nom(PostExec(println!("parsing done: {:?}", enum_def);))]
+pub enum FieldLessEnumPostExec{
+    A,
+    B = 2,
+    C,
+}
+
+#[derive(Debug,PartialEq,Eq,Clone,Copy,Nom)]
+pub struct MessageType(pub u8);
+
+#[derive(Debug, PartialEq, Nom)]
+// #[nom(DebugDerive)]
+#[nom(Selector="MessageType")]
+#[nom(PostExec(println!("parsing done: {:?}", enum_def);))]
+pub enum EnumPostExec {
+    #[nom(Selector="MessageType(0)")] Field1(u32),
+    #[nom(Selector="MessageType(1)")] Field2(Option<u32>),
+}
+
+#[derive(Debug, PartialEq, Nom)]
 // #[nom(DebugDerive)]
 #[nom(InputName(iii))]
 struct StructWithInputName {

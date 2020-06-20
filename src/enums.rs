@@ -92,7 +92,7 @@ fn is_input_fieldless_enum(ast: &syn::DeriveInput) -> bool {
 fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[MetaAttr], config: &Config) -> TokenStream {
     let input_name = syn::Ident::new(&config.input_name, Span::call_site());
     let orig_input_name = syn::Ident::new(&("orig_".to_string() + &config.input_name), Span::call_site());
-    let (tl_pre, _tl_post) = get_pre_post_exec(&meta_list, config);
+    let (tl_pre, tl_post) = get_pre_post_exec(&meta_list, config);
     let parser = match repr.as_ref() {
         "u8"  |
         "u16" |
@@ -138,7 +138,7 @@ fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[Me
         variant_names.iter()
             .map(|variant_name| {
                 let id = syn::Ident::new(variant_name, Span::call_site());
-                quote!{ if selector == #name::#id as #ty { return Ok((#input_name, #name::#id)); } }
+                quote!{ if selector == #name::#id as #ty { #name::#id } }
             })
             .collect();
     let tokens = quote!{
@@ -147,8 +147,11 @@ fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[Me
                 let #input_name = #orig_input_name;
                 #tl_pre
                 let (#input_name, selector) = #parser(#input_name)?;
-                #(#variants_code)*
-                Err(::nom::Err::Error((#orig_input_name, ::nom::error::ErrorKind::Switch)))
+                let enum_def =
+                    #(#variants_code else)*
+                    { return Err(::nom::Err::Error((#orig_input_name, ::nom::error::ErrorKind::Switch))); };
+                #tl_post
+                Ok((#input_name, enum_def))
             }
         }
     };
@@ -188,7 +191,7 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &Config) -> TokenSt
             _ => { panic!("expect enum"); }
         };
     // parse string items and prepare tokens for each variant
-    let (tl_pre, _tl_post) = get_pre_post_exec(&meta_list, config);
+    let (tl_pre, tl_post) = get_pre_post_exec(&meta_list, config);
     let generics = &ast.generics;
     let selector_type : proc_macro2::TokenStream = selector.parse().unwrap();
     let mut default_case_handled = false;
@@ -240,11 +243,12 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &Config) -> TokenSt
             fn parse(#orig_input_name: &[u8], selector: #selector_type) -> nom::IResult<&[u8],#name> {
                 let #input_name = #orig_input_name;
                 #tl_pre
-                let enum_def = match selector {
+                let (#input_name, enum_def) = match selector {
                     #(#variants_code)*
                     #default_case
-                };
-                enum_def
+                }?;
+                #tl_post
+                Ok((#input_name, enum_def))
             }
         }
     };
