@@ -162,7 +162,7 @@ fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[Me
 pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &Config) -> TokenStream {
     let name = &ast.ident;
     // eprintln!("{:?}", ast.attrs);
-    let meta_list = meta::parse_nom_attribute(&ast.attrs).expect("Parsing the 'nom' meta attribute failed");
+    let meta_list = meta::parse_nom_top_level_attribute(&ast.attrs).expect("Parsing the 'nom' meta attribute failed");
     let input_name = syn::Ident::new(&config.input_name, Span::call_site());
     let orig_input_name = syn::Ident::new(&("orig_".to_string() + &config.input_name), Span::call_site());
     let selector = match get_selector(&meta_list) { //.expect("The 'Selector' attribute must be used to give the type of selector item");
