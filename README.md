@@ -83,6 +83,11 @@ tests](https://github.com/rust-bakery/nom-derive/tree/master/tests).
 
 ## Changes
 
+### 0.6.1
+
+- Add Tag attribute
+- Fix type verification with Cond when using multiple attributes
+
 ### 0.6.0
 
 - Switch to nom parsing functions, do not generate macros

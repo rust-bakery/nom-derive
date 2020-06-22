@@ -145,6 +145,7 @@ use enums::impl_nom_enums;
 /// | [Selector](#deriving-parser-for-enum) | all | Used to specify the value matching an enum variant
 /// | [SkipAfter](#alignment-and-padding) | fields | skip the specified number of bytes, after parsing
 /// | [SkipBefore](#alignment-and-padding) | fields | skip the specified number of bytes, before parsing
+/// | [Tag](#tag) | fields | Parse a constant pattern
 /// | [Take](#take) | fields | Take `n` bytes of input
 /// | [Value](#value) | fields | Store result of evaluated expression in field
 /// | [Verify](#verifications) | fields | After parsing, check that condition is true and return an error if false.
@@ -326,6 +327,30 @@ use enums::impl_nom_enums;
 /// # let input = b"\x00\x01\x12\x34";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[4..],S{a:1, b:vec![0x1234]})));
+/// # }
+/// ```
+///
+/// ## Tag
+///
+/// The `Tag(value)` attribute is used to parse a constant value (or "magic").
+///
+/// For ex:
+/// ```rust
+/// # use nom_derive::Nom;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// struct S<'a> {
+///   #[nom(Tag(b"TAG"))]
+///   tag: &'a[u8],
+///   a: u16,
+///   b: u16,
+/// }
+/// #
+/// # fn main() {
+/// # let input = b"TAG\x00\x01\x12\x34";
+/// # let res = S::parse(input);
+/// # assert_eq!(res, Ok((&input[7..],S{tag: b"TAG", a:1, b:0x1234})));
 /// # }
 /// ```
 ///

@@ -30,6 +30,7 @@ pub enum MetaAttrType {
     Selector,
     SkipAfter,
     SkipBefore,
+    Tag,
     Take,
     Value,
     Verify,
@@ -62,6 +63,7 @@ impl MetaAttrType {
             "Selector" => Some(MetaAttrType::Selector),
             "SkipAfter" => Some(MetaAttrType::SkipAfter),
             "SkipBefore" => Some(MetaAttrType::SkipBefore),
+            "Tag" => Some(MetaAttrType::Tag),
             "Take" => Some(MetaAttrType::Take),
             "Value" => Some(MetaAttrType::Value),
             "Verify" => Some(MetaAttrType::Verify),
@@ -86,6 +88,7 @@ impl MetaAttrType {
             | MetaAttrType::Selector
             | MetaAttrType::SkipAfter
             | MetaAttrType::SkipBefore
+            | MetaAttrType::Tag
             | MetaAttrType::Take
             | MetaAttrType::Value
             | MetaAttrType::Verify => true,
@@ -119,6 +122,7 @@ impl fmt::Display for MetaAttrType {
             MetaAttrType::Selector => "Selector",
             MetaAttrType::SkipAfter => "SkipAfter",
             MetaAttrType::SkipBefore => "SkipBefore",
+            MetaAttrType::Tag => "Tag",
             MetaAttrType::Take => "Take",
             MetaAttrType::Value => "Value",
             MetaAttrType::Verify => "Verify",

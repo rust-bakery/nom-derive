@@ -156,6 +156,10 @@ fn get_parser(field: &::syn::Field, meta_list: &[MetaAttr], config: &Config) -> 
     // eprintln!("meta_list: {:?}", meta_list);
     for meta in meta_list {
         match meta.attr_type {
+            MetaAttrType::Tag => {
+                let s = meta.arg().unwrap().to_string();
+                return Some(ParserTree::Tag(s.clone()));
+            }
             MetaAttrType::Take => {
                 let s = meta.arg().unwrap().to_string();
                 return Some(ParserTree::Take(s.clone()));
