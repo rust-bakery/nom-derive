@@ -111,7 +111,7 @@ fn get_type_parser(ty: &Type, meta_list: &[MetaAttr], config: &Config) -> Option
     }
 }
 
-fn get_type_default(ty: &Type) -> Option<ParserTree> {
+fn get_type_first_ident(ty: &Type) -> Option<String> {
     match ty {
         Type::Path(ref typepath) => {
             let path = &typepath.path;
@@ -120,6 +120,15 @@ fn get_type_default(ty: &Type) -> Option<ParserTree> {
             }
             let segment = path.segments.last().expect("empty segments list");
             let ident_s = segment.ident.to_string();
+            Some(ident_s.to_string())
+        }
+        _ => None
+    }
+}
+
+fn get_type_default(ty: &Type) -> Option<ParserTree> {
+    get_type_first_ident(ty)
+        .map(|ident_s| {
             let default = match ident_s.as_ref() {
                 "u8"  |
                 "u16" |
@@ -133,12 +142,10 @@ fn get_type_default(ty: &Type) -> Option<ParserTree> {
                 "Vec" => "Vec::new()".to_string(),
                 s => format!("{}::default()", s)
             };
-            Some(ParserTree::Raw(
+            ParserTree::Raw(
                 format!("{{ |i| Ok((i, {})) }}", default)
-            ))
-        }
-        _ => None
-    }
+            )
+        })
 }
 
 fn get_parser(field: &::syn::Field, meta_list: &[MetaAttr], config: &Config) -> Option<ParserTree> {
@@ -387,7 +394,15 @@ fn patch_condition(field: &syn::Field, p: ParserTree, meta_list: &[MetaAttr]) ->
                         let s = meta.arg().unwrap().to_string();
                         return ParserTree::Cond(sub, s.clone());
                     }
-                    _ => panic!("A condition was given on field {}, which is not an option type. Hint: use Option<...>", ident),
+                    _ => {
+                        if let Some(ident_s) = get_type_first_ident(&field.ty) {
+                            if ident_s == "Option" {
+                                let s = meta.arg().unwrap().to_string();
+                                return ParserTree::Cond(Box::new(p), s.clone());
+                            }
+                        }
+                        panic!("A condition was given on field {}, which is not an option type. Hint: use Option<...>", ident);
+                    }
                 }
             },
             _ => (),
@@ -419,10 +434,10 @@ pub(crate) fn parse_fields(f: &Fields, config: &Config) -> StructParserTree {
         let p = add_complete(p, &meta_list, config);
         // add debug wrapper, if requested
         let p = add_debug(&field, p, &meta_list, config);
-        // Check if a condition was given, and set it
-        let p = patch_condition(&field, p, &meta_list);
         // add mapping function, if present
         let p = add_map(&field, p, &meta_list);
+        // Check if a condition was given, and set it
+        let p = patch_condition(&field, p, &meta_list);
         // add verify field, if present
         let p = add_verify(&field, p, &meta_list);
         // add pre and post code (also takes care of alignment)

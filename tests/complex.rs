@@ -4,8 +4,10 @@ extern crate pretty_assertions;
 
 use nom_derive::Nom;
 
+use nom::bytes::complete::take_till;
 use nom::combinator::cond;
 use nom::number::streaming::{be_u8, be_u64};
+use std::ffi::CString;
 
 /// A simple structure, with a complex sub-parser expression
 #[derive(Debug,PartialEq,Nom)]
@@ -145,7 +147,23 @@ struct StructExact {
     pub b: u32,
 }
 
+fn bytes_to_cstring(s: &[u8]) -> CString {
+    CString::new(s).unwrap()
+}
+
+#[derive(Debug, Nom)]
+pub struct MultipleAttributes1 {
+    pub a: u32,
+    #[nom(
+        Cond = "a == 0",
+        Parse = "take_till(|b| b == 0)",
+        Map = "bytes_to_cstring"
+    )]
+    cstring: Option<CString>,
+}
+
 const INPUT_16: &[u8] = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
+const INPUT_CSTRING: &[u8] = b"\x00\x00\x00\x00Hello, world!\x00\x01";
 
 #[test]
 fn test_struct_complex_parse() {
@@ -228,4 +246,12 @@ fn test_struct_exact() {
     } else {
         panic!("wrong error type");
     }
+}
+
+#[test]
+fn test_struct_multiple_attributes() {
+    let (rem, res) = MultipleAttributes1::parse(INPUT_CSTRING).expect("parsing failed");
+    assert!(rem.len() > 0);
+    assert!(res.cstring.is_some());
+    assert_eq!(res.cstring.unwrap().as_bytes(), b"Hello, world!");
 }
