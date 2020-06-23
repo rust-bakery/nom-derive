@@ -1172,7 +1172,7 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
     let mut config = Config::from_meta_list(struct_name, &meta).expect("Could not build config");
     config.debug_derive |= debug_derive;
     let (tl_pre, tl_post) = get_pre_post_exec(&meta, &config);
-    // test if struct has a lifetime
+    // enums are handled differently
     let s =
         match &ast.data {
             &syn::Data::Enum(_)       => { return impl_nom_enums(ast, &config); },
