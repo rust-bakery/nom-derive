@@ -93,6 +93,7 @@ mod parsertree;
 mod structs;
 mod enums;
 
+use crate::meta::attr::{MetaAttr, MetaAttrType};
 use structs::{get_pre_post_exec, parse_struct};
 use enums::impl_nom_enums;
 
@@ -1163,12 +1164,20 @@ pub fn nom(input: TokenStream) -> TokenStream {
     gen
 }
 
+fn get_extra_args(meta_list: &[MetaAttr]) -> Option<&proc_macro2::TokenStream> {
+    meta_list
+        .iter()
+        .find(|m| m.attr_type == MetaAttrType::ExtraArgs)
+        .and_then(|m| m.arg())
+}
+
 fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
     use crate::config::Config;
     // eprintln!("ast: {:#?}", ast);
     let struct_name = ast.ident.to_string();
     // parse top-level attributes and prepare tokens for each field parser
     let meta = meta::parse_nom_top_level_attribute(&ast.attrs).expect("Parsing the 'nom' top level attribute failed");
+    // eprintln!("top-level meta: {:?}", meta);
     let mut config = Config::from_meta_list(struct_name, &meta).expect("Could not build config");
     config.debug_derive |= debug_derive;
     let (tl_pre, tl_post) = get_pre_post_exec(&meta, &config);
@@ -1201,9 +1210,10 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
     };
     let input_name = syn::Ident::new(&config.input_name, Span::call_site());
     let orig_input_name = syn::Ident::new(&("orig_".to_string() + &config.input_name), Span::call_site());
+    let extra_args = get_extra_args(&meta);
     let tokens = quote! {
         impl#generics #name#generics {
-            pub fn parse(#orig_input_name: &[u8]) -> nom::IResult<&[u8],#name> {
+            pub fn parse(#orig_input_name: &[u8] #extra_args) -> nom::IResult<&[u8],#name> {
                 let #input_name = #orig_input_name;
                 #tl_pre
                 #(#pre let (#input_name, #idents) = #parser_tokens (#input_name) ?; #post)*

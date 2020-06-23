@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use quote::ToTokens;
 use std::fmt;
 use syn::parse::{Parse, ParseStream};
-// use syn::punctuated::Punctuated;
+use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
 use syn::{parenthesized, token, Ident, Token};
 
@@ -18,6 +18,7 @@ pub enum MetaAttrType {
     DebugDerive,
     ErrorIf,
     Exact,
+    ExtraArgs,
     Ignore,
     InputName,
     LittleEndian,
@@ -50,6 +51,7 @@ impl MetaAttrType {
             "Default" => Some(MetaAttrType::Ignore),
             "ErrorIf" => Some(MetaAttrType::ErrorIf),
             "Exact" => Some(MetaAttrType::Exact),
+            "ExtraArgs" => Some(MetaAttrType::ExtraArgs),
             "If" => Some(MetaAttrType::Cond),
             "Ignore" => Some(MetaAttrType::Ignore),
             "InputName" => Some(MetaAttrType::InputName),
@@ -78,6 +80,7 @@ impl MetaAttrType {
             | MetaAttrType::Cond
             | MetaAttrType::Count
             | MetaAttrType::ErrorIf
+            | MetaAttrType::ExtraArgs
             | MetaAttrType::InputName
             | MetaAttrType::Map
             | MetaAttrType::Move
@@ -110,6 +113,7 @@ impl fmt::Display for MetaAttrType {
             MetaAttrType::DebugDerive => "DebugDerive",
             MetaAttrType::ErrorIf => "ErrorIf",
             MetaAttrType::Exact => "Exact",
+            MetaAttrType::ExtraArgs => "ExtraArgs",
             MetaAttrType::Ignore => "Ignore",
             MetaAttrType::InputName => "InputName",
             MetaAttrType::LittleEndian => "LittleEndian",
@@ -147,6 +151,7 @@ impl MetaAttr {
         match self.attr_type {
             MetaAttrType::DebugDerive
             | MetaAttrType::Debug
+            | MetaAttrType::ExtraArgs
             | MetaAttrType::InputName
             | MetaAttrType::LittleEndian
             | MetaAttrType::BigEndian
@@ -161,7 +166,10 @@ impl MetaAttr {
     /// Is attribute acceptable for field-level
     pub fn acceptable_fla(&self) -> bool {
         match self.attr_type {
-            MetaAttrType::DebugDerive | MetaAttrType::InputName | MetaAttrType::Exact => false,
+            MetaAttrType::DebugDerive
+            | MetaAttrType::Exact
+            | MetaAttrType::ExtraArgs
+            | MetaAttrType::InputName => false,
             _ => true,
         }
     }
@@ -195,6 +203,14 @@ impl Parse for MetaAttr {
         let arg0 = if attr_type.takes_argument() {
             // read (value), or ="value"
             let token_stream = match attr_type {
+                MetaAttrType::ExtraArgs => {
+                    let content;
+                    let _paren_token = parenthesized!(content in input);
+                    type ExpectedType = Punctuated<syn::Field, Token![,]>;
+                    let fields: ExpectedType = content.parse_terminated(syn::Field::parse_named)?;
+                    // prepend comma, args will be after input name
+                    quote! { , #fields }
+                }
                 MetaAttrType::PreExec | MetaAttrType::PostExec => {
                     parse_content::<syn::Stmt>(input)?
                 }
