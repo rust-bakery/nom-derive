@@ -15,7 +15,7 @@
 //! In some cases, writing the parser manually will remain more efficient.
 //!
 //! - [API documentation](https://docs.rs/nom-derive)
-//! - [Documentation of `Nom` attribute](https://docs.rs/nom-derive/latest/nom_derive/derive.Nom.html). This is the main
+//! - [Documentation of `Nom` attribute](derive.Nom.html). This is the main
 //!   documentation for this crate, with all possible options and many examples.
 //!
 //! *Feedback welcome !*
@@ -32,6 +32,7 @@
 //! * it allows overriding any parsing method by your own
 //! * it allows using generated parsing functions along with handwritten parsers and
 //!   combining them without efforts
+//! * it remains as fast as nom
 //!
 //! `nom-derive` adds declarative parsing to `nom`. It also allows mixing with
 //! procedural parsing easily, making writing parsers for byte-encoded formats
@@ -59,10 +60,8 @@
 //!
 //! To parse input, just call `let res = S::parse(input);`.
 //!
-//! For extensive documentation of all attributes and examples, see the
-//! [Nom derive
-//! attribute](https://docs.rs/nom-derive/latest/nom_derive/derive.Nom.html)
-//! documentation.
+//! For extensive documentation of all attributes and examples, see the [Nom derive
+//! attribute](derive.Nom.html) documentation.
 //!
 //! Many examples are provided, and more can be found in the [project
 //! tests](https://github.com/rust-bakery/nom-derive/tree/master/tests).

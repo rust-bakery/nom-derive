@@ -34,6 +34,7 @@ The goal of this project is that:
 * it allows overriding any parsing method by your own
 * it allows using generated parsing functions along with handwritten parsers and
   combining them without efforts
+* it remains as fast as nom
 
 `nom-derive` adds declarative parsing to `nom`. It also allows mixing with
 procedural parsing easily, making writing parsers for byte-encoded formats
@@ -61,10 +62,8 @@ impl S {
 
 To parse input, just call `let res = S::parse(input);`.
 
-For extensive documentation of all attributes and examples, see the
-[Nom derive
-attribute](https://docs.rs/nom-derive/latest/nom_derive/derive.Nom.html)
-documentation.
+For extensive documentation of all attributes and examples, see the [Nom derive
+attribute](https://docs.rs/nom-derive/latest/nom_derive/derive.Nom.html) documentation.
 
 Many examples are provided, and more can be found in the [project
 tests](https://github.com/rust-bakery/nom-derive/tree/master/tests).
@@ -78,7 +77,6 @@ tests](https://github.com/rust-bakery/nom-derive/tree/master/tests).
   `stderr` if the parser fails.
 
 [nom]: https://github.com/geal/nom
-
 <!-- cargo-sync-readme end -->
 
 ## Changes
