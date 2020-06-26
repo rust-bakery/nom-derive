@@ -16,7 +16,6 @@ struct S2 {
     pub b: u64,
 }
 
-
 // if test is used with '--nocapture', output will go to stderr
 #[test]
 fn test_struct_dbg() {

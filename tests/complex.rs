@@ -6,33 +6,33 @@ use nom_derive::Nom;
 
 use nom::bytes::complete::take_till;
 use nom::combinator::cond;
+use nom::number::streaming::{be_u64, be_u8};
 use nom::number::Endianness;
-use nom::number::streaming::{be_u8, be_u64};
 use std::ffi::CString;
 
 /// A simple structure, with a complex sub-parser expression
-#[derive(Debug,PartialEq,Nom)]
+#[derive(Debug, PartialEq, Nom)]
 struct StructWithComplexParser {
     pub a: u32,
-    #[nom(Parse="cond(a > 0,be_u64)")]
+    #[nom(Parse = "cond(a > 0,be_u64)")]
     pub b: Option<u64>,
 }
 
 /// A simple structure, ignoring one field
-#[derive(Debug,PartialEq,Nom)]
+#[derive(Debug, PartialEq, Nom)]
 struct StructWithIgnore {
     pub a: u32,
     #[nom(Ignore)]
     pub b: Option<u64>,
 }
 
-#[derive(Debug,PartialEq,Nom)]
+#[derive(Debug, PartialEq, Nom)]
 struct StructWithoutComplete {
     pub a: u32,
     pub b: u64,
 }
 
-#[derive(Debug,PartialEq,Nom)]
+#[derive(Debug, PartialEq, Nom)]
 struct StructWithComplete {
     pub a: u32,
     #[nom(Complete)]
@@ -42,8 +42,8 @@ struct StructWithComplete {
 #[derive(Debug, PartialEq, Nom)]
 struct StructWithMap {
     pub a: u32,
-    #[nom(Parse="be_u8", Map = "|x: u8| x.to_string()")]
-    int_str: String
+    #[nom(Parse = "be_u8", Map = "|x: u8| x.to_string()")]
+    int_str: String,
 }
 
 #[derive(Debug, PartialEq, Nom)]
@@ -69,22 +69,24 @@ struct TopLevelPostExec {
 #[repr(u8)]
 // #[nom(DebugDerive)]
 #[nom(PostExec(println!("parsing done: {:?}", enum_def);))]
-pub enum FieldLessEnumPostExec{
+pub enum FieldLessEnumPostExec {
     A,
     B = 2,
     C,
 }
 
-#[derive(Debug,PartialEq,Eq,Clone,Copy,Nom)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Nom)]
 pub struct MessageType(pub u8);
 
 #[derive(Debug, PartialEq, Nom)]
 // #[nom(DebugDerive)]
-#[nom(Selector="MessageType")]
+#[nom(Selector = "MessageType")]
 #[nom(PostExec(println!("parsing done: {:?}", enum_def);))]
 pub enum EnumPostExec {
-    #[nom(Selector="MessageType(0)")] Field1(u32),
-    #[nom(Selector="MessageType(1)")] Field2(Option<u32>),
+    #[nom(Selector = "MessageType(0)")]
+    Field1(u32),
+    #[nom(Selector = "MessageType(1)")]
+    Field2(Option<u32>),
 }
 
 #[derive(Debug, PartialEq, Nom)]
@@ -124,7 +126,7 @@ struct StructWithOffset {
     #[nom(Move(3))]
     b: u32,
     #[nom(Move(-4))]
-    b2 : u32,
+    b2: u32,
 }
 
 #[derive(Debug, PartialEq, Nom)]
@@ -178,19 +180,31 @@ const INPUT_CSTRING: &[u8] = b"\x00\x00\x00\x00Hello, world!\x00\x01";
 #[test]
 fn test_struct_complex_parse() {
     let res = StructWithComplexParser::parse(INPUT_16);
-    assert_eq!(res, Ok((&INPUT_16[12..],StructWithComplexParser{a:1,b:Some(0x1234567812345678)})));
+    assert_eq!(
+        res,
+        Ok((
+            &INPUT_16[12..],
+            StructWithComplexParser {
+                a: 1,
+                b: Some(0x1234567812345678)
+            }
+        ))
+    );
 }
 
 #[test]
 fn test_struct_ignore() {
     let res = StructWithIgnore::parse(INPUT_16);
-    assert_eq!(res, Ok((&INPUT_16[4..],StructWithIgnore{a:1,b:None})));
+    assert_eq!(
+        res,
+        Ok((&INPUT_16[4..], StructWithIgnore { a: 1, b: None }))
+    );
 }
 
 #[test]
 fn test_struct_complete() {
     let input = &INPUT_16[12..];
-    let res= StructWithoutComplete::parse(input).expect_err("parse error");
+    let res = StructWithoutComplete::parse(input).expect_err("parse error");
     let res_complete = StructWithComplete::parse(input).expect_err("parse error");
     // res: Error(Incomplete(Size(8)))
     assert!(res.is_incomplete());
@@ -201,23 +215,63 @@ fn test_struct_complete() {
 #[test]
 fn test_struct_map() {
     let res = StructWithMap::parse(INPUT_16);
-    assert_eq!(res, Ok((&INPUT_16[5..],StructWithMap{a:1,int_str:"18".to_string()})));
+    assert_eq!(
+        res,
+        Ok((
+            &INPUT_16[5..],
+            StructWithMap {
+                a: 1,
+                int_str: "18".to_string()
+            }
+        ))
+    );
 }
 
 #[test]
 fn test_struct_postexec() {
     let res = StructWithPostExec::parse(INPUT_16);
-    assert_eq!(res, Ok((&INPUT_16[5..],StructWithPostExec{a:1,b:18,c:19})));
+    assert_eq!(
+        res,
+        Ok((&INPUT_16[5..], StructWithPostExec { a: 1, b: 18, c: 19 }))
+    );
     let res = TopLevelPostExec::parse(INPUT_16);
-    assert_eq!(res, Ok((&INPUT_16[6..],TopLevelPostExec{a:1,b:0x12,c:0x34})));
+    assert_eq!(
+        res,
+        Ok((
+            &INPUT_16[6..],
+            TopLevelPostExec {
+                a: 1,
+                b: 0x12,
+                c: 0x34
+            }
+        ))
+    );
 }
 
 #[test]
 fn test_struct_align_and_padding() {
     let res = StructWithAlignment::parse(INPUT_16);
-    assert_eq!(res, Ok((&INPUT_16[12..],StructWithAlignment{a:0,b:0x1234_5678_1234_5678})));
+    assert_eq!(
+        res,
+        Ok((
+            &INPUT_16[12..],
+            StructWithAlignment {
+                a: 0,
+                b: 0x1234_5678_1234_5678
+            }
+        ))
+    );
     let res = StructWithAlignmentAndPadding::parse(INPUT_16);
-    assert_eq!(res, Ok((&INPUT_16[10..],StructWithAlignmentAndPadding{a:0,b:0x5678_1234})));
+    assert_eq!(
+        res,
+        Ok((
+            &INPUT_16[10..],
+            StructWithAlignmentAndPadding {
+                a: 0,
+                b: 0x5678_1234
+            }
+        ))
+    );
     let res = StructWithLongSkip::parse(INPUT_16).expect_err("parse error");
     if let nom::Err::Incomplete(sz) = res {
         assert_eq!(sz, nom::Needed::Size(200));
@@ -225,9 +279,22 @@ fn test_struct_align_and_padding() {
         panic!("wrong error type");
     }
     let res = StructWithOffset::parse(INPUT_16);
-    assert_eq!(res, Ok((&INPUT_16[8..],StructWithOffset{a:0,b:0x1234_5678,b2:0x1234_5678})));
+    assert_eq!(
+        res,
+        Ok((
+            &INPUT_16[8..],
+            StructWithOffset {
+                a: 0,
+                b: 0x1234_5678,
+                b2: 0x1234_5678
+            }
+        ))
+    );
     let res = StructWithOffsetAbs::parse(INPUT_16);
-    assert_eq!(res, Ok((&INPUT_16[5..],StructWithOffsetAbs{a:0,a2:0x12})));
+    assert_eq!(
+        res,
+        Ok((&INPUT_16[5..], StructWithOffsetAbs { a: 0, a2: 0x12 }))
+    );
 }
 
 #[test]

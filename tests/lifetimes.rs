@@ -9,26 +9,26 @@ use nom::number::streaming::be_u64;
 use std::marker::PhantomData;
 
 /// A simple structure, with a lifetime
-#[derive(Debug,PartialEq,Nom)]
+#[derive(Debug, PartialEq, Nom)]
 struct StructWithLifetime<'a> {
     /// This field provides the parsing code, and calls a macro
-    #[nom(Parse="take(4 as usize)")]
-    s: &'a[u8],
+    #[nom(Parse = "take(4 as usize)")]
+    s: &'a [u8],
 }
 
 /// A structure with different lifetimes
-#[derive(Debug,PartialEq,Nom)]
-struct StructWithLifetimes<'a,'b> {
-    #[nom(Parse="take(4 as usize)")]
-    s: &'a[u8],
-    #[nom(Parse="take(4 as usize)")]
-    t: &'b[u8],
+#[derive(Debug, PartialEq, Nom)]
+struct StructWithLifetimes<'a, 'b> {
+    #[nom(Parse = "take(4 as usize)")]
+    s: &'a [u8],
+    #[nom(Parse = "take(4 as usize)")]
+    t: &'b [u8],
 }
 
 // /// A structure with PhantomData
-#[derive(Debug,PartialEq,Nom)]
+#[derive(Debug, PartialEq, Nom)]
 struct StructWithPhantomData<'a> {
-    #[nom(Parse="map(be_u64, |x| x as *const u8)")]
+    #[nom(Parse = "map(be_u64, |x| x as *const u8)")]
     start: *const u8,
     phantom: PhantomData<&'a u8>,
 }
@@ -37,24 +37,42 @@ struct StructWithPhantomData<'a> {
 fn test_struct_with_lifetime() {
     let input = b"\x00\x00\x00\x01";
     let res = StructWithLifetime::parse(input);
-    assert_eq!(res, Ok((&input[4..],StructWithLifetime{s:&input[0..4]})));
+    assert_eq!(
+        res,
+        Ok((&input[4..], StructWithLifetime { s: &input[0..4] }))
+    );
 }
 
 #[test]
 fn test_struct_with_lifetimes() {
     let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
     let res = StructWithLifetimes::parse(input);
-    assert_eq!(res, Ok((&input[8..],StructWithLifetimes{s:&input[0..4], t:&input[4..8]})));
+    assert_eq!(
+        res,
+        Ok((
+            &input[8..],
+            StructWithLifetimes {
+                s: &input[0..4],
+                t: &input[4..8]
+            }
+        ))
+    );
 }
 
 #[test]
 fn test_struct_with_phantomdata() {
     let input = b"\x12\x34\x56\x78\x12\x34\x56\x78";
     let res = StructWithPhantomData::parse(input);
-    assert_eq!(res,
-               Ok((&input[8..],
-               StructWithPhantomData{start:0x1234567812345678 as *const u8, phantom:PhantomData}))
-              );
+    assert_eq!(
+        res,
+        Ok((
+            &input[8..],
+            StructWithPhantomData {
+                start: 0x1234567812345678 as *const u8,
+                phantom: PhantomData
+            }
+        ))
+    );
 }
 
 // XXX generics are not supported

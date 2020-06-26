@@ -84,18 +84,18 @@ extern crate syn;
 extern crate quote;
 
 use proc_macro::TokenStream;
-use syn::*;
 use syn::export::Span;
+use syn::*;
 
 mod config;
+mod enums;
 mod meta;
 mod parsertree;
 mod structs;
-mod enums;
 
 use crate::meta::attr::{MetaAttr, MetaAttrType};
-use structs::{get_pre_post_exec, parse_struct};
 use enums::impl_nom_enums;
+use structs::{get_pre_post_exec, parse_struct};
 
 /// The `Nom` derive automatically generates a `parse` function for the structure
 /// using [nom] parsers. It will try to infer parsers for primitive of known
@@ -1150,12 +1150,13 @@ fn get_extra_args(meta_list: &[MetaAttr]) -> Option<&proc_macro2::TokenStream> {
         .and_then(|m| m.arg())
 }
 
-fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
+fn impl_nom(ast: &syn::DeriveInput, debug_derive: bool) -> TokenStream {
     use crate::config::Config;
     // eprintln!("ast: {:#?}", ast);
     let struct_name = ast.ident.to_string();
     // parse top-level attributes and prepare tokens for each field parser
-    let meta = meta::parse_nom_top_level_attribute(&ast.attrs).expect("Parsing the 'nom' top level attribute failed");
+    let meta = meta::parse_nom_top_level_attribute(&ast.attrs)
+        .expect("Parsing the 'nom' top level attribute failed");
     // eprintln!("top-level meta: {:?}", meta);
     let mut config = Config::from_meta_list(struct_name, &meta).expect("Could not build config");
     config.debug_derive |= debug_derive;
@@ -1165,35 +1166,41 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
         config.test_endian = true;
     }
     // enums are handled differently
-    let s =
-        match &ast.data {
-            syn::Data::Enum(_)       => { return impl_nom_enums(ast, &mut config); },
-            syn::Data::Struct(ref s) => parse_struct(s, &mut config),
-            syn::Data::Union(_)      => panic!("Unions not supported"),
+    let s = match &ast.data {
+        syn::Data::Enum(_) => {
+            return impl_nom_enums(ast, &mut config);
+        }
+        syn::Data::Struct(ref s) => parse_struct(s, &mut config),
+        syn::Data::Union(_) => panic!("Unions not supported"),
     };
     // prepare tokens
     let generics = &ast.generics;
     let name = &ast.ident;
-    let (idents, parser_tokens) : (Vec<_>,Vec<_>) = s.parsers.iter()
+    let (idents, parser_tokens): (Vec<_>, Vec<_>) = s
+        .parsers
+        .iter()
         .map(|sp| {
             let id = syn::Ident::new(&sp.name, Span::call_site());
             (id, &sp.parser)
         })
         .unzip();
-    let (pre, post) : (Vec<_>,Vec<_>) = s.parsers.iter()
-        .map(|sp| {
-            (sp.pre_exec.as_ref(), sp.post_exec.as_ref())
-        })
+    let (pre, post): (Vec<_>, Vec<_>) = s
+        .parsers
+        .iter()
+        .map(|sp| (sp.pre_exec.as_ref(), sp.post_exec.as_ref()))
         .unzip();
     let idents2 = idents.clone();
     // Code generation
     let struct_def = if s.unnamed {
-        quote!{ ( #name ( #(#idents2),* ) ) }
+        quote! { ( #name ( #(#idents2),* ) ) }
     } else {
-        quote!{ ( #name { #(#idents2),* } ) }
+        quote! { ( #name { #(#idents2),* } ) }
     };
     let input_name = syn::Ident::new(&config.input_name, Span::call_site());
-    let orig_input_name = syn::Ident::new(&("orig_".to_string() + &config.input_name), Span::call_site());
+    let orig_input_name = syn::Ident::new(
+        &("orig_".to_string() + &config.input_name),
+        Span::call_site(),
+    );
     let extra_args = get_extra_args(&meta);
     let tokens = quote! {
         impl#generics #name#generics {

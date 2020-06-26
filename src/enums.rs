@@ -8,7 +8,7 @@ use crate::parsertree::ParserTree;
 use crate::structs::{get_pre_post_exec, parse_fields, StructParserTree};
 
 #[derive(Debug)]
-struct VariantParserTree{
+struct VariantParserTree {
     pub ident: syn::Ident,
     pub selector: String,
     pub struct_def: StructParserTree,
@@ -16,15 +16,20 @@ struct VariantParserTree{
 
 fn parse_variant(variant: &syn::Variant, config: &mut Config) -> VariantParserTree {
     // eprintln!("variant: {:?}", variant);
-    let meta_list = meta::parse_nom_attribute(&variant.attrs).expect("Parsing the 'nom' meta attribute failed");
-    let selector = get_selector(&meta_list)
-        .unwrap_or_else(|| panic!("The 'Selector' attribute must be used to give the value of selector item (variant {})", variant.ident));
+    let meta_list =
+        meta::parse_nom_attribute(&variant.attrs).expect("Parsing the 'nom' meta attribute failed");
+    let selector = get_selector(&meta_list).unwrap_or_else(|| {
+        panic!(
+            "The 'Selector' attribute must be used to give the value of selector item (variant {})",
+            variant.ident
+        )
+    });
     let struct_def = parse_fields(&variant.fields, config);
     // discriminant ?
-    VariantParserTree{
+    VariantParserTree {
         ident: variant.ident.clone(),
         selector,
-        struct_def
+        struct_def,
     }
 }
 
@@ -47,25 +52,23 @@ fn get_repr(attrs: &[syn::Attribute]) -> Option<String> {
                         if ident == "repr" {
                             for n in metalist.nested.iter() {
                                 match n {
-                                    syn::NestedMeta::Meta(meta) => {
-                                        match meta {
-                                            syn::Meta::Path(path) => {
-                                                if let Some(word) = path.get_ident() {
-                                                    return Some(word.to_string())
-                                                } else {
-                                                    panic!("unsupported nested type for 'repr'")
-                                                }
-                                            },
-                                            _ => panic!("unsupported nested type for 'repr'")
+                                    syn::NestedMeta::Meta(meta) => match meta {
+                                        syn::Meta::Path(path) => {
+                                            if let Some(word) = path.get_ident() {
+                                                return Some(word.to_string());
+                                            } else {
+                                                panic!("unsupported nested type for 'repr'")
+                                            }
                                         }
+                                        _ => panic!("unsupported nested type for 'repr'"),
                                     },
-                                    _ => panic!("unsupported meta type for 'repr'")
+                                    _ => panic!("unsupported meta type for 'repr'"),
                                 }
                             }
                         }
                     }
                 }
-                syn::Meta::Path(_) => ()
+                syn::Meta::Path(_) => (),
             }
         }
     }
@@ -76,69 +79,80 @@ fn is_input_fieldless_enum(ast: &syn::DeriveInput) -> bool {
     match ast.data {
         syn::Data::Enum(ref data_enum) => {
             // eprintln!("{:?}", data_enum);
-            data_enum.variants.iter()
-                .fold(true,
-                      |acc, v| {
-                          if let syn::Fields::Unit = v.fields { acc } else { false }
-                      })
-        },
-        _ => false
+            data_enum.variants.iter().fold(true, |acc, v| {
+                if let syn::Fields::Unit = v.fields {
+                    acc
+                } else {
+                    false
+                }
+            })
+        }
+        _ => false,
     }
 }
 
-fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[MetaAttr], config: &Config) -> TokenStream {
+fn impl_nom_fieldless_enums(
+    ast: &syn::DeriveInput,
+    repr: String,
+    meta_list: &[MetaAttr],
+    config: &Config,
+) -> TokenStream {
     let input_name = syn::Ident::new(&config.input_name, Span::call_site());
-    let orig_input_name = syn::Ident::new(&("orig_".to_string() + &config.input_name), Span::call_site());
+    let orig_input_name = syn::Ident::new(
+        &("orig_".to_string() + &config.input_name),
+        Span::call_site(),
+    );
     let (tl_pre, tl_post) = get_pre_post_exec(&meta_list, config);
     let parser = match repr.as_ref() {
-        "u8"  |
-        "u16" |
-        "u24" |
-        "u32" |
-        "u64" |
-        "i8"  |
-        "i16" |
-        "i24" |
-        "i32" |
-        "i64" => {
+        "u8" | "u16" | "u24" | "u32" | "u64" | "i8" | "i16" | "i24" | "i32" | "i64" => {
             let is_big_endian = if meta_list.iter().any(|m| m.is_type(MetaAttrType::BigEndian)) {
                 true
-            } else if meta_list.iter().any(|m| m.is_type(MetaAttrType::LittleEndian)) {
+            } else if meta_list
+                .iter()
+                .any(|m| m.is_type(MetaAttrType::LittleEndian))
+            {
                 false
             } else {
                 config.big_endian
             };
             if is_big_endian {
-                Some(ParserTree::Raw(format!("nom::number::streaming::be_{}", repr)))
+                Some(ParserTree::Raw(format!(
+                    "nom::number::streaming::be_{}",
+                    repr
+                )))
             } else {
-                Some(ParserTree::Raw(format!("nom::number::streaming::le_{}", repr)))
+                Some(ParserTree::Raw(format!(
+                    "nom::number::streaming::le_{}",
+                    repr
+                )))
             }
         }
-        _ => panic!("Cannot parse 'repr' content")
+        _ => panic!("Cannot parse 'repr' content"),
     };
-    let variant_names : Vec<_> =
-        match ast.data {
-            syn::Data::Enum(ref data_enum) => {
-                // eprintln!("{:?}", data_enum);
-                data_enum.variants.iter()
-                    .map(|v| {
-                        v.ident.to_string()
-                    })
-                    .collect()
-            },
-            _ => { panic!("expect enum"); }
-        };
+    let variant_names: Vec<_> = match ast.data {
+        syn::Data::Enum(ref data_enum) => {
+            // eprintln!("{:?}", data_enum);
+            data_enum
+                .variants
+                .iter()
+                .map(|v| v.ident.to_string())
+                .collect()
+        }
+        _ => {
+            panic!("expect enum");
+        }
+    };
     let generics = &ast.generics;
     let name = &ast.ident;
     let ty = syn::Ident::new(&repr, Span::call_site());
-    let variants_code : Vec<_> =
-        variant_names.iter()
-            .map(|variant_name| {
-                let id = syn::Ident::new(variant_name, Span::call_site());
-                quote!{ if selector == #name::#id as #ty { #name::#id } }
-            })
-            .collect();
-    let tokens = quote!{
+    let variants_code: Vec<_> = variant_names
+        .iter()
+        .map(|variant_name| {
+            let id = syn::Ident::new(variant_name, Span::call_site());
+            quote! { if selector == #name::#id as #ty { #name::#id } }
+        })
+        .collect();
+    let tokens = quote! {
         impl#generics #name#generics {
             fn parse(#orig_input_name: &[u8]) -> nom::IResult<&[u8],#name> {
                 let #input_name = #orig_input_name;
@@ -162,43 +176,59 @@ fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[Me
 pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> TokenStream {
     let name = &ast.ident;
     // eprintln!("{:?}", ast.attrs);
-    let meta_list = meta::parse_nom_top_level_attribute(&ast.attrs).expect("Parsing the 'nom' meta attribute failed");
+    let meta_list = meta::parse_nom_top_level_attribute(&ast.attrs)
+        .expect("Parsing the 'nom' meta attribute failed");
     let input_name = syn::Ident::new(&config.input_name, Span::call_site());
-    let orig_input_name = syn::Ident::new(&("orig_".to_string() + &config.input_name), Span::call_site());
-    let selector = match get_selector(&meta_list) { //.expect("The 'Selector' attribute must be used to give the type of selector item");
+    let orig_input_name = syn::Ident::new(
+        &("orig_".to_string() + &config.input_name),
+        Span::call_site(),
+    );
+    let selector = match get_selector(&meta_list) {
+        //.expect("The 'Selector' attribute must be used to give the type of selector item");
         Some(s) => s,
-        None    => {
+        None => {
             if is_input_fieldless_enum(ast) {
                 // check that we have a repr attribute
-                let repr = get_repr(&ast.attrs).expect("Nom-derive: fieldless enums must have a 'repr' attribute");
+                let repr = get_repr(&ast.attrs)
+                    .expect("Nom-derive: fieldless enums must have a 'repr' attribute");
                 return impl_nom_fieldless_enums(ast, repr, &meta_list, config);
             } else {
                 panic!("Nom-derive: enums must specify the 'selector' attribute");
             }
         }
     };
-    let mut variants_defs : Vec<_> =
-        match ast.data {
-            syn::Data::Enum(ref data_enum) => {
-                // eprintln!("{:?}", data_enum);
-                data_enum.variants.iter()
-                    .map(|v| parse_variant(v, config))
-                    .collect()
-            },
-            _ => { panic!("expect enum"); }
-        };
+    let mut variants_defs: Vec<_> = match ast.data {
+        syn::Data::Enum(ref data_enum) => {
+            // eprintln!("{:?}", data_enum);
+            data_enum
+                .variants
+                .iter()
+                .map(|v| parse_variant(v, config))
+                .collect()
+        }
+        _ => {
+            panic!("expect enum");
+        }
+    };
     // parse string items and prepare tokens for each variant
     let (tl_pre, tl_post) = get_pre_post_exec(&meta_list, config);
     let generics = &ast.generics;
-    let selector_type : proc_macro2::TokenStream = selector.parse().unwrap();
+    let selector_type: proc_macro2::TokenStream = selector.parse().unwrap();
     let mut default_case_handled = false;
-    let mut variants_code : Vec<_> = {
-        variants_defs.iter()
+    let mut variants_code: Vec<_> = {
+        variants_defs
+            .iter()
             .map(|def| {
-                if def.selector == "_" { default_case_handled = true; }
-                let m : proc_macro2::TokenStream = def.selector.parse().expect("invalid selector value");
+                if def.selector == "_" {
+                    default_case_handled = true;
+                }
+                let m: proc_macro2::TokenStream =
+                    def.selector.parse().expect("invalid selector value");
                 let variantname = &def.ident;
-                let (idents,parser_tokens) : (Vec<_>,Vec<_>) = def.struct_def.parsers.iter()
+                let (idents, parser_tokens): (Vec<_>, Vec<_>) = def
+                    .struct_def
+                    .parsers
+                    .iter()
                     .map(|sp| {
                         let id = syn::Ident::new(&sp.name, Span::call_site());
                         (id, &sp.parser)
@@ -206,11 +236,11 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Tok
                     .unzip();
                 let idents2 = idents.clone();
                 let struct_def = if def.struct_def.unnamed {
-                    quote!{ ( #name::#variantname ( #(#idents2),* ) ) }
+                    quote! { ( #name::#variantname ( #(#idents2),* ) ) }
                 } else {
-                    quote!{ ( #name::#variantname { #(#idents2),* } ) }
+                    quote! { ( #name::#variantname { #(#idents2),* } ) }
                 };
-                quote!{
+                quote! {
                     #m => {
                         #(let (#input_name, #idents) = #parser_tokens (#input_name) ?;)*
                         let struct_def = #struct_def;
@@ -223,7 +253,8 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Tok
     };
     // if we have a default case, make sure it is the last entry
     if default_case_handled {
-        let pos = variants_defs.iter()
+        let pos = variants_defs
+            .iter()
             .position(|def| def.selector == "_")
             .expect("default case is handled but couldn't find index");
         let last_index = variants_defs.len() - 1;
@@ -233,10 +264,12 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Tok
         }
     }
     // generate code
-    let default_case =
-        if default_case_handled { quote!{} }
-        else { quote!{ _ => Err(nom::Err::Error(nom::error_position!(#input_name, nom::error::ErrorKind::Switch))) } };
-    let tokens = quote!{
+    let default_case = if default_case_handled {
+        quote! {}
+    } else {
+        quote! { _ => Err(nom::Err::Error(nom::error_position!(#input_name, nom::error::ErrorKind::Switch))) }
+    };
+    let tokens = quote! {
         impl#generics #name#generics {
             fn parse(#orig_input_name: &[u8], selector: #selector_type) -> nom::IResult<&[u8],#name> {
                 let #input_name = #orig_input_name;
