@@ -53,7 +53,7 @@
 //! This adds a static method `parse` to `S`, with the following signature:
 //! ```rust,ignore
 //! impl S {
-//! 	pub fn parse(i: &[u8]) -> nom::IResult(&[u8], S);
+//!     pub fn parse(i: &[u8]) -> nom::IResult(&[u8], S);
 //! }
 //! ```
 //!
@@ -176,11 +176,9 @@ use enums::impl_nom_enums;
 ///   c: u16
 /// }
 ///
-/// # fn main() {
 /// # let input = b"\x00\x00\x00\x01\x12\x34\x56\x78";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[8..],S{a:1,b:0x1234,c:0x5678})));
-/// # }
 /// ```
 ///
 /// This also work for tuple structs:
@@ -192,11 +190,9 @@ use enums::impl_nom_enums;
 /// #[derive(Nom)]
 /// struct S(u32);
 /// #
-/// # fn main() {
 /// # let input = b"\x00\x00\x00\x01";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[4..],S(1))));
-/// # }
 /// ```
 ///
 /// ## Byteorder
@@ -217,13 +213,11 @@ use enums::impl_nom_enums;
 ///   c: u16
 /// }
 ///
-/// # fn main() {
 /// let input = b"\x00\x00\x00\x01\x12\x34\x56\x78";
 /// let res = LittleEndianStruct::parse(input);
 /// assert_eq!(res, Ok((&input[8..],
 ///     LittleEndianStruct{a:0x0100_0000,b:0x3412,c:0x7856}))
 /// );
-/// # }
 /// ```
 ///
 /// The `BigEndian` and `LittleEndian` attributes can be specified for struct fields.
@@ -245,13 +239,11 @@ use enums::impl_nom_enums;
 ///   c: u16
 /// }
 ///
-/// # fn main() {
 /// # let input = b"\x00\x00\x00\x01\x12\x34\x56\x78";
 /// # let res = MixedEndianStruct::parse(input);
 /// # assert_eq!(res, Ok((&input[8..],
 /// #     MixedEndianStruct{a:0x1,b:0x3412,c:0x5678}))
 /// # );
-/// # }
 /// ```
 ///
 /// The `SetEndian` attribute changes the endianness of all following integer parsers to the
@@ -288,7 +280,6 @@ use enums::impl_nom_enums;
 ///   c: u16
 /// }
 ///
-/// # fn main() {
 /// # let input = b"\x00\x00\x00\x01\x12\x34\x56\x78";
 /// let res = MixedEndianStruct::parse(input, Endianness::Big);
 /// # assert_eq!(res, Ok((&input[8..],
@@ -298,7 +289,6 @@ use enums::impl_nom_enums;
 /// # assert_eq!(res, Ok((&input[8..],
 /// #     MixedEndianStruct{a:0x0100_0000,b:0x3412,c:0x5678}))
 /// # );
-/// # }
 /// ```
 ///
 /// # Deriving and Inferring Parsers
@@ -324,11 +314,9 @@ use enums::impl_nom_enums;
 ///   a: Option<u32>
 /// }
 ///
-/// # fn main() {
 /// let input = b"\x00\x00\x00\x01";
 /// let res = S::parse(input);
 /// assert_eq!(res, Ok((&input[4..],S{a:Some(1)})));
-/// # }
 /// ```
 ///
 /// ## Vec types
@@ -345,11 +333,9 @@ use enums::impl_nom_enums;
 ///   a: Vec<u16>
 /// }
 ///
-/// # fn main() {
 /// let input = b"\x00\x00\x00\x01";
 /// let res = S::parse(input);
 /// assert_eq!(res, Ok((&input[4..],S{a:vec![0,1]})));
-/// # }
 /// ```
 ///
 /// ## Count
@@ -372,11 +358,9 @@ use enums::impl_nom_enums;
 ///   b: Vec<u16>
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x00\x01\x12\x34";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[4..],S{a:1, b:vec![0x1234]})));
-/// # }
 /// ```
 ///
 /// ## Tag
@@ -396,11 +380,9 @@ use enums::impl_nom_enums;
 ///   b: u16,
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"TAG\x00\x01\x12\x34";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[7..],S{tag: b"TAG", a:1, b:0x1234})));
-/// # }
 /// ```
 ///
 /// ## Take
@@ -422,11 +404,9 @@ use enums::impl_nom_enums;
 ///   b: &'a [u8],
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x00\x01\x12\x34";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[3..],S{a:1, b:&[0x12]})));
-/// # }
 /// ```
 ///
 /// ## Default parsing function
@@ -455,11 +435,9 @@ use enums::impl_nom_enums;
 ///   b: S2
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x00\x00\x00\x01";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[4..],S{a:0,b:S2{c:1}})));
-/// # }
 /// ```
 ///
 /// Example (defining `parse` method):
@@ -491,11 +469,9 @@ use enums::impl_nom_enums;
 ///   b: S2
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x00\x00\x00\x01";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[4..],S{a:0,b:S2{c:256}})));
-/// # }
 /// ```
 ///
 /// ## Custom parsers
@@ -528,11 +504,9 @@ use enums::impl_nom_enums;
 ///     a: u16
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x00\x01";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[2..],S{a:256})));
-/// # }
 /// ```
 ///
 /// The `Parse` argument can be a complex expression:
@@ -549,11 +523,9 @@ use enums::impl_nom_enums;
 ///     pub b: Option<u16>,
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x01\x00\x01";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[3..],S{a:1,b:Some(1)})));
-/// # }
 /// ```
 /// Note that you are responsible from providing correct code.
 ///
@@ -575,11 +547,9 @@ use enums::impl_nom_enums;
 ///     pub b: Option<u16>,
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x01\x00\x01";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[1..],S{a:1,b:None})));
-/// # }
 /// ```
 ///
 /// ## Complete
@@ -600,11 +570,9 @@ use enums::impl_nom_enums;
 ///     pub b: u64,
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x01\x00\x01";
 /// # let res = S::parse(input).expect_err("parse error");
 /// # assert!(!res.is_incomplete());
-/// # }
 /// ```
 ///
 /// ## Map
@@ -625,11 +593,9 @@ use enums::impl_nom_enums;
 ///     pub b: String,
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x01\x00\x01";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[2..],S{a:1,b:"0".to_string()})));
-/// # }
 /// ```
 ///
 /// ## Conditional Values
@@ -650,11 +616,9 @@ use enums::impl_nom_enums;
 ///     pub b: Option<u16>,
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x01\x00\x01";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[3..],S{a:1,b:Some(1)})));
-/// # }
 /// ```
 ///
 /// ## Value
@@ -676,11 +640,9 @@ use enums::impl_nom_enums;
 ///     pub b: String,
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x01\x00\x01";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[1..],S{a:1,b:"1".to_string()})));
-/// # }
 /// ```
 ///
 /// ## Verifications
@@ -701,11 +663,9 @@ use enums::impl_nom_enums;
 ///     pub a: u8,
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x01";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[1..],S{a:1})));
-/// # }
 /// ```
 ///
 /// The `ErrorIf` checks the provided condition, and return an error if the
@@ -728,11 +688,9 @@ use enums::impl_nom_enums;
 ///     pub b: u8,
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x01\x02";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[2..],S{a:1, b:2})));
-/// # }
 /// ```
 ///
 /// ## Exact
@@ -750,13 +708,11 @@ use enums::impl_nom_enums;
 ///     pub a: u8,
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x01\x01";
 /// # let res = S::parse(&input[1..]);
 /// # assert!(res.is_ok());
 /// # let res = S::parse(input);
 /// # assert!(res.is_err());
-/// # }
 /// ```
 ///
 /// ## PreExec
@@ -784,11 +740,9 @@ use enums::impl_nom_enums;
 ///     pub sz: usize,
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x01";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[1..],S{a:1, sz:1})));
-/// # }
 /// ```
 ///
 /// ## PostExec
@@ -816,11 +770,9 @@ use enums::impl_nom_enums;
 ///     pub b: u8,
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x01";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[1..],S{a:1, b:2})));
-/// # }
 /// ```
 ///
 /// If applied to the top-level element, the statement is executing after the entire element
@@ -842,11 +794,9 @@ use enums::impl_nom_enums;
 ///     pub b: u8,
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x01\x02";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[2..],S{a:1, b:2})));
-/// # }
 /// ```
 ///
 /// ## Alignment and Padding
@@ -877,11 +827,9 @@ use enums::impl_nom_enums;
 ///     pub b: u8,
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x01\x00\x00\x00\x02";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[5..],S{a:1, b:2})));
-/// # }
 /// ```
 ///
 /// # Deriving parsers for `Enum`
@@ -906,11 +854,9 @@ use enums::impl_nom_enums;
 ///     #[nom(Selector="1")] Field2(Option<u32>),
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x00\x00\x00\x02";
 /// # let res = U1::parse(input, 0);
 /// # assert_eq!(res, Ok((&input[4..],U1::Field1(2))));
-/// # }
 /// ```
 ///
 /// The generated function will look like:
@@ -953,11 +899,9 @@ use enums::impl_nom_enums;
 ///     pub msg_value: U1
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x00\x00\x00\x02";
 /// # let res = U1::parse(input, MessageType(0));
 /// # assert_eq!(res, Ok((&input[4..],U1::Field1(2))));
-/// # }
 /// ```
 ///
 /// ## Default case
@@ -977,11 +921,9 @@ use enums::impl_nom_enums;
 ///     #[nom(Selector="_")] Field2(u32),
 /// }
 /// #
-/// # fn main() {
 /// # let input = b"\x00\x00\x00\x02";
 /// # let res = U2::parse(input, 123);
 /// # assert_eq!(res, Ok((&input[4..],U2::Field2(2))));
-/// # }
 /// ```
 ///
 /// If the `_` selector is not the last variant, the generated code will use it
@@ -1054,7 +996,6 @@ use enums::impl_nom_enums;
 ///     C
 /// }
 /// #
-/// # fn main() {
 /// # let empty : &[u8] = b"";
 /// # assert_eq!(
 /// #     U3::parse(b"\x00"),
@@ -1067,7 +1008,6 @@ use enums::impl_nom_enums;
 /// #     U3::parse(b"\x02"),
 /// #     Ok((empty,U3::B))
 /// # );
-/// # }
 /// ```
 ///
 /// The generated parser will parse an element of type `ty` (as Big Endian), try
@@ -1095,13 +1035,11 @@ use enums::impl_nom_enums;
 ///     pub i: u8,
 /// }
 /// #
-/// # fn main() {
 /// # let empty : &[u8] = b"";
 /// # assert_eq!(
 /// #     S::parse(b"\x00"),
 /// #     Ok((empty, S{i:0}))
 /// # );
-/// # }
 /// ```
 ///
 /// Note that this variable can be used as usual, for ex. to peek data
@@ -1120,13 +1058,11 @@ use enums::impl_nom_enums;
 ///     pub remaining_len: usize,
 /// }
 /// #
-/// # fn main() {
 /// # let empty : &[u8] = b"";
 /// # assert_eq!(
 /// #     S::parse(b"\x00"),
 /// #     Ok((empty, S{a:0, remaining_len:0}))
 /// # );
-/// # }
 /// ```
 ///
 /// **This can create side-effects**: if you create a variable with the same name
@@ -1149,13 +1085,11 @@ use enums::impl_nom_enums;
 ///     pub b: u8,
 /// }
 /// #
-/// # fn main() {
 /// # let empty : &[u8] = b"";
 /// # assert_eq!(
 /// #     S::parse(b"\x00\x01\x02\x03"),
 /// #     Ok((empty, S{a:0, b:3}))
 /// # );
-/// # }
 /// ```
 ///
 /// ## Limitations
@@ -1205,11 +1139,8 @@ pub fn nom(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
     let ast = parse_macro_input!(input as DeriveInput);
 
-    // Build the impl
-    let gen = impl_nom(&ast, false);
-
-    // Return the generated impl
-    gen
+    // Build and return the generated impl
+    impl_nom(&ast, false)
 }
 
 fn get_extra_args(meta_list: &[MetaAttr]) -> Option<&proc_macro2::TokenStream> {
@@ -1236,9 +1167,9 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
     // enums are handled differently
     let s =
         match &ast.data {
-            &syn::Data::Enum(_)       => { return impl_nom_enums(ast, &mut config); },
-            &syn::Data::Struct(ref s) => parse_struct(s, &mut config),
-            &syn::Data::Union(_)      => panic!("Unions not supported"),
+            syn::Data::Enum(_)       => { return impl_nom_enums(ast, &mut config); },
+            syn::Data::Struct(ref s) => parse_struct(s, &mut config),
+            syn::Data::Union(_)      => panic!("Unions not supported"),
     };
     // prepare tokens
     let generics = &ast.generics;
@@ -1256,9 +1187,10 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
         .unzip();
     let idents2 = idents.clone();
     // Code generation
-    let struct_def = match s.unnamed {
-        false => quote!{ ( #name { #(#idents2),* } ) },
-        true  => quote!{ ( #name ( #(#idents2),* ) ) },
+    let struct_def = if s.unnamed {
+        quote!{ ( #name ( #(#idents2),* ) ) }
+    } else {
+        quote!{ ( #name { #(#idents2),* } ) }
     };
     let input_name = syn::Ident::new(&config.input_name, Span::call_site());
     let orig_input_name = syn::Ident::new(&("orig_".to_string() + &config.input_name), Span::call_site());
@@ -1293,9 +1225,6 @@ pub fn nom_derive_debug(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
     let ast = parse_macro_input!(input as DeriveInput);
 
-    // Build the impl
-    let gen = impl_nom(&ast, true);
-
-    // Return the generated impl
-    gen
+    // Build and return the generated impl
+    impl_nom(&ast, true)
 }

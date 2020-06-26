@@ -1,5 +1,4 @@
 use proc_macro::TokenStream;
-use syn;
 use syn::export::Span;
 
 use crate::config::Config;
@@ -18,7 +17,8 @@ struct VariantParserTree{
 fn parse_variant(variant: &syn::Variant, config: &mut Config) -> VariantParserTree {
     // eprintln!("variant: {:?}", variant);
     let meta_list = meta::parse_nom_attribute(&variant.attrs).expect("Parsing the 'nom' meta attribute failed");
-    let selector = get_selector(&meta_list).expect(&format!("The 'Selector' attribute must be used to give the value of selector item (variant {})", variant.ident));
+    let selector = get_selector(&meta_list)
+        .unwrap_or_else(|| panic!("The 'Selector' attribute must be used to give the value of selector item (variant {})", variant.ident));
     let struct_def = parse_fields(&variant.fields, config);
     // discriminant ?
     VariantParserTree{
@@ -30,11 +30,8 @@ fn parse_variant(variant: &syn::Variant, config: &mut Config) -> VariantParserTr
 
 fn get_selector(meta_list: &[MetaAttr]) -> Option<String> {
     for meta in meta_list {
-        match meta.attr_type {
-            MetaAttrType::Selector => {
-                return Some(meta.arg().unwrap().to_string().clone());
-            }
-            _ => (),
+        if MetaAttrType::Selector == meta.attr_type {
+            return Some(meta.arg().unwrap().to_string());
         }
     }
     None
@@ -47,7 +44,7 @@ fn get_repr(attrs: &[syn::Attribute]) -> Option<String> {
                 syn::Meta::NameValue(_) => (),
                 syn::Meta::List(ref metalist) => {
                     if let Some(ident) = metalist.path.get_ident() {
-                        if &ident == &"repr" {
+                        if ident == "repr" {
                             for n in metalist.nested.iter() {
                                 match n {
                                     syn::NestedMeta::Meta(meta) => {
@@ -208,9 +205,10 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Tok
                     })
                     .unzip();
                 let idents2 = idents.clone();
-                let struct_def = match def.struct_def.unnamed {
-                    false => quote!{ ( #name::#variantname { #(#idents2),* } ) },
-                    true  => quote!{ ( #name::#variantname ( #(#idents2),* ) ) },
+                let struct_def = if def.struct_def.unnamed {
+                    quote!{ ( #name::#variantname ( #(#idents2),* ) ) }
+                } else {
+                    quote!{ ( #name::#variantname { #(#idents2),* } ) }
                 };
                 quote!{
                     #m => {

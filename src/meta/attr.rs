@@ -204,7 +204,7 @@ impl Parse for MetaAttr {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let ident: Ident = input.parse()?;
         let attr_type =
-            MetaAttrType::from_ident(&ident).expect(&format!("Wrong meta name {}", ident));
+            MetaAttrType::from_ident(&ident).unwrap_or_else(|| panic!("Wrong meta name {}", ident));
         let arg0 = if attr_type.takes_argument() {
             // read (value), or ="value"
             let token_stream = match attr_type {

@@ -32,7 +32,7 @@ impl Config {
             .iter()
             .find(|m| m.is_type(MetaAttrType::InputName))
             .map(|m| m.arg().unwrap().to_string())
-            .unwrap_or("i".to_string());
+            .unwrap_or_else(|| "i".to_string());
         Ok(Config {
             struct_name: name,
             big_endian,
