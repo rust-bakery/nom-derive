@@ -52,14 +52,29 @@ fn get_type_parser(ty: &Type, meta_list: &[MetaAttr], config: &Config) -> Option
                 "i24" |
                 "i32" |
                 "i64"    => {
-                    let is_big_endian = if meta_list.iter().any(|m| m.is_type(MetaAttrType::BigEndian)) {
-                        true
-                    } else if meta_list.iter().any(|m| m.is_type(MetaAttrType::LittleEndian)) {
-                        false
-                    } else {
-                        config.big_endian
-                    };
-                    if is_big_endian {
+                    let is_forced_big_endian = meta_list.iter().any(|m| m.is_type(MetaAttrType::BigEndian));
+                    let is_forced_little_endian = meta_list.iter().any(|m| m.is_type(MetaAttrType::LittleEndian));
+                    // first priority: field BigEndian/LittleEndian attributes
+                    if is_forced_big_endian {
+                        Some(ParserTree::Raw(format!("nom::number::streaming::be_{}", ident_s)))
+                    } else if is_forced_little_endian {
+                        Some(ParserTree::Raw(format!("nom::number::streaming::le_{}", ident_s)))
+                    }
+                    // second priority: dynamic endianness (SetEndian)
+                    else if config.test_endian {
+                        let be_ident = Ident::new(&("be_".to_string() + &ident_s), Span::call_site());
+                        let le_ident = Ident::new(&("le_".to_string() + &ident_s), Span::call_site());
+                        let qq = quote!{
+                            {
+                                if __endianness == nom::number::Endianness::Big
+                                     { nom::number::streaming::#be_ident }
+                                else { nom::number::streaming::#le_ident }
+                            }
+                        };
+                        Some(ParserTree::Raw(qq.to_string()))
+                    }
+                    // last priority: global struct endianness
+                    else if config.big_endian {
                         Some(ParserTree::Raw(format!("nom::number::streaming::be_{}", ident_s)))
                     } else {
                         Some(ParserTree::Raw(format!("nom::number::streaming::le_{}", ident_s)))
@@ -148,7 +163,7 @@ fn get_type_default(ty: &Type) -> Option<ParserTree> {
         })
 }
 
-fn get_parser(field: &::syn::Field, meta_list: &[MetaAttr], config: &Config) -> Option<ParserTree> {
+fn get_parser(field: &::syn::Field, meta_list: &[MetaAttr], config: &mut Config) -> Option<ParserTree> {
     // eprintln!("field: {:?}", field);
     let ty = &field.ty;
     // first check if we have attributes set
@@ -156,6 +171,9 @@ fn get_parser(field: &::syn::Field, meta_list: &[MetaAttr], config: &Config) -> 
     // eprintln!("meta_list: {:?}", meta_list);
     for meta in meta_list {
         match meta.attr_type {
+            MetaAttrType::SetEndian => {
+                config.test_endian = true;
+            }
             MetaAttrType::Tag => {
                 let s = meta.arg().unwrap().to_string();
                 return Some(ParserTree::Tag(s.clone()));
@@ -325,6 +343,12 @@ pub(crate) fn get_pre_post_exec(meta_list: &[MetaAttr], config: &Config) -> (Opt
                 let qq = quote_error_if(&cond, &config);
                 tk_post.extend(qq);
             }
+            MetaAttrType::SetEndian => {
+                let val = m.arg().unwrap();
+                let qq = quote!{ let __endianness = #val; };
+                // config is updated in `get_parser`
+                tk_pre.extend(qq);
+            }
             _ => (),
         }
     }
@@ -415,7 +439,7 @@ fn patch_condition(field: &syn::Field, p: ParserTree, meta_list: &[MetaAttr]) ->
     p
 }
 
-pub(crate) fn parse_fields(f: &Fields, config: &Config) -> StructParserTree {
+pub(crate) fn parse_fields(f: &Fields, config: &mut Config) -> StructParserTree {
     let mut parsers = vec![];
     let mut unnamed = false;
     match f {
@@ -455,6 +479,6 @@ pub(crate) fn parse_fields(f: &Fields, config: &Config) -> StructParserTree {
     }
 }
 
-pub(crate) fn parse_struct(s: &DataStruct, config: &Config) -> StructParserTree {
+pub(crate) fn parse_struct(s: &DataStruct, config: &mut Config) -> StructParserTree {
     parse_fields(&s.fields, config)
 }

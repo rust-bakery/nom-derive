@@ -29,6 +29,7 @@ pub enum MetaAttrType {
     PostExec,
     PreExec,
     Selector,
+    SetEndian,
     SkipAfter,
     SkipBefore,
     Tag,
@@ -63,6 +64,7 @@ impl MetaAttrType {
             "PostExec" => Some(MetaAttrType::PostExec),
             "PreExec" => Some(MetaAttrType::PreExec),
             "Selector" => Some(MetaAttrType::Selector),
+            "SetEndian" => Some(MetaAttrType::SetEndian),
             "SkipAfter" => Some(MetaAttrType::SkipAfter),
             "SkipBefore" => Some(MetaAttrType::SkipBefore),
             "Tag" => Some(MetaAttrType::Tag),
@@ -89,6 +91,7 @@ impl MetaAttrType {
             | MetaAttrType::PostExec
             | MetaAttrType::PreExec
             | MetaAttrType::Selector
+            | MetaAttrType::SetEndian
             | MetaAttrType::SkipAfter
             | MetaAttrType::SkipBefore
             | MetaAttrType::Tag
@@ -124,6 +127,7 @@ impl fmt::Display for MetaAttrType {
             MetaAttrType::PostExec => "PostExec",
             MetaAttrType::PreExec => "PreExec",
             MetaAttrType::Selector => "Selector",
+            MetaAttrType::SetEndian => "SetEndian",
             MetaAttrType::SkipAfter => "SkipAfter",
             MetaAttrType::SkipBefore => "SkipBefore",
             MetaAttrType::Tag => "Tag",
@@ -155,6 +159,7 @@ impl MetaAttr {
             | MetaAttrType::InputName
             | MetaAttrType::LittleEndian
             | MetaAttrType::BigEndian
+            | MetaAttrType::SetEndian
             | MetaAttrType::PreExec
             | MetaAttrType::PostExec
             | MetaAttrType::Exact

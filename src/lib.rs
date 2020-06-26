@@ -144,6 +144,7 @@ use enums::impl_nom_enums;
 /// | [PreExec](#preexec) | all | Execute Rust code before parsing field or struct
 /// | [PostExec](#postexec) | all | Execute Rust code after parsing field or struct
 /// | [Selector](#deriving-parser-for-enum) | all | Used to specify the value matching an enum variant
+/// | [SetEndian](#byteorder) | all | Dynamically set the endianness
 /// | [SkipAfter](#alignment-and-padding) | fields | skip the specified number of bytes, after parsing
 /// | [SkipBefore](#alignment-and-padding) | fields | skip the specified number of bytes, before parsing
 /// | [Tag](#tag) | fields | Parse a constant pattern
@@ -249,6 +250,53 @@ use enums::impl_nom_enums;
 /// # let res = MixedEndianStruct::parse(input);
 /// # assert_eq!(res, Ok((&input[8..],
 /// #     MixedEndianStruct{a:0x1,b:0x3412,c:0x5678}))
+/// # );
+/// # }
+/// ```
+///
+/// The `SetEndian` attribute changes the endianness of all following integer parsers to the
+/// provided endianness (expected argument has type `nom::number::Endianness`). The expression
+/// can be any expression or function returning an endianness, and will be evaluated once
+/// at the location of the attribute.
+///
+/// Only the parsers after this attribute (including it) are affected: if `SetEndian` is applied to
+/// the third field of a struct having 4 fields, only the fields 3 and 4 will have dynamic
+/// endianness.
+///
+/// This allows dynamic (runtime) change of the endianness, at a small cost (a test is done before
+/// every following integer parser).
+/// However, if the argument is static or known at compilation, the compiler will remove the test
+/// during optimization.
+///
+/// If a `BigEndian` or `LittleEndian` is applied to a field, its definition is used prior to
+/// `SetEndian`.
+///
+/// For ex, to create a parse function having two arguments (`input`, and the endianness):
+///
+/// ```rust
+/// # use nom_derive::Nom;
+/// # use nom::number::Endianness;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// #[nom(ExtraArgs(endian: Endianness))]
+/// #[nom(SetEndian(endian))] // Set dynamically the endianness
+/// struct MixedEndianStruct {
+///   a: u32,
+///   b: u16,
+///   #[nom(BigEndian)] // Field c will always be parsed as BigEndian
+///   c: u16
+/// }
+///
+/// # fn main() {
+/// # let input = b"\x00\x00\x00\x01\x12\x34\x56\x78";
+/// let res = MixedEndianStruct::parse(input, Endianness::Big);
+/// # assert_eq!(res, Ok((&input[8..],
+/// #     MixedEndianStruct{a:0x1,b:0x1234,c:0x5678}))
+/// # );
+/// # let res = MixedEndianStruct::parse(input, Endianness::Little);
+/// # assert_eq!(res, Ok((&input[8..],
+/// #     MixedEndianStruct{a:0x0100_0000,b:0x3412,c:0x5678}))
 /// # );
 /// # }
 /// ```
@@ -1181,11 +1229,15 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive:bool) -> TokenStream {
     let mut config = Config::from_meta_list(struct_name, &meta).expect("Could not build config");
     config.debug_derive |= debug_derive;
     let (tl_pre, tl_post) = get_pre_post_exec(&meta, &config);
+    // is endianness dynamic ?
+    if meta.iter().any(|m| m.attr_type == MetaAttrType::SetEndian) {
+        config.test_endian = true;
+    }
     // enums are handled differently
     let s =
         match &ast.data {
-            &syn::Data::Enum(_)       => { return impl_nom_enums(ast, &config); },
-            &syn::Data::Struct(ref s) => parse_struct(s, &config),
+            &syn::Data::Enum(_)       => { return impl_nom_enums(ast, &mut config); },
+            &syn::Data::Struct(ref s) => parse_struct(s, &mut config),
             &syn::Data::Union(_)      => panic!("Unions not supported"),
     };
     // prepare tokens

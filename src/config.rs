@@ -7,6 +7,9 @@ pub struct Config {
     pub debug: bool,
     pub debug_derive: bool,
     pub input_name: String,
+
+    // should generated code test endianness
+    pub test_endian: bool,
 }
 
 #[derive(Debug)]
@@ -36,6 +39,7 @@ impl Config {
             debug,
             debug_derive,
             input_name,
+            test_endian: false,
         })
     }
 }

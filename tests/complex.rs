@@ -6,6 +6,7 @@ use nom_derive::Nom;
 
 use nom::bytes::complete::take_till;
 use nom::combinator::cond;
+use nom::number::Endianness;
 use nom::number::streaming::{be_u8, be_u64};
 use std::ffi::CString;
 
@@ -162,6 +163,15 @@ pub struct MultipleAttributes1 {
     cstring: Option<CString>,
 }
 
+#[derive(Debug, Nom, PartialEq)]
+#[nom(BigEndian)]
+pub struct MixedEndian {
+    #[nom(SetEndian(Endianness::Big))]
+    pub a: u32,
+    #[nom(SetEndian(Endianness::Little))]
+    pub b: u32,
+}
+
 const INPUT_16: &[u8] = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
 const INPUT_CSTRING: &[u8] = b"\x00\x00\x00\x00Hello, world!\x00\x01";
 
@@ -254,4 +264,17 @@ fn test_struct_multiple_attributes() {
     assert!(rem.len() > 0);
     assert!(res.cstring.is_some());
     assert_eq!(res.cstring.unwrap().as_bytes(), b"Hello, world!");
+}
+
+#[test]
+fn test_struct_mixed_endian() {
+    let (rem, res) = MixedEndian::parse(INPUT_16).expect("parsing failed");
+    assert!(rem.len() > 0);
+    assert_eq!(
+        res,
+        MixedEndian {
+            a: 1,
+            b: 0x7856_3412,
+        }
+    );
 }

@@ -83,6 +83,10 @@ tests](https://github.com/rust-bakery/nom-derive/tree/master/tests).
 
 ## Changes
 
+### <unreleased>
+
+- Allow dynamic configuration of endianness (SetEndian attribute)
+
 ### 0.6.1
 
 - Add Tag attribute

@@ -15,7 +15,7 @@ struct VariantParserTree{
     pub struct_def: StructParserTree,
 }
 
-fn parse_variant(variant: &syn::Variant, config: &Config) -> VariantParserTree {
+fn parse_variant(variant: &syn::Variant, config: &mut Config) -> VariantParserTree {
     // eprintln!("variant: {:?}", variant);
     let meta_list = meta::parse_nom_attribute(&variant.attrs).expect("Parsing the 'nom' meta attribute failed");
     let selector = get_selector(&meta_list).expect(&format!("The 'Selector' attribute must be used to give the value of selector item (variant {})", variant.ident));
@@ -162,7 +162,7 @@ fn impl_nom_fieldless_enums(ast: &syn::DeriveInput, repr:String, meta_list: &[Me
     tokens.into()
 }
 
-pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &Config) -> TokenStream {
+pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> TokenStream {
     let name = &ast.ident;
     // eprintln!("{:?}", ast.attrs);
     let meta_list = meta::parse_nom_top_level_attribute(&ast.attrs).expect("Parsing the 'nom' meta attribute failed");
