@@ -84,6 +84,7 @@ tests](https://github.com/rust-bakery/nom-derive/tree/master/tests).
 ### <unreleased>
 
 - Allow dynamic configuration of endianness (SetEndian attribute)
+- Add support for `u128`/`i128` (#3)
 
 ### 0.6.1
 

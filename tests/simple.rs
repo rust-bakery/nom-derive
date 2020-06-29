@@ -84,9 +84,16 @@ struct NewType(pub u32);
 #[derive(Debug, PartialEq, Nom)]
 struct NewType2(pub u32, pub u16);
 
+#[derive(Nom, Debug, PartialEq)]
+pub struct S128 {
+    pub a: u128,
+}
+
+const INPUT_16: &[u8] = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
+
 #[test]
 fn test_simple_struct() {
-    let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
+    let input = INPUT_16;
     let res = SimpleStruct::parse(input);
     assert_eq!(
         res,
@@ -102,14 +109,14 @@ fn test_simple_struct() {
 
 #[test]
 fn test_struct_parse() {
-    let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
+    let input = INPUT_16;
     let res = StructWithParser::parse(input);
     assert_eq!(res, Ok((&input[4..], StructWithParser { a: 0x01000000 })));
 }
 
 #[test]
 fn test_struct_parse_substruct() {
-    let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
+    let input = INPUT_16;
     let res = StructWithSubStruct::parse(input);
     assert_eq!(
         res,
@@ -126,7 +133,7 @@ fn test_struct_parse_substruct() {
 
 #[test]
 fn test_struct_with_verify() {
-    let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
+    let input = INPUT_16;
     let res = StructWithVerify::parse(input);
     assert_eq!(res, Ok((&input[4..], StructWithVerify { a: 1 })));
 
@@ -142,7 +149,7 @@ fn test_struct_with_verify() {
 
 #[test]
 fn test_struct_with_condition() {
-    let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
+    let input = INPUT_16;
     let res = StructWithCondition::parse(input);
     assert_eq!(
         res,
@@ -170,7 +177,7 @@ fn test_struct_with_condition() {
 
 #[test]
 fn test_struct_with_take() {
-    let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
+    let input = INPUT_16;
     let res = StructWithTake::parse(input);
     assert_eq!(res, Ok((&input[4..], StructWithTake { b: &[0, 0, 0, 1] })));
 }
@@ -187,4 +194,19 @@ fn test_tuple_struct_2() {
     let input = b"\x00\x00\x00\x01\xff\xff";
     let res = NewType2::parse(input);
     assert_eq!(res, Ok((&input[6..], NewType2(1, 0xffff))));
+}
+
+#[test]
+fn test_struct_u128() {
+    let input = INPUT_16;
+    let res = S128::parse(input);
+    assert_eq!(
+        res,
+        Ok((
+            &input[16..],
+            S128 {
+                a: 0x0000_0001_1234_5678_1234_5678_0000_0001,
+            }
+        ))
+    );
 }
