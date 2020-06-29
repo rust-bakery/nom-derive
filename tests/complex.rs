@@ -328,7 +328,7 @@ fn test_struct_exact() {
 #[test]
 fn test_struct_multiple_attributes() {
     let (rem, res) = MultipleAttributes1::parse(INPUT_CSTRING).expect("parsing failed");
-    assert!(rem.len() > 0);
+    assert!(!rem.is_empty());
     assert!(res.cstring.is_some());
     assert_eq!(res.cstring.unwrap().as_bytes(), b"Hello, world!");
 }
@@ -336,7 +336,7 @@ fn test_struct_multiple_attributes() {
 #[test]
 fn test_struct_mixed_endian() {
     let (rem, res) = MixedEndian::parse(INPUT_16).expect("parsing failed");
-    assert!(rem.len() > 0);
+    assert!(!rem.is_empty());
     assert_eq!(
         res,
         MixedEndian {
