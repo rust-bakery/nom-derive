@@ -68,6 +68,17 @@ attribute](https://docs.rs/nom-derive/latest/nom_derive/derive.Nom.html) documen
 Many examples are provided, and more can be found in the [project
 tests](https://github.com/rust-bakery/nom-derive/tree/master/tests).
 
+## Combinators visibility
+
+All inferred parsers will generate code with absolute type path, so there is no need
+to add `use` statements for them. However, if you use any combinator directly (or in a `Parse`
+statement, for ex.), it has to be imported as usual.
+
+That is probably not going to change, since
+* a proc_macro cannot export items other than functions tagged with `#[proc_macro_derive]`
+* there are variants of combinators with the same names (complete/streaming, bits/bytes), so
+  re-exporting them would create side-effects.
+
 ## Debug tips
 
 * If the generated parser does not compile, add `#[nom(DebugDerive)]` to the structure.
