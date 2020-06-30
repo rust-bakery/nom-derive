@@ -83,6 +83,7 @@ tests](https://github.com/rust-bakery/nom-derive/tree/master/tests).
 
 ### <unreleased>
 
+- Add ExtraArgs support for structs (top-level only)
 - Allow dynamic configuration of endianness (SetEndian attribute)
 - Add support for `u128`/`i128` (#3)
 
