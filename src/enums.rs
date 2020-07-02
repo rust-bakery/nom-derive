@@ -168,7 +168,7 @@ fn impl_nom_fieldless_enums(
         .collect();
     let tokens = quote! {
         impl#generics #name#generics {
-            fn parse(#orig_input_name: &[u8]) -> nom::IResult<&[u8],#name> {
+            pub fn parse(#orig_input_name: &[u8]) -> nom::IResult<&[u8],#name> {
                 let #input_name = #orig_input_name;
                 #tl_pre
                 let (#input_name, selector) = #parser(#input_name)?;
@@ -295,7 +295,7 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Tok
     };
     let tokens = quote! {
         impl#generics #name#generics {
-            fn parse(#orig_input_name: &[u8], selector: #selector_type) -> nom::IResult<&[u8],#name> {
+            pub fn parse(#orig_input_name: &[u8], selector: #selector_type) -> nom::IResult<&[u8],#name> {
                 let #input_name = #orig_input_name;
                 #tl_pre
                 let (#input_name, enum_def) = match selector {
