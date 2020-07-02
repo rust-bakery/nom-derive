@@ -219,7 +219,7 @@ impl Parse for MetaAttr {
                 MetaAttrType::PreExec | MetaAttrType::PostExec => {
                     parse_content::<syn::Stmt>(input)?
                 }
-                MetaAttrType::Selector => parse_content::<syn::Pat>(input)?,
+                MetaAttrType::Selector => parse_content::<PatternAndGuard>(input)?,
                 _ => parse_content::<syn::Expr>(input)?,
             };
             Some(token_stream)
@@ -264,5 +264,35 @@ where
             input.span(),
             "Unexpected type for nom attribute content (!LitStr)",
         ))
+    }
+}
+
+#[derive(Debug)]
+struct PatternAndGuard {
+    pat: syn::Pat,
+    guard: Option<(token::If, Box<syn::Expr>)>,
+}
+
+impl Parse for PatternAndGuard {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let pat = input.parse()?;
+        let guard = if input.peek(Token![if]) {
+            let tk_if: Token![if] = input.parse()?;
+            let expr: syn::Expr = input.parse()?;
+            Some((tk_if, Box::new(expr)))
+        } else {
+            None
+        };
+        Ok(PatternAndGuard { pat, guard })
+    }
+}
+
+impl quote::ToTokens for PatternAndGuard {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        self.pat.to_tokens(tokens);
+        if let Some((tk_if, expr)) = &self.guard {
+            tk_if.to_tokens(tokens);
+            expr.to_tokens(tokens);
+        }
     }
 }

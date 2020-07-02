@@ -94,6 +94,8 @@ That is probably not going to change, since
 
 ### <unreleased>
 
+- Add support for guards in Selector Patterns (#5)
+
 ### 0.6.2
 
 - Add ExtraArgs support for structs (top-level only)
