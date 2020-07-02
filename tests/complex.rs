@@ -174,6 +174,19 @@ pub struct MixedEndian {
     pub b: u32,
 }
 
+fn test_value(x: u8) -> bool {
+    x >> 3 & 1 == 1
+}
+
+#[derive(Debug, Nom, PartialEq)]
+#[nom(Selector(u8))]
+pub enum EnumWithGuard {
+    #[nom(Selector(x if test_value(x)))]
+    Foo(u8),
+    #[nom(Selector(_))]
+    Bar(u8),
+}
+
 const INPUT_16: &[u8] = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
 const INPUT_CSTRING: &[u8] = b"\x00\x00\x00\x00Hello, world!\x00\x01";
 
@@ -344,4 +357,13 @@ fn test_struct_mixed_endian() {
             b: 0x7856_3412,
         }
     );
+}
+
+#[test]
+fn test_enum_selector_with_guard() {
+    let input = &[0];
+    let (_, res) = EnumWithGuard::parse(input, 0).expect("parsing failed");
+    assert_eq!(res, EnumWithGuard::Bar(0));
+    let (_, res) = EnumWithGuard::parse(input, 0b1000).expect("parsing failed");
+    assert_eq!(res, EnumWithGuard::Foo(0));
 }
