@@ -94,6 +94,8 @@ That is probably not going to change, since
 
 ### <unreleased>
 
+### 0.6.3
+
 - Add support for guards in Selector Patterns (#5)
 - Add limited support for Unit fields in enum (#6)
 - Make `parse` method public for enums too (#7)
