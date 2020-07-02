@@ -1,7 +1,7 @@
 [package]
 name = "nom-derive"
 description = "Custom derive nom parsers from struct"
-version = "0.6.2"
+version = "0.6.3"
 license = "MIT/Apache-2.0"
 keywords = ["parser","nom"]
 categories = ["parsing"]
