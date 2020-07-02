@@ -33,6 +33,7 @@ impl StructParser {
 
 #[derive(Debug)]
 pub(crate) struct StructParserTree {
+    pub empty: bool,
     pub unnamed: bool,
     pub parsers: Vec<StructParser>,
 }
@@ -481,13 +482,19 @@ fn patch_condition(field: &syn::Field, p: ParserTree, meta_list: &[MetaAttr]) ->
 
 pub(crate) fn parse_fields(f: &Fields, config: &mut Config) -> StructParserTree {
     let mut parsers = vec![];
+    let mut empty = false;
     let mut unnamed = false;
     match f {
         Fields::Named(_) => (),
         Fields::Unnamed(_) => {
             unnamed = true;
         }
-        Fields::Unit => panic!("Unit struct, nothing to generate"),
+        Fields::Unit => {
+            unnamed = false;
+            empty = true;
+            // the Parse attribute cannot be checked here (we only have 'Fields'),
+            // so the caller must check and add attributes
+        }
     }
     for (idx, field) in f.iter().enumerate() {
         let ident_str = match field.ident.as_ref() {
@@ -515,7 +522,11 @@ pub(crate) fn parse_fields(f: &Fields, config: &mut Config) -> StructParserTree 
         let sp = StructParser::new(ident_str, p, pre, post);
         parsers.push(sp);
     }
-    StructParserTree { unnamed, parsers }
+    StructParserTree {
+        empty,
+        unnamed,
+        parsers,
+    }
 }
 
 pub(crate) fn parse_struct(s: &DataStruct, config: &mut Config) -> StructParserTree {

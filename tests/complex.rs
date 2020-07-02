@@ -187,6 +187,18 @@ pub enum EnumWithGuard {
     Bar(u8),
 }
 
+/// An unnamed enum with unit struct fields, Parse, Pre/Post
+#[derive(Debug, PartialEq, Nom)]
+#[nom(Selector = "u8")]
+pub enum EnumWithUnit {
+    #[nom(Selector = "0", PostExec(eprintln!("enum with unit: ok");))]
+    Field1,
+    #[nom(Selector = "1")]
+    Field2(u32),
+    #[nom(Selector = "2", Parse = "be_u8")]
+    Field3,
+}
+
 const INPUT_16: &[u8] = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
 const INPUT_CSTRING: &[u8] = b"\x00\x00\x00\x00Hello, world!\x00\x01";
 
@@ -366,4 +378,19 @@ fn test_enum_selector_with_guard() {
     assert_eq!(res, EnumWithGuard::Bar(0));
     let (_, res) = EnumWithGuard::parse(input, 0b1000).expect("parsing failed");
     assert_eq!(res, EnumWithGuard::Foo(0));
+}
+
+#[test]
+fn test_enum_with_unit() {
+    let input = &[0, 1, 0, 1];
+    let (rem, res) = EnumWithUnit::parse(input, 0).expect("parsing failed");
+    assert_eq!(res, EnumWithUnit::Field1);
+    assert_eq!(rem.len(), 4);
+    let (rem, res) = EnumWithUnit::parse(input, 1).expect("parsing failed");
+    assert_eq!(res, EnumWithUnit::Field2(0x01_0001));
+    assert_eq!(rem.len(), 0);
+    let (rem, res) = EnumWithUnit::parse(input, 2).expect("parsing failed");
+    assert_eq!(res, EnumWithUnit::Field3);
+    // parsing should have read u8, so rem has one less byte
+    assert_eq!(rem.len(), 3);
 }

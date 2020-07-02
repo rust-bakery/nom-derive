@@ -1107,11 +1107,6 @@ use structs::{get_pre_post_exec, parse_struct};
 /// # );
 /// ```
 ///
-/// ## Limitations
-///
-/// Except if the entire enum is fieldless (a list of constant integer values),
-/// unit fields are not supported.
-///
 /// ## Debug
 ///
 /// Errors in generated parsers may be hard to understand and debug.
@@ -1206,10 +1201,10 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive: bool) -> TokenStream {
         .unzip();
     let idents2 = idents.clone();
     // Code generation
-    let struct_def = if s.unnamed {
-        quote! { ( #name ( #(#idents2),* ) ) }
-    } else {
-        quote! { ( #name { #(#idents2),* } ) }
+    let struct_def = match (s.empty, s.unnamed) {
+        (true, _) => quote! { ( #name ) },
+        (_, true) => quote! { ( #name ( #(#idents2),* ) ) },
+        (_, false) => quote! { ( #name { #(#idents2),* } ) },
     };
     let input_name = syn::Ident::new(&config.input_name, Span::call_site());
     let orig_input_name = syn::Ident::new(

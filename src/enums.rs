@@ -5,7 +5,7 @@ use crate::config::Config;
 use crate::meta;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
 use crate::parsertree::ParserTree;
-use crate::structs::{get_pre_post_exec, parse_fields, StructParserTree};
+use crate::structs::{get_pre_post_exec, parse_fields, StructParser, StructParserTree};
 
 #[derive(Debug)]
 struct VariantParserTree {
@@ -24,7 +24,20 @@ fn parse_variant(variant: &syn::Variant, config: &mut Config) -> VariantParserTr
             variant.ident
         )
     });
-    let struct_def = parse_fields(&variant.fields, config);
+    let mut struct_def = parse_fields(&variant.fields, config);
+    if variant.fields == syn::Fields::Unit {
+        let mut p = None;
+        for meta in &meta_list {
+            if meta.attr_type == MetaAttrType::Parse {
+                let s = meta.arg().unwrap().to_string();
+                p = Some(ParserTree::Raw(s));
+            }
+        }
+        let (pre, post) = get_pre_post_exec(&meta_list, config);
+        let p = p.unwrap_or_else(|| ParserTree::Nop);
+        let sp = StructParser::new("_".to_string(), p, pre, post);
+        struct_def.parsers.push(sp);
+    }
     // discriminant ?
     VariantParserTree {
         ident: variant.ident.clone(),
@@ -161,7 +174,7 @@ fn impl_nom_fieldless_enums(
                 let (#input_name, selector) = #parser(#input_name)?;
                 let enum_def =
                     #(#variants_code else)*
-                    { return Err(::nom::Err::Error((#orig_input_name, ::nom::error::ErrorKind::Switch))); };
+                { return Err(::nom::Err::Error((#orig_input_name, ::nom::error::ErrorKind::Switch))); };
                 #tl_post
                 Ok((#input_name, enum_def))
             }
@@ -235,19 +248,29 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Tok
                         (id, &sp.parser)
                     })
                     .unzip();
+                let (pre, post): (Vec<_>, Vec<_>) = def
+                    .struct_def
+                    .parsers
+                    .iter()
+                    .map(|sp| (sp.pre_exec.as_ref(), sp.post_exec.as_ref()))
+                    .unzip();
                 let idents2 = idents.clone();
-                let struct_def = if def.struct_def.unnamed {
-                    quote! { ( #name::#variantname ( #(#idents2),* ) ) }
-                } else {
-                    quote! { ( #name::#variantname { #(#idents2),* } ) }
+                let struct_def = match (def.struct_def.empty, def.struct_def.unnamed) {
+                    (true, _) => quote! { ( #name::#variantname ) },
+                    (_, true) => quote! { ( #name::#variantname ( #(#idents2),* ) ) },
+                    (_, false) => quote! { ( #name::#variantname { #(#idents2),* } ) },
                 };
                 quote! {
-                    #m => {
-                        #(let (#input_name, #idents) = #parser_tokens (#input_name) ?;)*
-                        let struct_def = #struct_def;
-                        Ok((#input_name, struct_def))
+                #m => {
+                    #(
+                        #pre
+                        let (#input_name, #idents) = #parser_tokens (#input_name) ?;
+                        #post
+                    )*
+                    let struct_def = #struct_def;
+                    Ok((#input_name, struct_def))
                         // Err(nom::Err::Error(error_position!(#input_name, nom::ErrorKind::Switch)))
-                    },
+                },
                 }
             })
             .collect()

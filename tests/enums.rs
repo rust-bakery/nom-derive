@@ -113,6 +113,16 @@ pub struct U8S1 {
     pub a: u32,
 }
 
+/// An unnamed enum with a unit struct field
+#[derive(Debug, PartialEq, Nom)]
+#[nom(Selector = "u8")]
+pub enum U9 {
+    #[nom(Selector = "0")]
+    Field1,
+    #[nom(Selector = "1")]
+    Field2(u32),
+}
+
 #[test]
 fn test_enum_unnamed() {
     let input = b"\x00\x00\x00\x02";

@@ -95,6 +95,7 @@ That is probably not going to change, since
 ### <unreleased>
 
 - Add support for guards in Selector Patterns (#5)
+- Add limited support for Unit fields in enum (#6)
 
 ### 0.6.2
 
