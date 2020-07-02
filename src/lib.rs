@@ -873,7 +873,7 @@ use structs::{get_pre_post_exec, parse_struct};
 ///
 /// <pre>
 /// impl U1{
-///     pub fn parse(i:&[u8), selector: u8) -> IResult<&[u8],U1> {
+///     pub fn parse(i:&[u8], selector: u8) -> IResult<&[u8],U1> {
 ///         match selector {
 ///             ...
 ///         }
