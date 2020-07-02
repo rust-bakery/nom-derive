@@ -153,7 +153,7 @@ use structs::{get_pre_post_exec, parse_struct};
 /// | [Parse](#custom-parsers) | fields | Use a custom parser function for reading from a file
 /// | [PreExec](#preexec) | all | Execute Rust code before parsing field or struct
 /// | [PostExec](#postexec) | all | Execute Rust code after parsing field or struct
-/// | [Selector](#deriving-parser-for-enum) | all | Used to specify the value matching an enum variant
+/// | [Selector](#deriving-parsers-for-enum) | all | Used to specify the value matching an enum variant
 /// | [SetEndian](#byteorder) | all | Dynamically set the endianness
 /// | [SkipAfter](#alignment-and-padding) | fields | skip the specified number of bytes, after parsing
 /// | [SkipBefore](#alignment-and-padding) | fields | skip the specified number of bytes, before parsing
@@ -852,6 +852,11 @@ use structs::{get_pre_post_exec, parse_struct};
 /// In addition of `derive(Nom)`, a `Selector` attribute must be used:
 ///   - on the structure, to specify the type of selector to match
 ///   - on each variant, to specify the value associated with this variant.
+///
+/// Expected values:
+///   - top-level: a valid Rust type
+///   - fields: a valid Rust match arm expression (for ex: `0`). *Note*: this expression can
+///     contain a pattern guard (for ex: `x if x > 2`)
 ///
 /// ```rust
 /// # use nom_derive::Nom;
