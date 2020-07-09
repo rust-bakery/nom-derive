@@ -289,7 +289,6 @@ fn quote_move_abs(offset: &TokenStream, config: &Config) -> TokenStream {
     );
     quote! {
         let #input_name = {
-            let start = #input_name.as_ptr() as usize;
             let offset = #offset as usize;
             if offset > #orig_input_name.len() {
                 return Err(nom::Err::Incomplete(nom::Needed::Size(offset)));
