@@ -30,8 +30,13 @@ impl Config {
         let debug_derive = l.iter().any(|m| m.is_type(MetaAttrType::DebugDerive));
         let input_name = l
             .iter()
-            .find(|m| m.is_type(MetaAttrType::InputName))
-            .map(|m| m.arg().unwrap().to_string())
+            .find_map(|m| {
+                if m.is_type(MetaAttrType::InputName) {
+                    Some(m.arg().unwrap().to_string())
+                } else {
+                    None
+                }
+            })
             .unwrap_or_else(|| "i".to_string());
         Ok(Config {
             struct_name: name,

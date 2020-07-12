@@ -59,7 +59,7 @@ fn get_repr(attrs: &[syn::Attribute]) -> Option<String> {
     for attr in attrs {
         if let Ok(ref meta) = attr.parse_meta() {
             match meta {
-                syn::Meta::NameValue(_) => (),
+                syn::Meta::NameValue(_) | syn::Meta::Path(_) => (),
                 syn::Meta::List(ref metalist) => {
                     if let Some(ident) = metalist.path.get_ident() {
                         if ident == "repr" {
@@ -81,7 +81,6 @@ fn get_repr(attrs: &[syn::Attribute]) -> Option<String> {
                         }
                     }
                 }
-                syn::Meta::Path(_) => (),
             }
         }
     }
@@ -106,7 +105,7 @@ fn is_input_fieldless_enum(ast: &syn::DeriveInput) -> bool {
 
 fn impl_nom_fieldless_enums(
     ast: &syn::DeriveInput,
-    repr: String,
+    repr: &str,
     meta_list: &[MetaAttr],
     config: &Config,
 ) -> TokenStream {
@@ -116,7 +115,7 @@ fn impl_nom_fieldless_enums(
         Span::call_site(),
     );
     let (tl_pre, tl_post) = get_pre_post_exec(&meta_list, config);
-    let parser = match repr.as_ref() {
+    let parser = match repr {
         "u8" | "u16" | "u24" | "u32" | "u64" | "u128" | "i8" | "i16" | "i24" | "i32" | "i64"
         | "i128" => {
             let is_big_endian = if meta_list.iter().any(|m| m.is_type(MetaAttrType::BigEndian)) {
@@ -143,18 +142,15 @@ fn impl_nom_fieldless_enums(
         }
         _ => panic!("Cannot parse 'repr' content"),
     };
-    let variant_names: Vec<_> = match ast.data {
-        syn::Data::Enum(ref data_enum) => {
-            // eprintln!("{:?}", data_enum);
-            data_enum
-                .variants
-                .iter()
-                .map(|v| v.ident.to_string())
-                .collect()
-        }
-        _ => {
-            panic!("expect enum");
-        }
+    let variant_names: Vec<_> = if let syn::Data::Enum(ref data_enum) = ast.data {
+        // eprintln!("{:?}", data_enum);
+        data_enum
+            .variants
+            .iter()
+            .map(|v| v.ident.to_string())
+            .collect()
+    } else {
+        panic!("expect enum");
     };
     let generics = &ast.generics;
     let name = &ast.ident;
@@ -205,24 +201,21 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Tok
                 // check that we have a repr attribute
                 let repr = get_repr(&ast.attrs)
                     .expect("Nom-derive: fieldless enums must have a 'repr' attribute");
-                return impl_nom_fieldless_enums(ast, repr, &meta_list, config);
+                return impl_nom_fieldless_enums(ast, &repr, &meta_list, config);
             } else {
                 panic!("Nom-derive: enums must specify the 'selector' attribute");
             }
         }
     };
-    let mut variants_defs: Vec<_> = match ast.data {
-        syn::Data::Enum(ref data_enum) => {
-            // eprintln!("{:?}", data_enum);
-            data_enum
-                .variants
-                .iter()
-                .map(|v| parse_variant(v, config))
-                .collect()
-        }
-        _ => {
-            panic!("expect enum");
-        }
+    let mut variants_defs: Vec<_> = if let syn::Data::Enum(ref data_enum) = ast.data {
+        // eprintln!("{:?}", data_enum);
+        data_enum
+            .variants
+            .iter()
+            .map(|v| parse_variant(v, config))
+            .collect()
+    } else {
+        panic!("expect enum");
     };
     // parse string items and prepare tokens for each variant
     let (tl_pre, tl_post) = get_pre_post_exec(&meta_list, config);

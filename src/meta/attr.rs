@@ -45,16 +45,14 @@ impl MetaAttrType {
             "AlignBefore" => Some(MetaAttrType::AlignBefore),
             "BigEndian" => Some(MetaAttrType::BigEndian),
             "Complete" => Some(MetaAttrType::Complete),
-            "Cond" => Some(MetaAttrType::Cond),
             "Count" => Some(MetaAttrType::Count),
             "Debug" => Some(MetaAttrType::Debug),
             "DebugDerive" => Some(MetaAttrType::DebugDerive),
-            "Default" => Some(MetaAttrType::Ignore),
             "ErrorIf" => Some(MetaAttrType::ErrorIf),
             "Exact" => Some(MetaAttrType::Exact),
             "ExtraArgs" => Some(MetaAttrType::ExtraArgs),
-            "If" => Some(MetaAttrType::Cond),
-            "Ignore" => Some(MetaAttrType::Ignore),
+            "If" | "Cond" => Some(MetaAttrType::Cond),
+            "Ignore" | "Default" => Some(MetaAttrType::Ignore),
             "InputName" => Some(MetaAttrType::InputName),
             "LittleEndian" => Some(MetaAttrType::LittleEndian),
             "Map" => Some(MetaAttrType::Map),
@@ -75,8 +73,8 @@ impl MetaAttrType {
         }
     }
 
-    pub fn takes_argument(&self) -> bool {
-        match *self {
+    pub fn takes_argument(self) -> bool {
+        match self {
             MetaAttrType::AlignAfter
             | MetaAttrType::AlignBefore
             | MetaAttrType::Cond
