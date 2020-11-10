@@ -94,6 +94,10 @@ That is probably not going to change, since
 
 ### <unreleased>
 
+### 0.7.0
+
+- Upgrade to nom 6
+
 ### 0.6.3
 
 - Add support for guards in Selector Patterns (#5)
