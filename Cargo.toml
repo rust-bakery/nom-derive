@@ -32,5 +32,5 @@ quote = "1.0"
 proc-macro2 = "1.0"
 
 [dev-dependencies]
-nom = "5.0"
+nom = "6.0"
 pretty_assertions = "0.6.0"

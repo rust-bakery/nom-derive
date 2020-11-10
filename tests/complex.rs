@@ -299,7 +299,7 @@ fn test_struct_align_and_padding() {
     );
     let res = StructWithLongSkip::parse(INPUT_16).expect_err("parse error");
     if let nom::Err::Incomplete(sz) = res {
-        assert_eq!(sz, nom::Needed::Size(200));
+        assert_eq!(sz, nom::Needed::new(185));
     } else {
         panic!("wrong error type");
     }
@@ -329,8 +329,8 @@ fn test_struct_error_if() {
     assert!(res.is_ok());
     // test with verification error
     let res = StructWithPossibleError::parse(&INPUT_16[4..]).expect_err("parsing failed");
-    if let nom::Err::Error((_, error_kind)) = res {
-        assert_eq!(error_kind, nom::error::ErrorKind::Verify);
+    if let nom::Err::Error(e) = res {
+        assert_eq!(e.code, nom::error::ErrorKind::Verify);
     } else {
         panic!("wrong error type");
     }
@@ -343,8 +343,8 @@ fn test_struct_exact() {
     assert!(res.is_ok());
     // test with verification error
     let res = StructExact::parse(INPUT_16).expect_err("parsing failed");
-    if let nom::Err::Error((_, error_kind)) = res {
-        assert_eq!(error_kind, nom::error::ErrorKind::Verify);
+    if let nom::Err::Error(e) = res {
+        assert_eq!(e.code, nom::error::ErrorKind::Verify);
     } else {
         panic!("wrong error type");
     }

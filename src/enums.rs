@@ -170,7 +170,7 @@ fn impl_nom_fieldless_enums(
                 let (#input_name, selector) = #parser(#input_name)?;
                 let enum_def =
                     #(#variants_code else)*
-                { return Err(::nom::Err::Error((#orig_input_name, ::nom::error::ErrorKind::Switch))); };
+                { return Err(::nom::Err::Error(nom::error::make_error(#orig_input_name, ::nom::error::ErrorKind::Switch))); };
                 #tl_post
                 Ok((#input_name, enum_def))
             }

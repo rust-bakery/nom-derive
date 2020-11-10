@@ -266,12 +266,12 @@ fn quote_move(offset: &TokenStream, config: &Config) -> TokenStream {
             let offset_u = offset.abs() as usize;
             let new_offset = if offset < 0 {
                 if offset_u > pos {
-                    return Err(nom::Err::Error((#input_name, nom::error::ErrorKind::TooLarge)));
+                    return Err(nom::Err::Error(nom::error::make_error(#input_name, nom::error::ErrorKind::TooLarge)));
                 }
                 pos - offset_u
             } else {
                 if pos + offset_u > #orig_input_name.len() {
-                    return Err(nom::Err::Incomplete(nom::Needed::Size(offset_u)));
+                    return Err(nom::Err::Incomplete(nom::Needed::new(offset_u)));
                 }
                 pos + offset_u
             };
@@ -291,7 +291,7 @@ fn quote_move_abs(offset: &TokenStream, config: &Config) -> TokenStream {
         let #input_name = {
             let offset = #offset as usize;
             if offset > #orig_input_name.len() {
-                return Err(nom::Err::Incomplete(nom::Needed::Size(offset)));
+                return Err(nom::Err::Incomplete(nom::Needed::new(offset)));
             }
             &#orig_input_name[offset..]
         };
@@ -312,7 +312,7 @@ fn quote_error_if(cond: &TokenStream, config: &Config) -> TokenStream {
     let input_name = syn::Ident::new(&config.input_name, Span::call_site());
     quote! {
         if #cond {
-            return Err(nom::Err::Error((#input_name, nom::error::ErrorKind::Verify)));
+            return Err(nom::Err::Error(nom::error::make_error(#input_name, nom::error::ErrorKind::Verify)));
         }
     }
 }
