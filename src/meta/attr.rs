@@ -3,7 +3,6 @@ use quote::ToTokens;
 use std::fmt;
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
-use syn::spanned::Spanned;
 use syn::{parenthesized, token, Ident, Token};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -74,30 +73,30 @@ impl MetaAttrType {
     }
 
     pub fn takes_argument(self) -> bool {
-        match self {
+        matches!(
+            self,
             MetaAttrType::AlignAfter
-            | MetaAttrType::AlignBefore
-            | MetaAttrType::Cond
-            | MetaAttrType::Count
-            | MetaAttrType::ErrorIf
-            | MetaAttrType::ExtraArgs
-            | MetaAttrType::InputName
-            | MetaAttrType::Map
-            | MetaAttrType::Move
-            | MetaAttrType::MoveAbs
-            | MetaAttrType::Parse
-            | MetaAttrType::PostExec
-            | MetaAttrType::PreExec
-            | MetaAttrType::Selector
-            | MetaAttrType::SetEndian
-            | MetaAttrType::SkipAfter
-            | MetaAttrType::SkipBefore
-            | MetaAttrType::Tag
-            | MetaAttrType::Take
-            | MetaAttrType::Value
-            | MetaAttrType::Verify => true,
-            _ => false,
-        }
+                | MetaAttrType::AlignBefore
+                | MetaAttrType::Cond
+                | MetaAttrType::Count
+                | MetaAttrType::ErrorIf
+                | MetaAttrType::ExtraArgs
+                | MetaAttrType::InputName
+                | MetaAttrType::Map
+                | MetaAttrType::Move
+                | MetaAttrType::MoveAbs
+                | MetaAttrType::Parse
+                | MetaAttrType::PostExec
+                | MetaAttrType::PreExec
+                | MetaAttrType::Selector
+                | MetaAttrType::SetEndian
+                | MetaAttrType::SkipAfter
+                | MetaAttrType::SkipBefore
+                | MetaAttrType::Tag
+                | MetaAttrType::Take
+                | MetaAttrType::Value
+                | MetaAttrType::Verify
+        )
     }
 }
 
@@ -150,31 +149,31 @@ impl MetaAttr {
 
     /// Is attribute acceptable for top-level
     pub fn acceptable_tla(&self) -> bool {
-        match self.attr_type {
+        matches!(
+            self.attr_type,
             MetaAttrType::DebugDerive
-            | MetaAttrType::Debug
-            | MetaAttrType::ExtraArgs
-            | MetaAttrType::InputName
-            | MetaAttrType::LittleEndian
-            | MetaAttrType::BigEndian
-            | MetaAttrType::SetEndian
-            | MetaAttrType::PreExec
-            | MetaAttrType::PostExec
-            | MetaAttrType::Exact
-            | MetaAttrType::Selector => true,
-            _ => false,
-        }
+                | MetaAttrType::Debug
+                | MetaAttrType::ExtraArgs
+                | MetaAttrType::InputName
+                | MetaAttrType::LittleEndian
+                | MetaAttrType::BigEndian
+                | MetaAttrType::SetEndian
+                | MetaAttrType::PreExec
+                | MetaAttrType::PostExec
+                | MetaAttrType::Exact
+                | MetaAttrType::Selector
+        )
     }
 
     /// Is attribute acceptable for field-level
     pub fn acceptable_fla(&self) -> bool {
-        match self.attr_type {
+        !matches!(
+            self.attr_type,
             MetaAttrType::DebugDerive
-            | MetaAttrType::Exact
-            | MetaAttrType::ExtraArgs
-            | MetaAttrType::InputName => false,
-            _ => true,
-        }
+                | MetaAttrType::Exact
+                | MetaAttrType::ExtraArgs
+                | MetaAttrType::InputName
+        )
     }
 
     #[inline]
