@@ -10,12 +10,16 @@ pub fn parse_nom_top_level_attribute(
     // eprintln!("attrs: {:?}", attrs);
     let x: Vec<_> = attrs
         .iter()
-        .filter(|x| x.path.is_ident("nom"))
-        .map(meta_from_attribute)
+        .filter_map(|x| {
+            if x.path.is_ident("nom") {
+                Some(meta_from_attribute(x))
+            } else {
+                None
+            }
+        })
         .collect::<Result<Vec<_>, _>>()?
         .into_iter()
-        .map(|x| x.0.into_iter())
-        .flatten()
+        .flat_map(|x| x.0.into_iter())
         .collect();
     // eprintln!("XXX: {:?}", x);
     if let Some(attr) = x.iter().find(|m| !m.acceptable_tla()) {
@@ -35,12 +39,16 @@ pub fn parse_nom_attribute(attrs: &[syn::Attribute]) -> Result<Vec<attr::MetaAtt
     // eprintln!("attrs: {:?}", attrs);
     let x: Vec<_> = attrs
         .iter()
-        .filter(|x| x.path.is_ident("nom"))
-        .map(meta_from_attribute)
+        .filter_map(|x| {
+            if x.path.is_ident("nom") {
+                Some(meta_from_attribute(x))
+            } else {
+                None
+            }
+        })
         .collect::<Result<Vec<_>, _>>()?
         .into_iter()
-        .map(|x| x.0.into_iter())
-        .flatten()
+        .flat_map(|x| x.0.into_iter())
         .collect();
     // eprintln!("****\nXXX: {:?}\n", x);
     if let Some(attr) = x.iter().find(|m| !m.acceptable_fla()) {

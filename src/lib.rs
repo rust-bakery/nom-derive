@@ -1157,7 +1157,7 @@ fn get_extra_args(meta_list: &[MetaAttr]) -> Option<&proc_macro2::TokenStream> {
     meta_list
         .iter()
         .find(|m| m.attr_type == MetaAttrType::ExtraArgs)
-        .and_then(|m| m.arg())
+        .and_then(MetaAttr::arg)
 }
 
 fn impl_nom(ast: &syn::DeriveInput, debug_derive: bool) -> TokenStream {

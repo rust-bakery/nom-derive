@@ -459,20 +459,17 @@ fn patch_condition(field: &syn::Field, p: ParserTree, meta_list: &[MetaAttr]) ->
         .expect("empty field ident (patch condition)");
     for meta in meta_list {
         if meta.attr_type == MetaAttrType::Cond {
-            match p {
-                ParserTree::Opt(sub) => {
-                    let s = meta.arg().unwrap().to_string();
-                    return ParserTree::Cond(sub, s);
-                }
-                _ => {
-                    if let Some(ident_s) = get_type_first_ident(&field.ty) {
-                        if ident_s == "Option" {
-                            let s = meta.arg().unwrap().to_string();
-                            return ParserTree::Cond(Box::new(p), s);
-                        }
+            if let ParserTree::Opt(sub) = p {
+                let s = meta.arg().unwrap().to_string();
+                return ParserTree::Cond(sub, s);
+            } else {
+                if let Some(ident_s) = get_type_first_ident(&field.ty) {
+                    if ident_s == "Option" {
+                        let s = meta.arg().unwrap().to_string();
+                        return ParserTree::Cond(Box::new(p), s);
                     }
-                    panic!("A condition was given on field {}, which is not an option type. Hint: use Option<...>", ident);
                 }
+                panic!("A condition was given on field {}, which is not an option type. Hint: use Option<...>", ident);
             }
         }
     }
@@ -496,9 +493,10 @@ pub(crate) fn parse_fields(f: &Fields, config: &mut Config) -> StructParserTree 
         }
     }
     for (idx, field) in f.iter().enumerate() {
-        let ident_str = match field.ident.as_ref() {
-            Some(s) => s.to_string(),
-            None => format!("_{}", idx),
+        let ident_str = if let Some(s) = field.ident.as_ref() {
+            s.to_string()
+        } else {
+            format!("_{}", idx)
         };
         let meta_list =
             meta::parse_nom_attribute(&field.attrs).expect("Parsing the 'nom' attribute failed");
