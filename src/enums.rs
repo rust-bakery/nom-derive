@@ -1,5 +1,5 @@
 use proc_macro::TokenStream;
-use syn::export::Span;
+use proc_macro2::Span;
 
 use crate::config::Config;
 use crate::meta;
