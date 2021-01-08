@@ -94,7 +94,7 @@ extern crate syn;
 extern crate quote;
 
 use proc_macro::TokenStream;
-use syn::export::Span;
+use proc_macro2::Span;
 use syn::*;
 
 mod config;
