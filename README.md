@@ -94,6 +94,10 @@ That is probably not going to change, since
 
 ### <unreleased>
 
+### 0.7.1
+
+- Fix build for syn 1.0.58 (#11)
+
 ### 0.7.0
 
 - Upgrade to nom 6

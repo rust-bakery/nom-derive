@@ -1,7 +1,7 @@
 [package]
 name = "nom-derive"
 description = "Custom derive nom parsers from struct"
-version = "0.7.0"
+version = "0.7.1"
 license = "MIT/Apache-2.0"
 keywords = ["parser","nom"]
 categories = ["parsing"]
@@ -27,7 +27,7 @@ proc-macro = true
 
 [dependencies]
 # syn = "1.0"
-syn = { version="1.0", features=["parsing","extra-traits","full"] }
+syn = { version=">=1.0.58", features=["parsing","extra-traits","full"] }
 quote = "1.0"
 proc-macro2 = "1.0"
 
