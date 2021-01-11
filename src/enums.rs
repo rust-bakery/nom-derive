@@ -34,7 +34,7 @@ fn parse_variant(variant: &syn::Variant, config: &mut Config) -> VariantParserTr
             }
         }
         let (pre, post) = get_pre_post_exec(&meta_list, config);
-        let p = p.unwrap_or_else(|| ParserTree::Nop);
+        let p = p.unwrap_or(ParserTree::Nop);
         let sp = StructParser::new("_".to_string(), p, pre, post);
         struct_def.parsers.push(sp);
     }
