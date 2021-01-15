@@ -3,7 +3,6 @@ use quote::ToTokens;
 use std::fmt;
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
-use syn::spanned::Spanned;
 use syn::{parenthesized, token, Ident, Token};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
