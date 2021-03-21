@@ -48,7 +48,7 @@ fn get_type_parser(ty: &Type, meta_list: &[MetaAttr], config: &Config) -> Option
             let ident_s = segment.ident.to_string();
             match ident_s.as_ref() {
                 "u8" | "u16" | "u24" | "u32" | "u64" | "u128" | "i8" | "i16" | "i24" | "i32"
-                | "i64" | "i128" => {
+                | "i64" | "i128" | "f32" | "f64" => {
                     let is_forced_big_endian =
                         meta_list.iter().any(|m| m.is_type(MetaAttrType::BigEndian));
                     let is_forced_little_endian = meta_list
@@ -164,9 +164,8 @@ fn get_type_first_ident(ty: &Type) -> Option<String> {
 fn get_type_default(ty: &Type) -> Option<ParserTree> {
     get_type_first_ident(ty).map(|ident_s| {
         let default = match ident_s.as_ref() {
-            "u8" | "u16" | "u32" | "u64" | "u128" | "i8" | "i16" | "i32" | "i64" | "i128" => {
-                "0".to_string()
-            }
+            "u8" | "u16" | "u32" | "u64" | "u128" | "i8" | "i16" | "i32" | "i64" | "i128"
+            | "f32" | "f64" => "0".to_string(),
             "Option" => "None".to_string(),
             "Vec" => "Vec::new()".to_string(),
             s => format!("{}::default()", s),

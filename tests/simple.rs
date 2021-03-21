@@ -89,6 +89,16 @@ pub struct S128 {
     pub a: u128,
 }
 
+#[derive(Nom, Debug, PartialEq)]
+pub struct F32 {
+    pub a: f32,
+}
+
+#[derive(Nom, Debug, PartialEq)]
+pub struct F64 {
+    pub a: f64,
+}
+
 const INPUT_16: &[u8] = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
 
 #[test]
@@ -209,4 +219,18 @@ fn test_struct_u128() {
             }
         ))
     );
+}
+
+#[test]
+fn test_struct_f32() {
+    let input = b"\x40\x29\x00\x00";
+    let res = F32::parse(input);
+    assert_eq!(res, Ok((&input[4..], F32 { a: 2.640625 })));
+}
+
+#[test]
+fn test_struct_f64() {
+    let input = b"\x40\x29\x00\x00\x00\x00\x00\x00";
+    let res = F64::parse(input);
+    assert_eq!(res, Ok((&input[8..], F64 { a: 12.5 })));
 }
