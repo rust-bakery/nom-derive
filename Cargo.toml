@@ -33,4 +33,4 @@ proc-macro2 = "1.0"
 
 [dev-dependencies]
 nom = "6.0"
-pretty_assertions = "0.6.0"
+pretty_assertions = "0.7"
