@@ -2,6 +2,7 @@
 #[macro_use]
 extern crate pretty_assertions;
 
+use nom::number::streaming::be_u8;
 use nom_derive::Nom;
 
 /// A structure with a length and a Vec
@@ -38,6 +39,13 @@ struct S4 {
     pub b: u8,
     #[nom(Value = "b.to_string()")]
     pub s: String,
+}
+
+/// A structure with a Vec of structs, length parsed as a u8
+#[derive(Debug, PartialEq, Nom)]
+struct S5 {
+    #[nom(LengthCount = "be_u8")]
+    pub b: Vec<NewType>,
 }
 
 #[test]
@@ -100,6 +108,21 @@ fn test_struct_value() {
                 a: 0x12,
                 b: 0x13,
                 s: "19".to_string()
+            }
+        ))
+    );
+}
+
+#[test]
+fn test_struct_length_count() {
+    let input = b"\x02\x12\x34";
+    let res = S5::parse(input);
+    assert_eq!(
+        res,
+        Ok((
+            &input[3..],
+            S5 {
+                b: vec![NewType(0x12), NewType(0x34)]
             }
         ))
     );

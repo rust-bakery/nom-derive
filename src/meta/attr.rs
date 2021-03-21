@@ -20,6 +20,7 @@ pub enum MetaAttrType {
     ExtraArgs,
     Ignore,
     InputName,
+    LengthCount,
     LittleEndian,
     Map,
     Move,
@@ -53,6 +54,7 @@ impl MetaAttrType {
             "If" | "Cond" => Some(MetaAttrType::Cond),
             "Ignore" | "Default" => Some(MetaAttrType::Ignore),
             "InputName" => Some(MetaAttrType::InputName),
+            "LengthCount" => Some(MetaAttrType::LengthCount),
             "LittleEndian" => Some(MetaAttrType::LittleEndian),
             "Map" => Some(MetaAttrType::Map),
             "Move" => Some(MetaAttrType::Move),
@@ -82,6 +84,7 @@ impl MetaAttrType {
                 | MetaAttrType::ErrorIf
                 | MetaAttrType::ExtraArgs
                 | MetaAttrType::InputName
+                | MetaAttrType::LengthCount
                 | MetaAttrType::Map
                 | MetaAttrType::Move
                 | MetaAttrType::MoveAbs
@@ -116,6 +119,7 @@ impl fmt::Display for MetaAttrType {
             MetaAttrType::ExtraArgs => "ExtraArgs",
             MetaAttrType::Ignore => "Ignore",
             MetaAttrType::InputName => "InputName",
+            MetaAttrType::LengthCount => "LengthCount",
             MetaAttrType::LittleEndian => "LittleEndian",
             MetaAttrType::Map => "Map",
             MetaAttrType::Move => "Move",

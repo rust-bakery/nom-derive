@@ -227,6 +227,24 @@ fn get_parser(
                 let s = meta.arg().unwrap().to_string();
                 return Some(ParserTree::Count(s2, s));
             }
+            MetaAttrType::LengthCount => {
+                // try to infer subparser
+                let sub = get_type_parser(ty, meta_list, config);
+                let s1 = match sub {
+                    Some(ParserTree::Many0(m)) => m,
+                    _ => {
+                        panic!("Unable to infer parser for 'LengthCount' attribute. Is item type a Vec ?")
+                    }
+                };
+                let s2 = match *s1 {
+                    ParserTree::Complete(m) => m,
+                    _ => {
+                        panic!("Unable to infer parser for 'LengthCount' attribute. Is item type a Vec ?")
+                    }
+                };
+                let s = meta.arg().unwrap().to_string();
+                return Some(ParserTree::LengthCount(s2, s));
+            }
             _ => (),
         }
     }

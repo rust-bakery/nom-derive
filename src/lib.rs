@@ -146,6 +146,7 @@ use structs::{get_pre_post_exec, parse_struct};
 /// | [If](#conditional-values) | fields | Similar to `Cond`
 /// | [Ignore](#default) | fields | An alias for `default`
 /// | [InputName](#input-name) | top-level | Change the internal name of input
+/// | [LengthCount](#lengthcount) | fields | Specify a parser to get the number of items, and parse the expected number of items
 /// | [LittleEndian](#byteorder) | all | Set the endianness to little endian
 /// | [Map](#map) | fields | Parse field, then apply a function
 /// | [Move](#alignment-and-padding) | fields | add the specified offset to current position, before parsing
@@ -371,6 +372,32 @@ use structs::{get_pre_post_exec, parse_struct};
 /// # let input = b"\x00\x01\x12\x34";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[4..],S{a:1, b:vec![0x1234]})));
+/// ```
+///
+/// ## LengthCount
+///
+/// The `LengthCount="parser"` attribute can be used to specify a parser to get a number, and
+/// use this number to parse an expected number of items.
+///
+/// Notes:
+///   - the subparser is inferred as usual (item type must be `Vec< ... >`)
+///   - the length parser must return a number
+///
+/// For ex:
+/// ```rust
+/// # use nom_derive::Nom;
+/// # use nom::number::streaming::be_u16;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// struct S {
+///   #[nom(LengthCount="be_u16")]
+///   b: Vec<u16>
+/// }
+/// #
+/// # let input = b"\x00\x01\x12\x34";
+/// # let res = S::parse(input);
+/// # assert_eq!(res, Ok((&input[4..],S{b:vec![0x1234]})));
 /// ```
 ///
 /// ## Tag
