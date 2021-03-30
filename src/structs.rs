@@ -164,8 +164,10 @@ fn get_type_first_ident(ty: &Type) -> Option<String> {
 fn get_type_default(ty: &Type) -> Option<ParserTree> {
     get_type_first_ident(ty).map(|ident_s| {
         let default = match ident_s.as_ref() {
-            "u8" | "u16" | "u32" | "u64" | "u128" | "i8" | "i16" | "i32" | "i64" | "i128"
-            | "f32" | "f64" => "0".to_string(),
+            "u8" | "u16" | "u32" | "u64" | "u128" | "i8" | "i16" | "i32" | "i64" | "i128" => {
+                "0".to_string()
+            }
+            "f32" | "f64" => "0.0".to_string(),
             "Option" => "None".to_string(),
             "Vec" => "Vec::new()".to_string(),
             s => format!("{}::default()", s),
