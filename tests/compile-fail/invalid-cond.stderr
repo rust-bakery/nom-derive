@@ -1,0 +1,5 @@
+error: Nom-derive: a condition was given, but the type is not an option type. Hint: use Option<...>
+ --> $DIR/invalid-cond.rs:8:8
+  |
+8 |     a: u32,
+  |        ^^^

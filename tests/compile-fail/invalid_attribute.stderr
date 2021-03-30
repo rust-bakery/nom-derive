@@ -1,0 +1,21 @@
+error: expected literal
+ --> $DIR/invalid_attribute.rs:7:17
+  |
+7 |     #[nom(Parse=u32)]
+  |                 ^^^
+
+error: Attribute Parse(be_u32) is not valid for top-level
+  --> $DIR/invalid_attribute.rs:11:10
+   |
+11 | #[derive(Nom)]
+   |          ^^^
+   |
+   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: Attribute Exact is not valid for field-level
+  --> $DIR/invalid_attribute.rs:17:10
+   |
+17 | #[derive(Nom)]
+   |          ^^^
+   |
+   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)

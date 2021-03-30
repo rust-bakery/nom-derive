@@ -1,0 +1,13 @@
+error: Nom-derive: multiple segments in type path are not supported
+  --> $DIR/unsupported_types.rs:13:8
+   |
+13 |     h: ::std::primitive::u64, // ERROR: Nom-derive: multiple segments in type path are not supported
+   |        ^^
+
+error[E0599]: no function or associated item named `parse` found for struct `HashMap<_, _, _>` in the current scope
+ --> $DIR/unsupported_types.rs:6:10
+  |
+6 | #[derive(Nom)]
+  |          ^^^ function or associated item not found in `HashMap<_, _, _>`
+  |
+  = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)

@@ -1,0 +1,5 @@
+error: Nom-derive: could not infer parser for type
+ --> $DIR/could-not-infer.rs:7:8
+  |
+7 |     a: [u32; 4],
+  |        ^^^^^^^^
