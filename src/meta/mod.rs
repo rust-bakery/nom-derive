@@ -32,7 +32,7 @@ fn meta_from_attribute(
     attr: &syn::Attribute,
 ) -> Result<attr_list::AttrList<attr::MetaAttr>, syn::Error> {
     // eprintln!("tlas_from_attribute: {:?}", attr);
-    Ok(syn::parse2(attr.tokens.clone())?)
+    syn::parse2(attr.tokens.clone())
 }
 
 pub fn parse_nom_attribute(attrs: &[syn::Attribute]) -> Result<Vec<attr::MetaAttr>, MetaError> {
