@@ -1,4 +1,5 @@
 use proc_macro2::{Span, TokenStream};
+use syn::spanned::Spanned;
 use syn::*;
 
 use crate::config::Config;
@@ -37,12 +38,15 @@ pub(crate) struct StructParserTree {
     pub parsers: Vec<StructParser>,
 }
 
-fn get_type_parser(ty: &Type, meta_list: &[MetaAttr], config: &Config) -> Option<ParserTree> {
+fn get_type_parser(ty: &Type, meta_list: &[MetaAttr], config: &Config) -> Result<ParserTree> {
     match ty {
         Type::Path(ref typepath) => {
             let path = &typepath.path;
             if path.segments.len() != 1 {
-                panic!("Multiple segments in type path are not supported");
+                return Err(Error::new(
+                    ty.span(),
+                    "Nom-derive: multiple segments in type path are not supported",
+                ));
             }
             let segment = path.segments.last().expect("empty segments list");
             let ident_s = segment.ident.to_string();
@@ -56,12 +60,12 @@ fn get_type_parser(ty: &Type, meta_list: &[MetaAttr], config: &Config) -> Option
                         .any(|m| m.is_type(MetaAttrType::LittleEndian));
                     // first priority: field BigEndian/LittleEndian attributes
                     if is_forced_big_endian {
-                        Some(ParserTree::Raw(format!(
+                        Ok(ParserTree::Raw(format!(
                             "nom::number::streaming::be_{}",
                             ident_s
                         )))
                     } else if is_forced_little_endian {
-                        Some(ParserTree::Raw(format!(
+                        Ok(ParserTree::Raw(format!(
                             "nom::number::streaming::le_{}",
                             ident_s
                         )))
@@ -79,16 +83,16 @@ fn get_type_parser(ty: &Type, meta_list: &[MetaAttr], config: &Config) -> Option
                                 else { nom::number::streaming::#le_ident }
                             }
                         };
-                        Some(ParserTree::Raw(qq.to_string()))
+                        Ok(ParserTree::Raw(qq.to_string()))
                     }
                     // last priority: global struct endianness
                     else if config.big_endian {
-                        Some(ParserTree::Raw(format!(
+                        Ok(ParserTree::Raw(format!(
                             "nom::number::streaming::be_{}",
                             ident_s
                         )))
                     } else {
-                        Some(ParserTree::Raw(format!(
+                        Ok(ParserTree::Raw(format!(
                             "nom::number::streaming::le_{}",
                             ident_s
                         )))
@@ -99,7 +103,7 @@ fn get_type_parser(ty: &Type, meta_list: &[MetaAttr], config: &Config) -> Option
                         PathArguments::AngleBracketed(ref ab) => {
                             // eprintln!("Option type: {:?}", ab);
                             if ab.args.len() != 1 {
-                                panic!("Option type with multiple types are unsupported");
+                                panic!("Option should have only one type argument");
                             }
                             match &ab.args[0] {
                                 GenericArgument::Type(ref ty) => {
@@ -120,7 +124,10 @@ fn get_type_parser(ty: &Type, meta_list: &[MetaAttr], config: &Config) -> Option
                         PathArguments::AngleBracketed(ref ab) => {
                             // eprintln!("Vec type: {:?}", ab);
                             if ab.args.len() != 1 {
-                                panic!("Vec type with multiple types are unsupported");
+                                return Err(Error::new(
+                                    segment.span(),
+                                    "Vec type with multiple types are not supported",
+                                ));
                             }
                             match &ab.args[0] {
                                 GenericArgument::Type(ref ty) => {
@@ -138,30 +145,39 @@ fn get_type_parser(ty: &Type, meta_list: &[MetaAttr], config: &Config) -> Option
                         _ => panic!("Unsupported Vec/parameterized type"),
                     }
                 }
-                "PhantomData" => Some(ParserTree::PhantomData),
-                s => Some(ParserTree::CallParse(s.to_owned())),
+                "PhantomData" => Ok(ParserTree::PhantomData),
+                s => Ok(ParserTree::CallParse(s.to_owned())),
             }
         }
-        _ => None,
+        _ => Err(Error::new(
+            ty.span(),
+            "Nom-derive: could not infer parser for type",
+        )),
     }
 }
 
-fn get_type_first_ident(ty: &Type) -> Option<String> {
+fn get_type_first_ident(ty: &Type) -> Result<String> {
     match ty {
         Type::Path(ref typepath) => {
             let path = &typepath.path;
             if path.segments.len() != 1 {
-                panic!("Multiple segments in type path are not supported");
+                return Err(Error::new(
+                    ty.span(),
+                    "Nom-derive: multiple segments in type path are not supported",
+                ));
             }
             let segment = path.segments.last().expect("empty segments list");
             let ident_s = segment.ident.to_string();
-            Some(ident_s)
+            Ok(ident_s)
         }
-        _ => None,
+        _ => Err(Error::new(
+            ty.span(),
+            "Nom-derive: could not get first path ident",
+        )),
     }
 }
 
-fn get_type_default(ty: &Type) -> Option<ParserTree> {
+fn get_type_default(ty: &Type) -> Result<ParserTree> {
     get_type_first_ident(ty).map(|ident_s| {
         let default = match ident_s.as_ref() {
             "u8" | "u16" | "u32" | "u64" | "u128" | "i8" | "i16" | "i32" | "i64" | "i128" => {
@@ -180,7 +196,7 @@ fn get_parser(
     field: &::syn::Field,
     meta_list: &[MetaAttr],
     config: &mut Config,
-) -> Option<ParserTree> {
+) -> Result<ParserTree> {
     // eprintln!("field: {:?}", field);
     let ty = &field.ty;
     // first check if we have attributes set
@@ -193,19 +209,19 @@ fn get_parser(
             }
             MetaAttrType::Tag => {
                 let s = meta.arg().unwrap().to_string();
-                return Some(ParserTree::Tag(s));
+                return Ok(ParserTree::Tag(s));
             }
             MetaAttrType::Take => {
                 let s = meta.arg().unwrap().to_string();
-                return Some(ParserTree::Take(s));
+                return Ok(ParserTree::Take(s));
             }
             MetaAttrType::Value => {
                 let s = meta.arg().unwrap().to_string();
-                return Some(ParserTree::Value(s));
+                return Ok(ParserTree::Value(s));
             }
             MetaAttrType::Parse => {
                 let s = meta.arg().unwrap().to_string();
-                return Some(ParserTree::Raw(s));
+                return Ok(ParserTree::Raw(s));
             }
             MetaAttrType::Ignore => {
                 return get_type_default(ty);
@@ -213,38 +229,44 @@ fn get_parser(
             MetaAttrType::Count => {
                 // try to infer subparser
                 let sub = get_type_parser(ty, meta_list, config);
-                let s1 = match sub {
-                    Some(ParserTree::Many0(m)) => m,
-                    _ => {
-                        panic!("Unable to infer parser for 'Count' attribute. Is item type a Vec ?")
-                    }
-                };
-                let s2 = match *s1 {
-                    ParserTree::Complete(m) => m,
-                    _ => {
-                        panic!("Unable to infer parser for 'Count' attribute. Is item type a Vec ?")
-                    }
-                };
+                let s1 =
+                    match sub {
+                        Ok(ParserTree::Many0(m)) => m,
+                        _ => {
+                            return Err(Error::new(field.ty.span(),
+                        "Unable to infer parser for 'Count' attribute. Is item type a Vec ?"));
+                        }
+                    };
+                let s2 =
+                    match *s1 {
+                        ParserTree::Complete(m) => m,
+                        _ => {
+                            return Err(Error::new(field.ty.span(),
+                        "Unable to infer parser for 'Count' attribute. Is item type a Vec ?"));
+                        }
+                    };
                 let s = meta.arg().unwrap().to_string();
-                return Some(ParserTree::Count(s2, s));
+                return Ok(ParserTree::Count(s2, s));
             }
             MetaAttrType::LengthCount => {
                 // try to infer subparser
                 let sub = get_type_parser(ty, meta_list, config);
                 let s1 = match sub {
-                    Some(ParserTree::Many0(m)) => m,
+                    Ok(ParserTree::Many0(m)) => m,
                     _ => {
-                        panic!("Unable to infer parser for 'LengthCount' attribute. Is item type a Vec ?")
+                        return Err(Error::new(field.ty.span(),
+                        "Unable to infer parser for 'LengthCount' attribute. Is item type a Vec ?"));
                     }
                 };
                 let s2 = match *s1 {
                     ParserTree::Complete(m) => m,
                     _ => {
-                        panic!("Unable to infer parser for 'LengthCount' attribute. Is item type a Vec ?")
+                        return Err(Error::new(field.ty.span(),
+                        "Unable to infer parser for 'LengthCount' attribute. Is item type a Vec ?"));
                     }
                 };
                 let s = meta.arg().unwrap().to_string();
-                return Some(ParserTree::LengthCount(s2, s));
+                return Ok(ParserTree::LengthCount(s2, s));
             }
             _ => (),
         }
@@ -467,34 +489,34 @@ fn add_verify(field: &syn::Field, p: ParserTree, meta_list: &[MetaAttr]) -> Pars
     p
 }
 
-fn patch_condition(field: &syn::Field, p: ParserTree, meta_list: &[MetaAttr]) -> ParserTree {
+fn patch_condition(
+    field: &syn::Field,
+    p: ParserTree,
+    meta_list: &[MetaAttr],
+) -> Result<ParserTree> {
     if field.ident == None {
-        return p;
+        return Ok(p);
     }
-    let ident = field
-        .ident
-        .as_ref()
-        .expect("empty field ident (patch condition)");
     for meta in meta_list {
         if meta.attr_type == MetaAttrType::Cond {
             if let ParserTree::Opt(sub) = p {
                 let s = meta.arg().unwrap().to_string();
-                return ParserTree::Cond(sub, s);
+                return Ok(ParserTree::Cond(sub, s));
             } else {
-                if let Some(ident_s) = get_type_first_ident(&field.ty) {
+                if let Ok(ident_s) = get_type_first_ident(&field.ty) {
                     if ident_s == "Option" {
                         let s = meta.arg().unwrap().to_string();
-                        return ParserTree::Cond(Box::new(p), s);
+                        return Ok(ParserTree::Cond(Box::new(p), s));
                     }
                 }
-                panic!("A condition was given on field {}, which is not an option type. Hint: use Option<...>", ident);
+                return Err(Error::new(field.ty.span(), "Nom-derive: a condition was given, but the type is not an option type. Hint: use Option<...>"));
             }
         }
     }
-    p
+    Ok(p)
 }
 
-pub(crate) fn parse_fields(f: &Fields, config: &mut Config) -> StructParserTree {
+pub(crate) fn parse_fields(f: &Fields, config: &mut Config) -> Result<StructParserTree> {
     let mut parsers = vec![];
     let mut empty = false;
     let mut unnamed = false;
@@ -516,12 +538,9 @@ pub(crate) fn parse_fields(f: &Fields, config: &mut Config) -> StructParserTree 
         } else {
             format!("_{}", idx)
         };
-        let meta_list =
-            meta::parse_nom_attribute(&field.attrs).expect("Parsing the 'nom' attribute failed");
+        let meta_list = meta::parse_nom_attribute(&field.attrs)?;
         // eprintln!("meta_list: {:?}", meta_list);
-        let opt_parser = get_parser(&field, &meta_list, config);
-        let p =
-            opt_parser.unwrap_or_else(|| panic!("Could not infer parser for field {}", ident_str));
+        let p = get_parser(&field, &meta_list, config)?;
         // add complete wrapper, if requested
         let p = add_complete(p, &meta_list, config);
         // add debug wrapper, if requested
@@ -529,7 +548,7 @@ pub(crate) fn parse_fields(f: &Fields, config: &mut Config) -> StructParserTree 
         // add mapping function, if present
         let p = add_map(&field, p, &meta_list);
         // Check if a condition was given, and set it
-        let p = patch_condition(&field, p, &meta_list);
+        let p = patch_condition(&field, p, &meta_list)?;
         // add verify field, if present
         let p = add_verify(&field, p, &meta_list);
         // add pre and post code (also takes care of alignment)
@@ -537,13 +556,13 @@ pub(crate) fn parse_fields(f: &Fields, config: &mut Config) -> StructParserTree 
         let sp = StructParser::new(ident_str, p, pre, post);
         parsers.push(sp);
     }
-    StructParserTree {
+    Ok(StructParserTree {
         empty,
         unnamed,
         parsers,
-    }
+    })
 }
 
-pub(crate) fn parse_struct(s: &DataStruct, config: &mut Config) -> StructParserTree {
+pub(crate) fn parse_struct(s: &DataStruct, config: &mut Config) -> Result<StructParserTree> {
     parse_fields(&s.fields, config)
 }

@@ -6,6 +6,7 @@ use crate::meta;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
 use crate::parsertree::ParserTree;
 use crate::structs::{get_pre_post_exec, parse_fields, StructParser, StructParserTree};
+use syn::{spanned::Spanned, Error, Result};
 
 #[derive(Debug)]
 struct VariantParserTree {
@@ -14,17 +15,17 @@ struct VariantParserTree {
     pub struct_def: StructParserTree,
 }
 
-fn parse_variant(variant: &syn::Variant, config: &mut Config) -> VariantParserTree {
+fn parse_variant(variant: &syn::Variant, config: &mut Config) -> Result<VariantParserTree> {
     // eprintln!("variant: {:?}", variant);
     let meta_list =
         meta::parse_nom_attribute(&variant.attrs).expect("Parsing the 'nom' meta attribute failed");
-    let selector = get_selector(&meta_list).unwrap_or_else(|| {
-        panic!(
-            "The 'Selector' attribute must be used to give the value of selector item (variant {})",
-            variant.ident
+    let selector = get_selector(&meta_list).ok_or_else(|| {
+        Error::new(
+            variant.span(),
+            "Nom-derive: the 'Selector' attribute must be used to give the value of selector item",
         )
-    });
-    let mut struct_def = parse_fields(&variant.fields, config);
+    })?;
+    let mut struct_def = parse_fields(&variant.fields, config)?;
     if variant.fields == syn::Fields::Unit {
         let mut p = None;
         for meta in &meta_list {
@@ -39,11 +40,11 @@ fn parse_variant(variant: &syn::Variant, config: &mut Config) -> VariantParserTr
         struct_def.parsers.push(sp);
     }
     // discriminant ?
-    VariantParserTree {
+    Ok(VariantParserTree {
         ident: variant.ident.clone(),
         selector,
         struct_def,
-    }
+    })
 }
 
 fn get_selector(meta_list: &[MetaAttr]) -> Option<String> {
@@ -108,7 +109,7 @@ fn impl_nom_fieldless_enums(
     repr: &str,
     meta_list: &[MetaAttr],
     config: &Config,
-) -> TokenStream {
+) -> Result<TokenStream> {
     let input_name = syn::Ident::new(&config.input_name, Span::call_site());
     let orig_input_name = syn::Ident::new(
         &("orig_".to_string() + &config.input_name),
@@ -140,7 +141,12 @@ fn impl_nom_fieldless_enums(
                 )))
             }
         }
-        _ => panic!("Cannot parse 'repr' content"),
+        _ => {
+            return Err(Error::new(
+                ast.span(),
+                "Nom-derive: cannot parse 'repr' content (must be a primitive type)",
+            ))
+        }
     };
     let variant_names: Vec<_> = if let syn::Data::Enum(ref data_enum) = ast.data {
         // eprintln!("{:?}", data_enum);
@@ -180,34 +186,39 @@ fn impl_nom_fieldless_enums(
         eprintln!("impl_nom_enums: {}", tokens);
     }
 
-    tokens.into()
+    Ok(tokens.into())
 }
 
-pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> TokenStream {
+pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Result<TokenStream> {
     let name = &ast.ident;
     // eprintln!("{:?}", ast.attrs);
-    let meta_list = meta::parse_nom_top_level_attribute(&ast.attrs)
-        .expect("Parsing the 'nom' meta attribute failed");
+    let meta_list = meta::parse_nom_top_level_attribute(&ast.attrs)?;
     let input_name = syn::Ident::new(&config.input_name, Span::call_site());
     let orig_input_name = syn::Ident::new(
         &("orig_".to_string() + &config.input_name),
         Span::call_site(),
     );
     let selector = match get_selector(&meta_list) {
-        //.expect("The 'Selector' attribute must be used to give the type of selector item");
         Some(s) => s,
         None => {
             if is_input_fieldless_enum(ast) {
                 // check that we have a repr attribute
-                let repr = get_repr(&ast.attrs)
-                    .expect("Nom-derive: fieldless enums must have a 'repr' attribute");
+                let repr = get_repr(&ast.attrs).ok_or_else(|| {
+                    Error::new(
+                        ast.ident.span(),
+                        "Nom-derive: fieldless enums must have a 'repr' attribute",
+                    )
+                })?;
                 return impl_nom_fieldless_enums(ast, &repr, &meta_list, config);
             } else {
-                panic!("Nom-derive: enums must specify the 'selector' attribute");
+                return Err(Error::new(
+                    ast.ident.span(),
+                    "Nom-derive: enums must specify the 'selector' attribute",
+                ));
             }
         }
     };
-    let mut variants_defs: Vec<_> = if let syn::Data::Enum(ref data_enum) = ast.data {
+    let variants_defs: Result<Vec<_>> = if let syn::Data::Enum(ref data_enum) = ast.data {
         // eprintln!("{:?}", data_enum);
         data_enum
             .variants
@@ -217,6 +228,7 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Tok
     } else {
         panic!("expect enum");
     };
+    let mut variants_defs = variants_defs?;
     // parse string items and prepare tokens for each variant
     let (tl_pre, tl_post) = get_pre_post_exec(&meta_list, config);
     let generics = &ast.generics;
@@ -305,5 +317,5 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Tok
         eprintln!("impl_nom_enums: {}", tokens);
     }
 
-    tokens.into()
+    Ok(tokens.into())
 }

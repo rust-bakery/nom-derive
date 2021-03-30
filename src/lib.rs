@@ -1177,7 +1177,10 @@ pub fn nom(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
 
     // Build and return the generated impl
-    impl_nom(&ast, false)
+    match impl_nom(&ast, false) {
+        Ok(ts) => ts,
+        Err(e) => e.to_compile_error().into(),
+    }
 }
 
 fn get_extra_args(meta_list: &[MetaAttr]) -> Option<&proc_macro2::TokenStream> {
@@ -1187,13 +1190,12 @@ fn get_extra_args(meta_list: &[MetaAttr]) -> Option<&proc_macro2::TokenStream> {
         .and_then(MetaAttr::arg)
 }
 
-fn impl_nom(ast: &syn::DeriveInput, debug_derive: bool) -> TokenStream {
+fn impl_nom(ast: &syn::DeriveInput, debug_derive: bool) -> Result<TokenStream> {
     use crate::config::Config;
     // eprintln!("ast: {:#?}", ast);
     let struct_name = ast.ident.to_string();
     // parse top-level attributes and prepare tokens for each field parser
-    let meta = meta::parse_nom_top_level_attribute(&ast.attrs)
-        .expect("Parsing the 'nom' top level attribute failed");
+    let meta = meta::parse_nom_top_level_attribute(&ast.attrs)?;
     // eprintln!("top-level meta: {:?}", meta);
     let mut config = Config::from_meta_list(struct_name, &meta).expect("Could not build config");
     config.debug_derive |= debug_derive;
@@ -1207,7 +1209,7 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive: bool) -> TokenStream {
         syn::Data::Enum(_) => {
             return impl_nom_enums(ast, &mut config);
         }
-        syn::Data::Struct(ref s) => parse_struct(s, &mut config),
+        syn::Data::Struct(ref s) => parse_struct(s, &mut config)?,
         syn::Data::Union(_) => panic!("Unions not supported"),
     };
     // prepare tokens
@@ -1254,7 +1256,7 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive: bool) -> TokenStream {
     if config.debug_derive {
         eprintln!("tokens:\n{}", tokens);
     }
-    tokens.into()
+    Ok(tokens.into())
 }
 
 /// This derive macro behaves exactly like [Nom derive](derive.Nom.html), except it
@@ -1270,5 +1272,8 @@ pub fn nom_derive_debug(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
 
     // Build and return the generated impl
-    impl_nom(&ast, true)
+    match impl_nom(&ast, true) {
+        Ok(ts) => ts,
+        Err(e) => e.to_compile_error().into(),
+    }
 }
