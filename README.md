@@ -94,6 +94,12 @@ That is probably not going to change, since
 
 ### <unreleased>
 
+### 0.7.2
+
+- Add LengthCount attribute (#15)
+- Add f32 and f64 as native types (#16)
+- Rewrite error handling to raise compile errors (instead of panic)
+
 ### 0.7.1
 
 - Fix build for syn 1.0.58 (#11)
