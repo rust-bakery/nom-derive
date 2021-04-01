@@ -1,4 +1,4 @@
-error: Nom-derive: fieldless enums must have a 'repr' attribute
+error: Nom-derive: fieldless enums must have a 'repr' or 'selector' attribute
  --> $DIR/error-enums.rs:6:10
   |
 6 | pub enum E1 {

@@ -104,7 +104,7 @@ fn is_input_fieldless_enum(ast: &syn::DeriveInput) -> bool {
     }
 }
 
-fn impl_nom_fieldless_enums(
+fn impl_nom_fieldless_repr_enum(
     ast: &syn::DeriveInput,
     repr: &str,
     meta_list: &[MetaAttr],
@@ -206,10 +206,10 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Res
                 let repr = get_repr(&ast.attrs).ok_or_else(|| {
                     Error::new(
                         ast.ident.span(),
-                        "Nom-derive: fieldless enums must have a 'repr' attribute",
+                        "Nom-derive: fieldless enums must have a 'repr' or 'selector' attribute",
                     )
                 })?;
-                return impl_nom_fieldless_enums(ast, &repr, &meta_list, config);
+                return impl_nom_fieldless_repr_enum(ast, &repr, &meta_list, config);
             } else {
                 return Err(Error::new(
                     ast.ident.span(),
