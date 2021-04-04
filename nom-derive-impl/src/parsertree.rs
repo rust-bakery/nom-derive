@@ -1,55 +1,124 @@
+use proc_macro2::TokenStream;
 use quote::ToTokens;
-use std::fmt;
+use syn::Ident;
 
 #[derive(Debug)]
-pub enum ParserTree {
-    CallParse(String),
-    Complete(Box<ParserTree>),
-    Cond(Box<ParserTree>, String),
-    Count(Box<ParserTree>, String),
-    DbgDmp(Box<ParserTree>, String),
-    LengthCount(Box<ParserTree>, String),
-    Many0(Box<ParserTree>),
-    Map(Box<ParserTree>, String),
-    Nop,
-    Opt(Box<ParserTree>),
-    PhantomData,
-    Raw(String),
-    Tag(String),
-    Take(String),
-    Value(String),
-    Verify(Box<ParserTree>, String, String),
-}
-
-impl fmt::Display for ParserTree {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ParserTree::CallParse(s) => write!(f, "{}::parse", s),
-            ParserTree::Complete(p) => write!(f, "nom::combinator::complete({})", p),
-            ParserTree::Cond(p, c) => write!(f, "nom::combinator::cond({}, {})", c, p),
-            ParserTree::Count(s, n) => write!(f, "nom::multi::count({}, {{ {} }} as usize)", s, n),
-            ParserTree::DbgDmp(s, c) => write!(f, "nom::dbg_dmp({}, \"{}\")", s, c),
-            ParserTree::LengthCount(s, n) => write!(f, "nom::multi::length_count({}, {})", n, s),
-            ParserTree::Many0(p) => write!(f, "nom::multi::many0({})", p),
-            ParserTree::Map(p, m) => write!(f, "nom::combinator::map({}, {})", p, m),
-            ParserTree::Nop => write!(f, "{{ |__i__| Ok((__i__, ())) }}"),
-            ParserTree::Opt(p) => write!(f, "nom::combinator::opt({})", p),
-            ParserTree::PhantomData => write!(f, "{{ |__i__| Ok((__i__, PhantomData)) }}"),
-            ParserTree::Raw(s) => f.write_str(s),
-            ParserTree::Tag(s) => write!(f, "nom::bytes::streaming::tag({})", s),
-            ParserTree::Take(s) => write!(f, "nom::bytes::streaming::take({} as usize)", s),
-            ParserTree::Value(s) => write!(f, "{{ |__i__| Ok((__i__, {})) }}", s),
-            ParserTree::Verify(p, i, c) => {
-                write!(f, "nom::combinator::verify({}, |{}| {{ {} }})", p, i, c)
-            }
-        }
-    }
+pub struct ParserTree {
+    root: ParserExpr,
 }
 
 impl ToTokens for ParserTree {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let s = format!("{}", self);
-        let input: proc_macro2::TokenStream = s.parse().expect("Unable to tokenize ParserTree");
-        input.to_tokens(tokens);
+        self.root.to_tokens(tokens)
+    }
+}
+
+#[derive(Debug)]
+pub struct ParserTreeItem {
+    pub ident: Option<Ident>,
+    pub expr: ParserExpr,
+}
+
+impl ParserTreeItem {
+    pub fn new(ident: Option<Ident>, expr: ParserExpr) -> Self {
+        ParserTreeItem { ident, expr }
+    }
+}
+
+impl ToTokens for ParserTreeItem {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        self.expr.to_tokens(tokens)
+    }
+}
+
+#[derive(Debug)]
+pub enum ParserExpr {
+    CallParse(TypeItem),
+    CallParseBE(TypeItem),
+    CallParseLE(TypeItem),
+    Complete(Box<ParserExpr>),
+    Cond(Box<ParserExpr>, TokenStream),
+    Count(Box<ParserExpr>, TokenStream),
+    DbgDmp(Box<ParserExpr>, Ident),
+    LengthCount(Box<ParserExpr>, TokenStream),
+    Map(Box<ParserExpr>, TokenStream),
+    Nop,
+    PhantomData,
+    Raw(TokenStream),
+    Tag(TokenStream),
+    Take(TokenStream),
+    Value(TokenStream),
+    Verify(Box<ParserExpr>, Ident, TokenStream),
+}
+
+#[derive(Debug)]
+pub struct TypeItem(pub syn::Type);
+
+impl ToTokens for TypeItem {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        self.0.to_tokens(tokens)
+    }
+}
+
+impl ToTokens for ParserExpr {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        let ts = match self {
+            ParserExpr::CallParse(s) => {
+                quote! { <#s>::parse }
+            }
+            ParserExpr::CallParseBE(s) => {
+                quote! { <#s>::parse_be }
+            }
+            ParserExpr::CallParseLE(s) => {
+                quote! { <#s>::parse_le }
+            }
+            ParserExpr::Complete(expr) => {
+                quote! { nom::combinator::complete(#expr) }
+            }
+            ParserExpr::Cond(expr, c) => {
+                quote! { nom::combinator::cond(#c, #expr) }
+            }
+            ParserExpr::Count(expr, n) => {
+                quote! { nom::multi::count(#expr, #n as usize) }
+            }
+            ParserExpr::DbgDmp(expr, i) => {
+                let ident = format!("{}", i);
+                quote! { nom::dbg_dmp(#expr, #ident) }
+            }
+            ParserExpr::LengthCount(expr, n) => {
+                quote! { nom::multi::length_count(#n, #expr) }
+            }
+            ParserExpr::Map(expr, m) => {
+                quote! { nom::combinator::map(#expr, #m) }
+            }
+            ParserExpr::Nop => {
+                quote! {
+                    { |__i__| Ok((__i__, ())) }
+                }
+            }
+            ParserExpr::PhantomData => {
+                quote! {
+                    { |__i__| Ok((__i__, PhantomData)) }
+                }
+            }
+            ParserExpr::Raw(s) => s.to_token_stream(),
+            ParserExpr::Tag(s) => {
+                quote! { nom::bytes::streaming::tag(#s) }
+            }
+            ParserExpr::Take(s) => {
+                quote! { nom::bytes::streaming::take(#s as usize) }
+            }
+            ParserExpr::Value(ts) => {
+                quote! {
+                    { |__i__| Ok((__i__, #ts)) }
+                }
+            }
+            ParserExpr::Verify(expr, i, v) => {
+                quote! {
+                    nom::combinator::verify(#expr, |&#i| { #v })
+                }
+            }
+        };
+        tokens.extend(ts);
     }
 }

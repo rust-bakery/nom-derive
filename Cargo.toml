@@ -17,6 +17,8 @@ include = [
   ".gitignore",
   ".travis.yml",
   "Cargo.toml",
+  "nom-derive-impl/Cargo.toml",
+  "nom-derive-impl/*.rs",
   "src/*.rs",
   "src/meta/*.rs",
 ]

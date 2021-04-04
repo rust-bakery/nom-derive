@@ -1,10 +1,47 @@
+//! # nom-derive
+//!
+//! [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE-MIT)
+//! [![Apache License 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE-APACHE)
+//! [![docs.rs](https://docs.rs/nom-derive/badge.svg)](https://docs.rs/nom-derive)
+//! [![Build Status](https://travis-ci.org/chifflier/nom-derive.svg?branch=master)](https://travis-ci.org/chifflier/nom-derive)
+//! [![Crates.io Version](https://img.shields.io/crates/v/nom-derive.svg)](https://crates.io/crates/nom-derive)
+//!
+//! ## Overview
+//!
+//! nom-derive is a custom derive attribute, to derive [nom] parsers automatically from the structure definition.
+//!
+//! It is not meant to replace [nom], but to provide a quick and easy way to generate parsers for
+//! structures, especially for simple structures. This crate aims at simplifying common cases.
+//! In some cases, writing the parser manually will remain more efficient.
+//!
+//! - [API documentation](https://docs.rs/nom-derive)
+//! - [Documentation of `Nom` attribute](derive.Nom.html). This is the main
+//!   documentation for this crate, with all possible options and many examples.
+//!
+//! *Feedback welcome !*
+//!
+//! ## `#[derive(Nom)]`
+//!
+//! This crate exposes a single custom-derive macro `Nom` which
+//! implements `parse` for the struct it is applied to.
+//!
+//! The goal of this project is that:
+//!
+//! * `derive(Nom)` should be enough for you to derive [nom] parsers for simple
+//!   structures easily, without having to write it manually
+//! * it allows overriding any parsing method by your own
+//! * it allows using generated parsing functions along with handwritten parsers and
+//!   combining them without efforts
+//! * it remains as fast as nom
+//!
+//! `nom-derive` adds declarative parsing to `nom`. It also allows mixing with
 //! procedural parsing easily, making writing parsers for byte-encoded formats
 //! very easy.
 //!
 //! For example:
 //!
 //! ```rust
-//! use nom_derive::Nom;
+//! use nom_derive::{Nom, Parse};
 //!
 //! #[derive(Nom)]
 //! struct S {
@@ -14,17 +51,23 @@
 //! }
 //! ```
 //!
-//! This adds a static method `parse` to `S`, with the following signature:
+//! This adds an implementation of the trait [`Parse`](Parse) to `S`. The generated code looks
+//! like:
 //! ```rust,ignore
 //! impl S {
-//!     pub fn parse(i: &[u8]) -> nom::IResult(&[u8], S);
+//!     pub fn parse(i: &[u8]) -> nom::IResult(&[u8], S) {
+//!         let (i, a) = be_u32(i)?;
+//!         let (i, b) = be_u16(i)?;
+//!         let (i, c) = be_u16(i)?;
+//!         Ok((i, S{ a, b, c }))
+//!     }
 //! }
 //! ```
 //!
 //! To parse input, just call `let res = S::parse(input);`.
 //!
-//! For extensive documentation of all attributes and examples, see the [Nom derive
-//! attribute](derive.Nom.html) documentation.
+//! For extensive documentation of all attributes and examples, see the [`docs`](docs/struct.DocNom.html)
+//! module.
 //!
 //! Many examples are provided, and more can be found in the [project
 //! tests](https://github.com/rust-bakery/nom-derive/tree/master/tests).
@@ -50,9 +93,12 @@
 //!
 //! [nom]: https://github.com/geal/nom
 
+pub mod docs;
+mod helpers;
 mod traits;
 
+pub use helpers::*;
 pub use traits::*;
 
-pub use nom::IResult;
+pub use nom;
 pub use nom_derive_impl::*;

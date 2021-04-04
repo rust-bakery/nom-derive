@@ -43,7 +43,7 @@ very easy.
 For example:
 
 ```rust
-use nom_derive::Nom;
+use nom_derive::{Nom, Parse};
 
 #[derive(Nom)]
 struct S {
@@ -53,17 +53,23 @@ struct S {
 }
 ```
 
-This adds a static method `parse` to `S`, with the following signature:
+This adds an implementation of the trait [`Parse`](Parse) to `S`. The generated code looks
+like:
 ```rust,ignore
 impl S {
-    pub fn parse(i: &[u8]) -> nom::IResult(&[u8], S);
+    pub fn parse(i: &[u8]) -> nom::IResult(&[u8], S) {
+        let (i, a) = be_u32(i)?;
+        let (i, b) = be_u16(i)?;
+        let (i, c) = be_u16(i)?;
+        Ok((i, S{ a, b, c }))
+    }
 }
 ```
 
 To parse input, just call `let res = S::parse(input);`.
 
-For extensive documentation of all attributes and examples, see the [Nom derive
-attribute](https://docs.rs/nom-derive/latest/nom_derive/derive.Nom.html) documentation.
+For extensive documentation of all attributes and examples, see the [`docs`](https://docs.rs/nom-derive/latest/nom_derive/docs/struct.DocNom.html)
+module.
 
 Many examples are provided, and more can be found in the [project
 tests](https://github.com/rust-bakery/nom-derive/tree/master/tests).

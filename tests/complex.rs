@@ -3,6 +3,7 @@
 extern crate pretty_assertions;
 
 use nom_derive::Nom;
+use nom_derive::Parse;
 
 use nom::bytes::complete::take_till;
 use nom::combinator::cond;
@@ -42,7 +43,7 @@ struct StructWithComplete {
 #[derive(Debug, PartialEq, Nom)]
 struct StructWithMap {
     pub a: u32,
-    #[nom(Parse = "be_u8", Map = "|x: u8| x.to_string()")]
+    #[nom(Map = "|x: u8| x.to_string()", Parse = "be_u8")]
     int_str: String,
 }
 
@@ -159,8 +160,8 @@ pub struct MultipleAttributes1 {
     pub a: u32,
     #[nom(
         Cond = "a == 0",
-        Parse = "take_till(|b| b == 0)",
-        Map = "bytes_to_cstring"
+        Map = "bytes_to_cstring",
+        Parse = "take_till(|b| b == 0)"
     )]
     cstring: Option<CString>,
 }

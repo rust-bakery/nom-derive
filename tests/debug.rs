@@ -1,4 +1,4 @@
-use nom_derive::Nom;
+use nom_derive::{Nom, Parse};
 
 /// test for the `Debug` attribute (field)
 #[derive(Debug, PartialEq, Nom)]

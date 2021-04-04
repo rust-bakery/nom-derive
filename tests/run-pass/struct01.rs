@@ -1,4 +1,4 @@
-use nom_derive::Nom;
+use nom_derive::*;
 
 /// A simple structure, deriving a trivial parser
 #[derive(Debug, PartialEq, Nom)]

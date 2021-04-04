@@ -1,4 +1,4 @@
-error: Unable to infer parser for 'Count' attribute. Is item type a Vec ?
+error: Nom-derive: unexpected type for Count attribute. Expected type: Vec
   --> $DIR/invalid-count.rs:10:8
    |
 10 |     a: u32,

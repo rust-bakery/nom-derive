@@ -2,7 +2,7 @@
 #[macro_use]
 extern crate pretty_assertions;
 
-use nom_derive::Nom;
+use nom_derive::{Nom, Parse};
 
 /// A simple structure with an Option type
 #[derive(Debug, PartialEq, Nom)]
