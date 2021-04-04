@@ -1,10 +1,11 @@
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 
-use crate::config::Config;
+use crate::config::*;
+use crate::endian::*;
 use crate::meta;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
-use crate::parsertree::ParserTree;
+use crate::parsertree::{ParserExpr, ParserTreeItem};
 use crate::structs::{get_pre_post_exec, parse_fields, StructParser, StructParserTree};
 use syn::{spanned::Spanned, Error, Result};
 
@@ -30,13 +31,14 @@ fn parse_variant(variant: &syn::Variant, config: &mut Config) -> Result<VariantP
         let mut p = None;
         for meta in &meta_list {
             if meta.attr_type == MetaAttrType::Parse {
-                let s = meta.arg().unwrap().to_string();
-                p = Some(ParserTree::Raw(s));
+                let s = meta.arg().unwrap();
+                p = Some(ParserExpr::Raw(s.clone()));
             }
         }
         let (pre, post) = get_pre_post_exec(&meta_list, config);
-        let p = p.unwrap_or(ParserTree::Nop);
-        let sp = StructParser::new("_".to_string(), p, pre, post);
+        let p = p.unwrap_or(ParserExpr::Nop);
+        let item = ParserTreeItem::new(Some(variant.ident.clone()), p);
+        let sp = StructParser::new("_".to_string(), item, pre, post);
         struct_def.parsers.push(sp);
     }
     // discriminant ?
@@ -119,26 +121,23 @@ fn impl_nom_fieldless_repr_enum(
     let parser = match repr {
         "u8" | "u16" | "u24" | "u32" | "u64" | "u128" | "i8" | "i16" | "i24" | "i32" | "i64"
         | "i128" => {
-            let is_big_endian = if meta_list.iter().any(|m| m.is_type(MetaAttrType::BigEndian)) {
-                true
-            } else if meta_list
-                .iter()
-                .any(|m| m.is_type(MetaAttrType::LittleEndian))
-            {
-                false
-            } else {
-                config.big_endian
-            };
-            if is_big_endian {
-                Some(ParserTree::Raw(format!(
-                    "nom::number::streaming::be_{}",
-                    repr
-                )))
-            } else {
-                Some(ParserTree::Raw(format!(
-                    "nom::number::streaming::le_{}",
-                    repr
-                )))
+            let endian = get_object_endianness(config);
+            match endian {
+                ParserEndianness::BigEndian => {
+                    let p = syn::Ident::new(&format!("be_{}", repr), Span::call_site());
+                    let qq = quote! {
+                        nom::number::streaming::#p
+                    };
+                    Some(ParserExpr::Raw(qq))
+                }
+                ParserEndianness::LittleEndian | ParserEndianness::Unspecified => {
+                    let p = syn::Ident::new(&format!("le_{}", repr), Span::call_site());
+                    let qq = quote! {
+                        nom::number::streaming::#p
+                    };
+                    Some(ParserExpr::Raw(qq))
+                }
+                ParserEndianness::SetEndian => unimplemented!("SetEndian for fieldless enums"),
             }
         }
         _ => {
@@ -250,7 +249,7 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Res
                     .iter()
                     .map(|sp| {
                         let id = syn::Ident::new(&sp.name, Span::call_site());
-                        (id, &sp.parser)
+                        (id, &sp.item)
                     })
                     .unzip();
                 let (pre, post): (Vec<_>, Vec<_>) = def

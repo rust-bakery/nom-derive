@@ -2,7 +2,7 @@
 #[macro_use]
 extern crate pretty_assertions;
 
-use nom_derive::Nom;
+use nom_derive::{Nom, Parse};
 
 use nom::combinator::opt;
 use nom::number::streaming::le_u32;
@@ -50,7 +50,7 @@ struct StructWithSubStruct {
 /// A simple structure with a verification
 #[derive(Debug, PartialEq, Nom)]
 struct StructWithVerify {
-    #[nom(Verify = "*a == 1")]
+    #[nom(Verify = "a == 1")]
     pub a: u32,
 }
 

@@ -52,11 +52,13 @@ impl_primitive_type!(i8, be_i8, le_i8);
 impl_primitive_type!(i16, be_i16, le_i16);
 impl_primitive_type!(i32, be_i32, le_i32);
 impl_primitive_type!(i64, be_i64, le_i64);
+impl_primitive_type!(i128, be_i128, le_i128);
 
 impl_primitive_type!(u8, be_u8, le_u8);
 impl_primitive_type!(u16, be_u16, le_u16);
 impl_primitive_type!(u32, be_u32, le_u32);
 impl_primitive_type!(u64, be_u64, le_u64);
+impl_primitive_type!(u128, be_u128, le_u128);
 
 impl_primitive_type!(f32, be_f32, le_f32);
 impl_primitive_type!(f64, be_f64, le_f64);
