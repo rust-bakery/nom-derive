@@ -100,11 +100,13 @@ use syn::*;
 mod config;
 mod endian;
 mod enums;
+mod gen;
 mod meta;
 mod parsertree;
 mod structs;
 
 use crate::endian::set_object_endianness;
+use crate::gen::*;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
 use enums::impl_nom_enums;
 use structs::{get_pre_post_exec, parse_struct};
@@ -131,7 +133,7 @@ pub fn nom(input: TokenStream) -> TokenStream {
     }
 }
 
-fn get_extra_args(meta_list: &[MetaAttr]) -> Option<&proc_macro2::TokenStream> {
+pub(crate) fn get_extra_args(meta_list: &[MetaAttr]) -> Option<&proc_macro2::TokenStream> {
     meta_list
         .iter()
         .find(|m| m.attr_type == MetaAttrType::ExtraArgs)
@@ -181,10 +183,7 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive: bool) -> Result<TokenStream> {
         (_, false) => quote! { ( #name { #(#idents2),* } ) },
     };
     let input_name = syn::Ident::new(&config.input_name, Span::call_site());
-    let orig_input_name = syn::Ident::new(
-        &("orig_".to_string() + &config.input_name),
-        Span::call_site(),
-    );
+    let orig_input_name = get_orig_input_name(&config);
     let extra_args = get_extra_args(&meta);
     let fn_body = quote! {
         let #input_name = #orig_input_name;
@@ -194,43 +193,8 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive: bool) -> Result<TokenStream> {
         #tl_post
         Ok((#input_name, struct_def))
     };
-    // get lifetimes
-    let lft = Lifetime::new("'nom", Span::call_site());
-    let lfts: Vec<_> = generics.lifetimes().collect();
-    let mut fn_where_clause = WhereClause {
-        where_token: Token![where](Span::call_site()),
-        predicates: punctuated::Punctuated::new(),
-    };
-    if !lfts.is_empty() {
-        // input slice must outlive all lifetimes from Self
-        let wh: WherePredicate = parse_quote! { #lft: #(#lfts)+* };
-        fn_where_clause.predicates.push(wh);
-        // for &l in &lfts {
-        //     let rev_wh: WherePredicate = parse_quote! { #l: #lft };
-        //     fn_where_clause.predicates.push(rev_wh);
-        // }
-    };
-    // function declaration line
-    let fn_decl = if config.generic_errors {
-        let ident_e = Ident::new("E", Span::call_site());
-        // extend where clause for generic parameters
-        let dep: WherePredicate = parse_quote! {
-            #ident_e: nom_derive::nom::error::ParseError<&#lft [u8]>
-        };
-        fn_where_clause.predicates.push(dep);
-        // let dep: WherePredicate = parse_quote! { #ident_e: std::fmt::Debug };
-        // fn_where_clause.predicates.push(dep);
-        quote! {
-            pub fn parse<#lft, #ident_e>(#orig_input_name: &#lft [u8] #extra_args) -> nom::IResult<&#lft [u8], Self, #ident_e>
-            #fn_where_clause
-        }
-    } else {
-        quote! {
-            pub fn parse<#lft>(#orig_input_name: &#lft [u8] #extra_args) -> nom::IResult<&#lft [u8], Self>
-            #fn_where_clause
-        }
-    };
-    // extract impl parameters
+    let fn_decl = gen_fn_decl(generics, extra_args, &config);
+    // extract impl parameters from struct
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
     // Generate impl
     let impl_tokens = quote! {
