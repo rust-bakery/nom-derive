@@ -66,25 +66,22 @@ fn get_type_parser(ty: &Type, meta_list: &[MetaAttr], config: &Config) -> Result
 }
 
 fn get_item_subtype_parser(ty: &Type, expected: &str, attr: &str) -> Result<TokenStream> {
-    match ty {
-        Type::Path(ref typepath) => {
-            let path = &typepath.path;
-            if path.segments.len() != 1 {
-                return Err(Error::new(
-                    ty.span(),
-                    "Nom-derive: multiple segments in type path are not supported",
-                ));
-            }
-            let segment = path.segments.last().expect("empty segments list");
-            let ident_s = segment.ident.to_string();
-            if ident_s == expected {
-                // segment.arguments should contain the values, wrapped in AngleBracketed
-                if let PathArguments::AngleBracketed(args) = &segment.arguments {
-                    return Ok(args.args.to_token_stream());
-                }
+    if let Type::Path(ref typepath) = ty {
+        let path = &typepath.path;
+        if path.segments.len() != 1 {
+            return Err(Error::new(
+                ty.span(),
+                "Nom-derive: multiple segments in type path are not supported",
+            ));
+        }
+        let segment = path.segments.last().expect("empty segments list");
+        let ident_s = segment.ident.to_string();
+        if ident_s == expected {
+            // segment.arguments should contain the values, wrapped in AngleBracketed
+            if let PathArguments::AngleBracketed(args) = &segment.arguments {
+                return Ok(args.args.to_token_stream());
             }
         }
-        _ => (),
     }
     Err(Error::new(
         ty.span(),
@@ -116,11 +113,11 @@ fn get_type_first_ident(ty: &Type) -> Result<String> {
     }
 }
 
-fn get_type_default(ty: &Type) -> Result<ParserExpr> {
+fn get_type_default(ty: &Type) -> ParserExpr {
     let ts = quote! {
         { |i| Ok((i, <#ty>::default())) }
     };
-    Ok(ParserExpr::Raw(ts))
+    ParserExpr::Raw(ts)
 }
 
 fn get_parser(
@@ -148,11 +145,9 @@ fn get_parser(
             MetaAttrType::Take => {
                 // if meta.arg is string, parse content
                 let ts = meta.arg().unwrap();
-                if let Some(tt) = ts.clone().into_iter().next() {
-                    if let TokenTree::Literal(_) = tt {
-                        let ts = syn::parse2::<Expr>(ts.clone())?;
-                        return Ok(ParserExpr::Take(ts.to_token_stream()));
-                    }
+                if let Some(TokenTree::Literal(_)) = ts.clone().into_iter().next() {
+                    let ts = syn::parse2::<Expr>(ts.clone())?;
+                    return Ok(ParserExpr::Take(ts.to_token_stream()));
                 }
                 let s = meta.arg().unwrap();
                 return Ok(ParserExpr::Take(s.clone()));
@@ -166,7 +161,7 @@ fn get_parser(
                 return Ok(ParserExpr::Raw(s.clone()));
             }
             MetaAttrType::Ignore => {
-                return get_type_default(ty);
+                return Ok(get_type_default(ty));
             }
             MetaAttrType::Complete => {
                 let expr = get_parser(ident, ty, sub_meta_list, meta_list, config)?;
@@ -216,11 +211,9 @@ fn get_parser(
                 let expr = get_parser(ident, ty, sub_meta_list, meta_list, config)?;
                 // if meta.arg is string, parse content
                 let ts_arg = meta.arg().unwrap();
-                if let Some(tt) = ts_arg.clone().into_iter().next() {
-                    if let TokenTree::Literal(_) = tt {
-                        let ts_arg = syn::parse2::<Expr>(ts_arg.clone())?;
-                        return Ok(ParserExpr::Map(Box::new(expr), ts_arg.to_token_stream()));
-                    }
+                if let Some(TokenTree::Literal(_)) = ts_arg.clone().into_iter().next() {
+                    let ts_arg = syn::parse2::<Expr>(ts_arg.clone())?;
+                    return Ok(ParserExpr::Map(Box::new(expr), ts_arg.to_token_stream()));
                 }
                 let ts_arg = meta.arg().unwrap();
                 return Ok(ParserExpr::Map(Box::new(expr), ts_arg.clone()));
@@ -238,11 +231,9 @@ fn get_parser(
                 };
                 // if meta.arg is string, parse content
                 let ts_arg = meta.arg().unwrap();
-                if let Some(tt) = ts_arg.clone().into_iter().next() {
-                    if let TokenTree::Literal(_) = tt {
-                        let ts_arg = syn::parse2::<Expr>(ts_arg.clone())?;
-                        return Ok(ParserExpr::Map(Box::new(expr), ts_arg.to_token_stream()));
-                    }
+                if let Some(TokenTree::Literal(_)) = ts_arg.clone().into_iter().next() {
+                    let ts_arg = syn::parse2::<Expr>(ts_arg.clone())?;
+                    return Ok(ParserExpr::Map(Box::new(expr), ts_arg.to_token_stream()));
                 }
                 let ts_arg = meta.arg().unwrap();
                 return Ok(ParserExpr::Verify(

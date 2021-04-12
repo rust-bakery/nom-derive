@@ -56,7 +56,7 @@ pub enum U3<'a> {
     Field1(u32),
     // next variant has to be annotated for parsing (inside variant definition, not outside!)
     #[nom(Selector = "MessageType(1)")]
-    Field2(#[nom(Parse = "take(4 as usize)")] &'a [u8]),
+    Field2(#[nom(Parse = "take(4usize)")] &'a [u8]),
 }
 
 // /// An enum with fields and Parse attribute

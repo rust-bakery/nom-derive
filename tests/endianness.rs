@@ -34,7 +34,7 @@ pub struct UnitStruct(pub u32);
 #[derive(Debug, PartialEq, Nom)]
 #[nom(LittleEndian)]
 #[repr(u32)]
-pub enum LE16 {
+pub enum Le16 {
     A = 1,
     B,
     C = 0x0100_0000,
@@ -95,8 +95,8 @@ fn little_endian_unit_struct() {
 
 #[test]
 fn little_endian_enum() {
-    let res = LE16::parse(INPUT_16);
-    assert_eq!(res, Ok((&INPUT_16[4..], LE16::C)));
+    let res = Le16::parse(INPUT_16);
+    assert_eq!(res, Ok((&INPUT_16[4..], Le16::C)));
 }
 
 // XXX panics at compile time, not runtime
