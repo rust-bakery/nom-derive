@@ -10,6 +10,7 @@ pub struct Config {
     pub object_endianness: ParserEndianness,
     pub debug: bool,
     pub debug_derive: bool,
+    pub generic_errors: bool,
     pub input_name: String,
 }
 
@@ -33,6 +34,7 @@ impl Config {
         };
         let debug = l.iter().any(|m| m.is_type(MetaAttrType::Debug));
         let debug_derive = l.iter().any(|m| m.is_type(MetaAttrType::DebugDerive));
+        let generic_errors = l.iter().any(|m| m.is_type(MetaAttrType::GenericErrors));
         let input_name = l
             .iter()
             .find_map(|m| {
@@ -49,6 +51,7 @@ impl Config {
             object_endianness,
             debug,
             debug_derive,
+            generic_errors,
             input_name,
         })
     }

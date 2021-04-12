@@ -1,6 +1,6 @@
-use crate::traits::Parse;
+use crate::traits::*;
 use nom::error::ParseError;
-use nom::{IResult, InputLength, InputTake, ToUsize};
+use nom::{IResult, ToUsize};
 use std::marker::PhantomData;
 
 #[derive(Debug, PartialEq)]
@@ -18,7 +18,7 @@ impl<L, D> LengthData<L, D> {
 
 impl<L, I, E> Parse<I, E> for LengthData<L, I>
 where
-    I: Clone + PartialEq + InputLength + InputTake,
+    I: Clone + PartialEq + InputSlice,
     E: ParseError<I>,
     L: Parse<I, E> + ToUsize,
 {
