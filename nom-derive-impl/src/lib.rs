@@ -186,50 +186,61 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive: bool) -> Result<TokenStream> {
         Span::call_site(),
     );
     let extra_args = get_extra_args(&meta);
-    // eprintln!("  generic: {:?}", generics);
-    // pickup a lifetime not used by struct
-    // let lft = Lifetime::new("'nom", Span::call_site());
-    // XXX: support for custom errors?
-    // let ident_e = Ident::new("E", Span::call_site());
-    // for p in &s.parsers {
-    //     //
-    //     dbg!(&p);
-    //     let ts = p.item.to_token_stream();
-    //     eprintln!("ts: {}", ts);
-    // }
-    // let impl_tokens = quote! {
-    //     // impl<'a, #ident_e> nom_derive::Parse<&'a [u8], #ident_e> for #name#generics
-    //     impl#generics #name#generics
-    //     {
-    //         fn parse<#lft, #ident_e>(#orig_input_name: &#lft [u8] #extra_args) -> nom::IResult<&#lft [u8], #name, #ident_e>
-    //         where
-    //             #ident_e: nom_derive::nom::error::ParseError<&#lft [u8]> + core::fmt::Debug,
-    //         {
-    //             let #input_name = #orig_input_name;
-    //             #tl_pre
-    //             #(#pre let (#input_name, #idents) = #parser_tokens (#input_name) ?; #post)*
-    //             let struct_def = #struct_def;
-    //             #tl_post
-    //             Ok((#input_name, struct_def))
-    //         }
-    //     }
-    // };
+    let fn_body = quote! {
+        let #input_name = #orig_input_name;
+        #tl_pre
+        #(#pre let (#input_name, #idents) = #parser_tokens (#input_name) ?; #post)*
+        let struct_def = #struct_def;
+        #tl_post
+        Ok((#input_name, struct_def))
+    };
+    // get lifetimes
+    let lft = Lifetime::new("'nom", Span::call_site());
+    let lfts: Vec<_> = generics.lifetimes().collect();
+    let mut fn_where_clause = WhereClause {
+        where_token: Token![where](Span::call_site()),
+        predicates: punctuated::Punctuated::new(),
+    };
+    if !lfts.is_empty() {
+        // input slice must outlive all lifetimes from Self
+        let wh: WherePredicate = parse_quote! { #lft: #(#lfts)+* };
+        fn_where_clause.predicates.push(wh);
+        // for &l in &lfts {
+        //     let rev_wh: WherePredicate = parse_quote! { #l: #lft };
+        //     fn_where_clause.predicates.push(rev_wh);
+        // }
+    };
+    // function declaration line
+    let fn_decl = if config.generic_errors {
+        let ident_e = Ident::new("E", Span::call_site());
+        // extend where clause for generic parameters
+        let dep: WherePredicate = parse_quote! {
+            #ident_e: nom_derive::nom::error::ParseError<&#lft [u8]>
+        };
+        fn_where_clause.predicates.push(dep);
+        // let dep: WherePredicate = parse_quote! { #ident_e: std::fmt::Debug };
+        // fn_where_clause.predicates.push(dep);
+        quote! {
+            pub fn parse<#lft, #ident_e>(#orig_input_name: &#lft [u8] #extra_args) -> nom::IResult<&#lft [u8], Self, #ident_e>
+            #fn_where_clause
+        }
+    } else {
+        quote! {
+            pub fn parse<#lft>(#orig_input_name: &#lft [u8] #extra_args) -> nom::IResult<&#lft [u8], Self>
+            #fn_where_clause
+        }
+    };
+    // extract impl parameters
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+    // Generate impl
     let impl_tokens = quote! {
-        // impl<'a, #ident_e> nom_derive::Parse<&'a [u8], #ident_e> for #name#generics
-        impl#generics #name#generics
-        {
-            fn parse(#orig_input_name: &[u8] #extra_args) -> nom::IResult<&[u8], #name>
+        impl #impl_generics #name #ty_generics #where_clause {
+            #fn_decl
             {
-                let #input_name = #orig_input_name;
-                #tl_pre
-                #(#pre let (#input_name, #idents) = #parser_tokens (#input_name) ?; #post)*
-                let struct_def = #struct_def;
-                #tl_post
-                Ok((#input_name, struct_def))
+                #fn_body
             }
         }
     };
-
     if config.debug_derive {
         eprintln!("tokens:\n{}", impl_tokens);
     }

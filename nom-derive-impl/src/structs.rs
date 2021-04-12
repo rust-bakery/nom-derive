@@ -113,11 +113,23 @@ fn get_type_first_ident(ty: &Type) -> Result<String> {
     }
 }
 
-fn get_type_default(ty: &Type) -> ParserExpr {
-    let ts = quote! {
-        { |i| Ok((i, <#ty>::default())) }
+fn get_type_default(ty: &Type) -> Result<ParserExpr> {
+    let ident_s = get_type_first_ident(ty)?;
+    let default = match ident_s.as_ref() {
+        // "u8" | "u16" | "u32" | "u64" | "u128" | "i8" | "i16" | "i32" | "i64" | "i128" => {
+        //     "0".to_string()
+        // }
+        // "f32" | "f64" => "0.0".to_string(),
+        "Option" => quote! { None },
+        "PhantomData" => quote! { PhantomData },
+        "Vec" => quote! { Vec::new() },
+        _ => quote! { <#ty>::default() },
     };
-    ParserExpr::Raw(ts)
+    // ParserTree::Raw(format!("{{ |i| Ok((i, {})) }}", default))
+    let ts = quote! {
+        { |i| Ok((i, #default )) }
+    };
+    Ok(ParserExpr::Raw(ts))
 }
 
 fn get_parser(
@@ -161,7 +173,7 @@ fn get_parser(
                 return Ok(ParserExpr::Raw(s.clone()));
             }
             MetaAttrType::Ignore => {
-                return Ok(get_type_default(ty));
+                return get_type_default(ty);
             }
             MetaAttrType::Complete => {
                 let expr = get_parser(ident, ty, sub_meta_list, meta_list, config)?;

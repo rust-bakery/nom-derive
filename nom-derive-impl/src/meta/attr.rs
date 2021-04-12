@@ -18,6 +18,7 @@ pub enum MetaAttrType {
     ErrorIf,
     Exact,
     ExtraArgs,
+    GenericErrors,
     Ignore,
     InputName,
     LengthCount,
@@ -51,6 +52,7 @@ impl MetaAttrType {
             "ErrorIf" => Some(MetaAttrType::ErrorIf),
             "Exact" => Some(MetaAttrType::Exact),
             "ExtraArgs" => Some(MetaAttrType::ExtraArgs),
+            "GenericErrors" => Some(MetaAttrType::GenericErrors),
             "If" | "Cond" => Some(MetaAttrType::Cond),
             "Ignore" | "Default" => Some(MetaAttrType::Ignore),
             "InputName" => Some(MetaAttrType::InputName),
@@ -117,6 +119,7 @@ impl fmt::Display for MetaAttrType {
             MetaAttrType::ErrorIf => "ErrorIf",
             MetaAttrType::Exact => "Exact",
             MetaAttrType::ExtraArgs => "ExtraArgs",
+            MetaAttrType::GenericErrors => "GenericErrors",
             MetaAttrType::Ignore => "Ignore",
             MetaAttrType::InputName => "InputName",
             MetaAttrType::LengthCount => "LengthCount",
@@ -158,6 +161,7 @@ impl MetaAttr {
             MetaAttrType::DebugDerive
                 | MetaAttrType::Debug
                 | MetaAttrType::ExtraArgs
+                | MetaAttrType::GenericErrors
                 | MetaAttrType::InputName
                 | MetaAttrType::LittleEndian
                 | MetaAttrType::BigEndian
@@ -176,6 +180,7 @@ impl MetaAttr {
             MetaAttrType::DebugDerive
                 | MetaAttrType::Exact
                 | MetaAttrType::ExtraArgs
+                | MetaAttrType::GenericErrors
                 | MetaAttrType::InputName
         )
     }

@@ -8,9 +8,22 @@ use nom::*;
 use std::convert::TryFrom;
 use std::ops::RangeFrom;
 
+pub use nom::{InputLength, Slice};
+
+pub trait InputSlice:
+    Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength + InputTake
+{
+}
+impl<'a> InputSlice for &'a [u8] {}
+
 /// Common trait for all parsers in nom-derive
+// Implementation note: using a generic type I "hides" the lifetime
+// of the input slice &'lft [u8]
+// We prefer not to add another lifetime here, or auto-generated code becomes complex
+// if the object implementing Parse also has lifetimes
 pub trait Parse<I, E = Error<I>>
 where
+    I: InputSlice,
     E: ParseError<I>,
     Self: Sized,
 {
@@ -33,7 +46,7 @@ macro_rules! impl_primitive_type {
         impl<I, E> Parse<I, E> for $ty
         where
             E: ParseError<I>,
-            I: Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength,
+            I: InputSlice,
         {
             fn parse(i: I) -> IResult<I, Self, E> {
                 Self::parse_be(i)
@@ -76,7 +89,7 @@ where
 
 impl<T, I, E> Parse<I, E> for Option<T>
 where
-    I: Clone,
+    I: Clone + InputSlice,
     E: ParseError<I>,
     T: Parse<I, E>,
 {
@@ -93,7 +106,7 @@ where
 
 impl<T, I, E> Parse<I, E> for Vec<T>
 where
-    I: Clone + PartialEq,
+    I: Clone + PartialEq + InputSlice,
     E: ParseError<I>,
     T: Parse<I, E>,
 {
@@ -110,7 +123,7 @@ where
 
 impl<T1, T2, I, E> Parse<I, E> for (T1, T2)
 where
-    I: Clone + PartialEq,
+    I: Clone + PartialEq + InputSlice,
     E: ParseError<I>,
     T1: Parse<I, E>,
     T2: Parse<I, E>,
@@ -130,7 +143,7 @@ where
 #[rustversion::since(1.51)]
 impl<T, I, E, const N: usize> Parse<I, E> for [T; N]
 where
-    I: Clone + PartialEq,
+    I: Clone + PartialEq + InputSlice,
     E: ParseError<I> + FromExternalError<I, Vec<T>>,
     T: Parse<I, E>,
 {

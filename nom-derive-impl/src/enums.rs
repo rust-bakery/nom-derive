@@ -7,7 +7,7 @@ use crate::meta;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
 use crate::parsertree::{ParserExpr, ParserTreeItem};
 use crate::structs::{get_pre_post_exec, parse_fields, StructParser, StructParserTree};
-use syn::{spanned::Spanned, Error, Result};
+use syn::{spanned::Spanned, *};
 
 #[derive(Debug)]
 struct VariantParserTree {
@@ -167,9 +167,38 @@ fn impl_nom_fieldless_repr_enum(
             quote! { if selector == #name::#id as #ty { #name::#id } }
         })
         .collect();
+    // note: fieldless enums cannot have lifetimes
+    let lft = Lifetime::new("'nom", Span::call_site());
+    let mut fn_where_clause = WhereClause {
+        where_token: Token![where](Span::call_site()),
+        predicates: punctuated::Punctuated::new(),
+    };
+    // function declaration line
+    let fn_decl = if config.generic_errors {
+        let ident_e = Ident::new("E", Span::call_site());
+        // extend where clause for generic parameters
+        let dep: WherePredicate = parse_quote! {
+            #ident_e: nom_derive::nom::error::ParseError<&#lft [u8]>
+        };
+        fn_where_clause.predicates.push(dep);
+        // let dep: WherePredicate = parse_quote! { #ident_e: std::fmt::Debug };
+        // fn_where_clause.predicates.push(dep);
+        quote! {
+            pub fn parse<#lft, #ident_e>(#orig_input_name: &#lft [u8]) -> nom::IResult<&#lft [u8], Self, #ident_e>
+            #fn_where_clause
+        }
+    } else {
+        quote! {
+            pub fn parse<#lft>(#orig_input_name: &#lft [u8]) -> nom::IResult<&#lft [u8], Self>
+            #fn_where_clause
+        }
+    };
+    // extract impl parameters
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+    // generate impl
     let tokens = quote! {
-        impl#generics #name#generics {
-            pub fn parse(#orig_input_name: &[u8]) -> nom::IResult<&[u8],#name> {
+        impl#impl_generics #name#ty_generics #where_clause {
+            #fn_decl {
                 let #input_name = #orig_input_name;
                 #tl_pre
                 let (#input_name, selector) = #parser(#input_name)?;
@@ -291,15 +320,53 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Res
             variants_code.swap(pos, last_index);
         }
     }
-    // generate code
+    // get lifetimes
+    let lft = Lifetime::new("'nom", Span::call_site());
+    let lfts: Vec<_> = generics.lifetimes().collect();
+    let mut fn_where_clause = WhereClause {
+        where_token: Token![where](Span::call_site()),
+        predicates: punctuated::Punctuated::new(),
+    };
+    if !lfts.is_empty() {
+        // input slice must outlive all lifetimes from Self
+        let wh: WherePredicate = parse_quote! { #lft: #(#lfts)+* };
+        fn_where_clause.predicates.push(wh);
+        // for &l in &lfts {
+        //     let rev_wh: WherePredicate = parse_quote! { #l: #lft };
+        //     fn_where_clause.predicates.push(rev_wh);
+        // }
+    };
+    // function declaration line
+    let fn_decl = if config.generic_errors {
+        let ident_e = Ident::new("E", Span::call_site());
+        // extend where clause for generic parameters
+        let dep: WherePredicate = parse_quote! {
+            #ident_e: nom_derive::nom::error::ParseError<&#lft [u8]>
+        };
+        fn_where_clause.predicates.push(dep);
+        // let dep: WherePredicate = parse_quote! { #ident_e: std::fmt::Debug };
+        // fn_where_clause.predicates.push(dep);
+        quote! {
+            pub fn parse<#lft, #ident_e>(#orig_input_name: &#lft [u8], selector: #selector_type) -> nom::IResult<&#lft [u8], Self, #ident_e>
+            #fn_where_clause
+        }
+    } else {
+        quote! {
+            pub fn parse<#lft>(#orig_input_name: &#lft [u8], selector: #selector_type) -> nom::IResult<&#lft [u8], Self>
+            #fn_where_clause
+        }
+    };
+    // extract impl parameters
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+    // generate impl
     let default_case = if default_case_handled {
         quote! {}
     } else {
         quote! { _ => Err(nom::Err::Error(nom::error_position!(#input_name, nom::error::ErrorKind::Switch))) }
     };
     let tokens = quote! {
-        impl#generics #name#generics {
-            pub fn parse(#orig_input_name: &[u8], selector: #selector_type) -> nom::IResult<&[u8],#name> {
+        impl#impl_generics #name#ty_generics #where_clause {
+            #fn_decl {
                 let #input_name = #orig_input_name;
                 #tl_pre
                 let (#input_name, enum_def) = match selector {
