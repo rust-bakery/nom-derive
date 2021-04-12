@@ -3,6 +3,8 @@ use proc_macro2::Span;
 
 use crate::config::*;
 use crate::endian::*;
+use crate::gen::*;
+use crate::get_extra_args;
 use crate::meta;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
 use crate::parsertree::{ParserExpr, ParserTreeItem};
@@ -168,31 +170,7 @@ fn impl_nom_fieldless_repr_enum(
         })
         .collect();
     // note: fieldless enums cannot have lifetimes
-    let lft = Lifetime::new("'nom", Span::call_site());
-    let mut fn_where_clause = WhereClause {
-        where_token: Token![where](Span::call_site()),
-        predicates: punctuated::Punctuated::new(),
-    };
-    // function declaration line
-    let fn_decl = if config.generic_errors {
-        let ident_e = Ident::new("E", Span::call_site());
-        // extend where clause for generic parameters
-        let dep: WherePredicate = parse_quote! {
-            #ident_e: nom_derive::nom::error::ParseError<&#lft [u8]>
-        };
-        fn_where_clause.predicates.push(dep);
-        // let dep: WherePredicate = parse_quote! { #ident_e: std::fmt::Debug };
-        // fn_where_clause.predicates.push(dep);
-        quote! {
-            pub fn parse<#lft, #ident_e>(#orig_input_name: &#lft [u8]) -> nom::IResult<&#lft [u8], Self, #ident_e>
-            #fn_where_clause
-        }
-    } else {
-        quote! {
-            pub fn parse<#lft>(#orig_input_name: &#lft [u8]) -> nom::IResult<&#lft [u8], Self>
-            #fn_where_clause
-        }
-    };
+    let fn_decl = gen_fn_decl(generics, None, config);
     // extract impl parameters
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
     // generate impl
@@ -222,10 +200,8 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Res
     // eprintln!("{:?}", ast.attrs);
     let meta_list = meta::parse_nom_top_level_attribute(&ast.attrs)?;
     let input_name = syn::Ident::new(&config.input_name, Span::call_site());
-    let orig_input_name = syn::Ident::new(
-        &("orig_".to_string() + &config.input_name),
-        Span::call_site(),
-    );
+    let orig_input_name = get_orig_input_name(config);
+    let extra_args = get_extra_args(&meta_list);
     let selector = match get_selector(&meta_list) {
         Some(s) => s,
         None => {
@@ -320,42 +296,8 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Res
             variants_code.swap(pos, last_index);
         }
     }
-    // get lifetimes
-    let lft = Lifetime::new("'nom", Span::call_site());
-    let lfts: Vec<_> = generics.lifetimes().collect();
-    let mut fn_where_clause = WhereClause {
-        where_token: Token![where](Span::call_site()),
-        predicates: punctuated::Punctuated::new(),
-    };
-    if !lfts.is_empty() {
-        // input slice must outlive all lifetimes from Self
-        let wh: WherePredicate = parse_quote! { #lft: #(#lfts)+* };
-        fn_where_clause.predicates.push(wh);
-        // for &l in &lfts {
-        //     let rev_wh: WherePredicate = parse_quote! { #l: #lft };
-        //     fn_where_clause.predicates.push(rev_wh);
-        // }
-    };
-    // function declaration line
-    let fn_decl = if config.generic_errors {
-        let ident_e = Ident::new("E", Span::call_site());
-        // extend where clause for generic parameters
-        let dep: WherePredicate = parse_quote! {
-            #ident_e: nom_derive::nom::error::ParseError<&#lft [u8]>
-        };
-        fn_where_clause.predicates.push(dep);
-        // let dep: WherePredicate = parse_quote! { #ident_e: std::fmt::Debug };
-        // fn_where_clause.predicates.push(dep);
-        quote! {
-            pub fn parse<#lft, #ident_e>(#orig_input_name: &#lft [u8], selector: #selector_type) -> nom::IResult<&#lft [u8], Self, #ident_e>
-            #fn_where_clause
-        }
-    } else {
-        quote! {
-            pub fn parse<#lft>(#orig_input_name: &#lft [u8], selector: #selector_type) -> nom::IResult<&#lft [u8], Self>
-            #fn_where_clause
-        }
-    };
+    let extra_args = quote! { , selector: #selector_type #extra_args };
+    let fn_decl = gen_fn_decl(generics, Some(&extra_args), &config);
     // extract impl parameters
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
     // generate impl
