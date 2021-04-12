@@ -12,16 +12,16 @@ use std::marker::PhantomData;
 #[derive(Debug, PartialEq, Nom)]
 struct StructWithLifetime<'a> {
     /// This field provides the parsing code, and calls a macro
-    #[nom(Parse = "take(4 as usize)")]
+    #[nom(Parse = "take(4usize)")]
     s: &'a [u8],
 }
 
 /// A structure with different lifetimes
 #[derive(Debug, PartialEq, Nom)]
 struct StructWithLifetimes<'a, 'b> {
-    #[nom(Parse = "take(4 as usize)")]
+    #[nom(Parse = "take(4usize)")]
     s: &'a [u8],
-    #[nom(Parse = "take(4 as usize)")]
+    #[nom(Parse = "take(4usize)")]
     t: &'b [u8],
 }
 
