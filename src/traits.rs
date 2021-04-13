@@ -98,7 +98,10 @@ where
     E: ParseError<I>,
     Self: Sized,
 {
-    /// Parse input, redardless of endianness
+    /// Parse input, not knowing the endianness
+    ///
+    /// Usually, this means choosing between big and little-endian.
+    /// Default implementations for common types are big-endian.
     fn parse(i: I) -> IResult<I, Self, E>;
 
     /// Parse input as Big-Endian
