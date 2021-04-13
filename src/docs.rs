@@ -1,91 +1,5 @@
-//! # nom-derive pseudo-module, containing crate documentation
-//!
-//! [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE-MIT)
-//! [![Apache License 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE-APACHE)
-//! [![docs.rs](https://docs.rs/nom-derive/badge.svg)](https://docs.rs/nom-derive)
-//! [![Build Status](https://travis-ci.org/chifflier/nom-derive.svg?branch=master)](https://travis-ci.org/chifflier/nom-derive)
-//! [![Crates.io Version](https://img.shields.io/crates/v/nom-derive.svg)](https://crates.io/crates/nom-derive)
-//!
-//! ## Overview
-//!
-//! nom-derive is a custom derive attribute, to derive [nom] parsers automatically from the structure definition.
-//!
-//! It is not meant to replace [nom], but to provide a quick and easy way to generate parsers for
-//! structures, especially for simple structures. This crate aims at simplifying common cases.
-//! In some cases, writing the parser manually will remain more efficient.
-//!
-//! - [API documentation](https://docs.rs/nom-derive)
-//! - [Documentation of `Nom` attribute](struct.DocNom.html). This is the main
-//!   documentation for this crate, with all possible options and many examples.
-//!
-//! *Feedback welcome !*
-//!
-//! ## `#[derive(Nom)]`
-//!
-//! This crate exposes a single custom-derive macro `Nom` which
-//! implements `parse` for the struct it is applied to.
-//!
-//! The goal of this project is that:
-//!
-//! * `derive(Nom)` should be enough for you to derive [nom] parsers for simple
-//!   structures easily, without having to write it manually
-//! * it allows overriding any parsing method by your own
-//! * it allows using generated parsing functions along with handwritten parsers and
-//!   combining them without efforts
-//! * it remains as fast as nom
-//!
-//! `nom-derive` adds declarative parsing to `nom`. It also allows mixing with
-//! procedural parsing easily, making writing parsers for byte-encoded formats
-//! very easy.
-//!
-//! For example:
-//!
-//! ```rust
-//! use nom_derive::{Nom, Parse};
-//!
-//! #[derive(Nom)]
-//! struct S {
-//!   a: u32,
-//!   b: u16,
-//!   c: u16
-//! }
-//! ```
-//!
-//! This adds a static method `parse` to `S`, with the following signature:
-//! ```rust,ignore
-//! impl S {
-//!     pub fn parse(i: &[u8]) -> nom::IResult(&[u8], S);
-//! }
-//! ```
-//!
-//! To parse input, just call `let res = S::parse(input);`.
-//!
-//! For extensive documentation of all attributes and examples, see the [`docs`](struct.DocNom.html)
-//! module.
-//!
-//! Many examples are provided, and more can be found in the [project
-//! tests](https://github.com/rust-bakery/nom-derive/tree/master/tests).
-//!
-//! ## Combinators visibility
-//!
-//! All inferred parsers will generate code with absolute type path, so there is no need
-//! to add `use` statements for them. However, if you use any combinator directly (or in a `Parse`
-//! statement, for ex.), it has to be imported as usual.
-//!
-//! That is probably not going to change, since
-//! * a proc_macro cannot export items other than functions tagged with `#[proc_macro_derive]`
-//! * there are variants of combinators with the same names (complete/streaming, bits/bytes), so
-//!   re-exporting them would create side-effects.
-//!
-//! ## Debug tips
-//!
-//! * If the generated parser does not compile, add `#[nom(DebugDerive)]` to the structure.
-//!   It will dump the generated parser to `stderr`.
-//! * If the generated parser fails at runtime, try adding `#[nom(Debug)]` to the structure or
-//!   to fields. It wraps subparsers in `dbg_dmp` and will print the field name and input to
-//!   `stderr` if the parser fails.
-//!
-//! [nom]: https://github.com/geal/nom
+//! The `docs` pseudo-module contains `nom-derive` documentation. Objects from this module
+//! are only used to add documentation, and are not used in the crate.
 
 /// The `Nom` derive automatically generates a `parse` function for the structure
 /// using [nom] parsers. It will try to infer parsers for primitive of known
@@ -97,6 +11,13 @@
 /// tests](https://github.com/rust-bakery/nom-derive/tree/master/tests).
 ///
 /// [nom]: https://github.com/Geal/nom
+///
+/// # Table of contents
+///
+/// - [Attributes](#attributes)
+/// - [Deriving parsers for `Struct`](#deriving-parsers-for-struct)
+/// - [Deriving parsers for `Enum`](#deriving-parsers-for-enum)
+/// - [Generic Errors](#generic-errors)
 ///
 /// # Attributes
 ///
@@ -128,6 +49,7 @@
 /// | [Default](#default) | fields | Do not parse, set a field to the default value for the type
 /// | [ErrorIf](#verifications) | fields | Before parsing, check condition is true and return an error if false.
 /// | [Exact](#exact) | top-level | Check that input was entirely consumed by parser
+/// | [GenericErrors](#generic-errors) | top-level | Change function signature to accept generic type parameter for error
 /// | [If](#conditional-values) | fields | Similar to `Cond`
 /// | [Ignore](#default) | fields | An alias for `default`
 /// | [InputName](#input-name) | top-level | Change the internal name of input
@@ -509,7 +431,7 @@
 /// must be equivalent to:
 ///
 /// ```rust,ignore
-/// fn parser(i: &[u8]) -> IResult<T> {
+/// fn parser(i: &[u8]) -> IResult<&[u8], T> {
 /// // ...
 /// }
 /// ```
@@ -1157,4 +1079,44 @@
 ///     pub a: u32,
 /// }
 /// ```
-pub struct DocNom;
+///
+/// # Generic errors
+///
+/// By default, `nom-derive` will use `nom`'s default error type (`(&[u8], ErrorKind)`). In most cases,
+/// this will be enough for a simple parser.
+/// However, there are some cases like debugging a runtime error, or using custom error types, where this
+/// error type is not easy to use.
+///
+/// The `GenericErrors` attribute changes the generated function signature to have a generic type parameter
+/// for the error type:
+///
+/// ```rust
+/// # use nom_derive::{Nom, Parse};
+/// #
+/// #[derive(Nom)]
+/// #[nom(GenericErrors)]
+/// #[nom(DebugDerive)]
+/// pub struct S {
+///     pub a: u32,
+/// }
+/// ```
+/// will generate the following code signature (simplified):
+/// ```rust,ignore
+/// impl S
+/// {
+///     pub fn parse<'nom, NomErr>(i: &'nom [u8]) -> IResult<&'nom [u8], Self, NomErr>
+///     where
+///         NomErr: ParseError<&'nom [u8]> {
+///     }
+/// }
+/// ```
+///
+/// The `parse` method requires to give a concrete type for the error type when called:
+/// ```rust,ignore
+/// let (rem, obj) = S::parse::<VerboseError<_>>(input).unwrap();
+/// ```
+///
+/// This attribute has the following requirements:
+/// - The error type must implement `nom::error::ParseError<&[u8]>`
+/// - All subparsers must return compatible error types
+pub struct Nom;
