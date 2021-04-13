@@ -1119,4 +1119,5 @@
 /// This attribute has the following requirements:
 /// - The error type must implement `nom::error::ParseError<&[u8]>`
 /// - All subparsers must return compatible error types
-pub struct Nom;
+#[allow(non_snake_case)]
+pub mod Nom {}
