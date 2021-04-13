@@ -17,8 +17,8 @@ structures, especially for simple structures. This crate aims at simplifying com
 In some cases, writing the parser manually will remain more efficient.
 
 - [API documentation](https://docs.rs/nom-derive)
-- [Documentation of `Nom` attribute](https://docs.rs/nom-derive/latest/nom_derive/derive.Nom.html). This is the main
-  documentation for this crate, with all possible options and many examples.
+- The [`Nom`](https://docs.rs/nom-derive/latest/nom_derive/docs/struct.Nom.html) pseudo-struct. This is the main
+  documentation for the `Nom` attribute, with all possible options and many examples.
 
 *Feedback welcome !*
 
@@ -53,7 +53,7 @@ struct S {
 }
 ```
 
-This adds an implementation of the trait [`Parse`](Parse) to `S`. The generated code looks
+This adds static method `parse` to `S`. The generated code looks
 like:
 ```rust,ignore
 impl S {
@@ -68,8 +68,8 @@ impl S {
 
 To parse input, just call `let res = S::parse(input);`.
 
-For extensive documentation of all attributes and examples, see the [`docs`](https://docs.rs/nom-derive/latest/nom_derive/docs/struct.DocNom.html)
-module.
+For extensive documentation of all attributes and examples, see the documentation of [`Nom`](https://docs.rs/nom-derive/latest/nom_derive/docs/struct.Nom.html)
+custom derive attribute.
 
 Many examples are provided, and more can be found in the [project
 tests](https://github.com/rust-bakery/nom-derive/tree/master/tests).
