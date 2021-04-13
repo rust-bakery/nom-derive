@@ -18,6 +18,7 @@
 /// - [Deriving parsers for `Struct`](#deriving-parsers-for-struct)
 /// - [Deriving parsers for `Enum`](#deriving-parsers-for-enum)
 /// - [Generic Errors](#generic-errors)
+/// - [Generic Type Parameters](#generic-type-parameters)
 ///
 /// # Attributes
 ///
@@ -1080,7 +1081,7 @@
 /// }
 /// ```
 ///
-/// # Generic errors
+/// # Generic Errors
 ///
 /// By default, `nom-derive` will use `nom`'s default error type (`(&[u8], ErrorKind)`). In most cases,
 /// this will be enough for a simple parser.
@@ -1095,7 +1096,6 @@
 /// #
 /// #[derive(Nom)]
 /// #[nom(GenericErrors)]
-/// #[nom(DebugDerive)]
 /// pub struct S {
 ///     pub a: u32,
 /// }
@@ -1119,5 +1119,26 @@
 /// This attribute has the following requirements:
 /// - The error type must implement `nom::error::ParseError<&[u8]>`
 /// - All subparsers must return compatible error types
+///
+/// # Generic Type Parameters
+///
+/// `nom-derive` supports generic type parameters in the `struct` or `enum` definition.
+///
+/// Requirements:
+/// - Every generic type parameter must implement the [Parse](crate::Parse) trait from this crate
+/// - Note: it the generic type is not boxed, this often require the type to be `Sized`
+///
+/// Example:
+/// ```rust
+/// # use nom_derive::{Nom, Parse};
+/// #
+/// #[derive(Nom)]
+/// pub struct S<T> where T: Sized {
+///     pub a: u32,
+///     pub t: T,
+/// }
+/// ```
+///
+/// Generic type parameters can also be used with generic errors.
 #[allow(non_snake_case)]
 pub mod Nom {}
