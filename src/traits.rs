@@ -17,10 +17,81 @@ pub trait InputSlice:
 impl<'a> InputSlice for &'a [u8] {}
 
 /// Common trait for all parsers in nom-derive
-// Implementation note: using a generic type I "hides" the lifetime
-// of the input slice &'lft [u8]
-// We prefer not to add another lifetime here, or auto-generated code becomes complex
-// if the object implementing Parse also has lifetimes
+///
+/// This trait is used to provide parser implementations, usually as generic as possible for the
+/// error type. Implementations are provided for common and primitive types.
+/// The only required method is `parse`, but it is advised to implement the `parse_be` and `parse_be`
+/// methods. Derived code will call one of these methods, depending on the field endianness.
+///
+/// # Example
+///
+/// A possible implementation for the type `u32` is:
+/// ```rust,ignore
+/// impl<I, E> Parse<I, E> for u32
+/// where
+///     E: ParseError<I>,
+///     I: InputSlice,
+/// {
+///     fn parse(i: I) -> IResult<I, Self, E> { be_u32(i) } // default to big-endian
+///     fn parse_be(i: I) -> IResult<I, Self, E> { be_u32(i) }
+///     fn parse_le(i: I) -> IResult<I, Self, E> { le_u32(i) }
+/// }
+/// ```
+///
+/// # Generic type parameters and input
+///
+/// Note: `I` is a generic type that is mostly equivalent to `&'a [u8]`. It is used to
+/// "hide" the lifetime of the input slice `&'a [u8]` and simplify traits implementation
+/// and generation of derived code.
+///
+/// It is possible to implement the `Parse` trait only for `&[u8]` if the
+/// implementation contains non-generic functions.
+///
+/// For example, the implementation for `String` is:
+/// ```rust,ignore
+/// impl<'a, E> Parse<&'a [u8], E> for String
+/// where
+///     E: ParseError<&'a [u8]> + FromExternalError<&'a [u8], std::str::Utf8Error>,
+/// {
+///     fn parse(i: &'a [u8]) -> IResult<&'a [u8], Self, E> {
+///         let (rem, sz) = <u32>::parse(i)?;
+///         let (rem, s) = map_res(take(sz as usize), std::str::from_utf8)(rem)?;
+///         Ok((rem, s.to_owned()))
+///     }
+/// }
+/// ```
+///
+/// # Implementing primitives or specific types
+///
+/// To implement an existing type differently, or a type where implementation was not provided, a
+/// common way is to use a newtype pattern:
+///
+/// ```rust
+/// use nom_derive::{Parse, nom};
+///
+/// use nom::IResult;
+/// use nom::bytes::complete::take;
+/// use nom::combinator::map_res;
+/// use nom::error::{Error, FromExternalError, ParseError};
+///
+/// # #[derive(Debug, PartialEq)]
+/// pub struct MyString(pub String);
+/// impl<'a, E> Parse<&'a [u8], E> for MyString
+/// where
+///     E: ParseError<&'a [u8]> + FromExternalError<&'a [u8], std::str::Utf8Error>,
+/// {
+///     fn parse(i: &'a [u8]) -> IResult<&'a [u8], Self, E> {
+///         let (rem, sz) = <u32>::parse(i)?;
+///         let (rem, s) = map_res(take(sz as usize), std::str::from_utf8)(rem)?;
+///         Ok((rem, MyString(s.to_owned())))
+///     }
+/// }
+///
+/// # let input = b"\x00\x00\x00\x04test";
+/// // error type cannot be inferred by compiler and must be explicit
+/// let res: IResult<_, _, Error<_>> = MyString::parse(input);
+/// # assert_eq!(res, Ok((&input[8..], MyString(String::from("test")))));
+/// ```
 pub trait Parse<I, E = Error<I>>
 where
     I: InputSlice,
