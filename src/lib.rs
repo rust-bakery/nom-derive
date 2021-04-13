@@ -15,7 +15,7 @@
 //! In some cases, writing the parser manually will remain more efficient.
 //!
 //! - [API documentation](https://docs.rs/nom-derive)
-//! - The [`Nom`](docs/struct.Nom.html) pseudo-struct. This is the main
+//! - The [docs::Nom] pseudo-module. This is the main
 //!   documentation for the `Nom` attribute, with all possible options and many examples.
 //!
 //! *Feedback welcome !*
@@ -66,7 +66,7 @@
 //!
 //! To parse input, just call `let res = S::parse(input);`.
 //!
-//! For extensive documentation of all attributes and examples, see the documentation of [`Nom`](docs/struct.Nom.html)
+//! For extensive documentation of all attributes and examples, see the documentation of [docs::Nom]
 //! custom derive attribute.
 //!
 //! Many examples are provided, and more can be found in the [project
