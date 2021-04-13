@@ -35,6 +35,12 @@ pub(crate) fn gen_fn_decl(
             #ident_e: nom_derive::nom::error::ParseError<&#lft [u8]>
         };
         fn_where_clause.predicates.push(dep);
+        // make sure generic parameters inplement Parse
+        for param in generics.type_params() {
+            let param_ident = &param.ident;
+            let dep: WherePredicate = parse_quote! { #param_ident: Parse<&#lft [u8], #ident_e> };
+            fn_where_clause.predicates.push(dep);
+        }
         // let dep: WherePredicate = parse_quote! { #ident_e: std::fmt::Debug };
         // fn_where_clause.predicates.push(dep);
         quote! {
@@ -42,6 +48,12 @@ pub(crate) fn gen_fn_decl(
             #fn_where_clause
         }
     } else {
+        // make sure generic parameters inplement Parse
+        for param in generics.type_params() {
+            let param_ident = &param.ident;
+            let dep: WherePredicate = parse_quote! { #param_ident: Parse<&#lft [u8]> };
+            fn_where_clause.predicates.push(dep);
+        }
         quote! {
             pub fn parse<#lft>(#orig_input_name: &#lft [u8] #extra_args) -> nom::IResult<&#lft [u8], Self>
             #fn_where_clause
