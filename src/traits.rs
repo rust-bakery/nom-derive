@@ -20,7 +20,7 @@ impl<'a> InputSlice for &'a [u8] {}
 ///
 /// This trait is used to provide parser implementations, usually as generic as possible for the
 /// error type. Implementations are provided for common and primitive types.
-/// The only required method is `parse`, but it is advised to implement the `parse_be` and `parse_be`
+/// The only required method is `parse`, but it is advised to implement the `parse_be` and `parse_le`
 /// methods. Derived code will call one of these methods, depending on the field endianness.
 ///
 /// # Example
