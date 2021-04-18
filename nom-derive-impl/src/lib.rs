@@ -25,7 +25,8 @@ mod meta;
 mod parsertree;
 mod structs;
 
-use crate::endian::set_object_endianness;
+use crate::config::Config;
+use crate::endian::{set_object_endianness, ParserEndianness};
 use crate::gen::*;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
 use enums::impl_nom_enums;
@@ -50,7 +51,31 @@ pub fn nom(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
 
     // Build and return the generated impl
-    match impl_nom(&ast, false) {
+    match impl_nom(&ast, false, ParserEndianness::Unspecified) {
+        Ok(ts) => ts,
+        Err(e) => e.to_compile_error().into(),
+    }
+}
+
+#[proc_macro_derive(NomBE, attributes(nom))]
+pub fn nom_be(input: TokenStream) -> TokenStream {
+    // Parse the input tokens into a syntax tree
+    let ast = parse_macro_input!(input as DeriveInput);
+
+    // Build and return the generated impl
+    match impl_nom(&ast, false, ParserEndianness::BigEndian) {
+        Ok(ts) => ts,
+        Err(e) => e.to_compile_error().into(),
+    }
+}
+
+#[proc_macro_derive(NomLE, attributes(nom))]
+pub fn nom_le(input: TokenStream) -> TokenStream {
+    // Parse the input tokens into a syntax tree
+    let ast = parse_macro_input!(input as DeriveInput);
+
+    // Build and return the generated impl
+    match impl_nom(&ast, false, ParserEndianness::LittleEndian) {
         Ok(ts) => ts,
         Err(e) => e.to_compile_error().into(),
     }
@@ -63,8 +88,11 @@ pub(crate) fn get_extra_args(meta_list: &[MetaAttr]) -> Option<&proc_macro2::Tok
         .and_then(MetaAttr::arg)
 }
 
-fn impl_nom(ast: &syn::DeriveInput, debug_derive: bool) -> Result<TokenStream> {
-    use crate::config::Config;
+fn impl_nom(
+    ast: &syn::DeriveInput,
+    debug_derive: bool,
+    endianness: ParserEndianness,
+) -> Result<TokenStream> {
     // eprintln!("ast: {:#?}", ast);
     let struct_name = ast.ident.to_string();
     // parse top-level attributes and prepare tokens for each field parser
@@ -72,7 +100,7 @@ fn impl_nom(ast: &syn::DeriveInput, debug_derive: bool) -> Result<TokenStream> {
     // eprintln!("top-level meta: {:?}", meta);
     let mut config = Config::from_meta_list(struct_name, &meta).expect("Could not build config");
     config.debug_derive |= debug_derive;
-    set_object_endianness(ast.ident.span(), &meta, &mut config)?;
+    set_object_endianness(ast.ident.span(), endianness, &meta, &mut config)?;
     let (tl_pre, tl_post) = get_pre_post_exec(&meta, &config);
     // enums are handled differently
     let s = match &ast.data {
@@ -147,7 +175,7 @@ pub fn nom_derive_debug(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
 
     // Build and return the generated impl
-    match impl_nom(&ast, true) {
+    match impl_nom(&ast, true, ParserEndianness::Unspecified) {
         Ok(ts) => ts,
         Err(e) => e.to_compile_error().into(),
     }
