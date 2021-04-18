@@ -22,9 +22,11 @@ pub fn get_object_endianness(config: &Config) -> ParserEndianness {
 
 pub fn set_object_endianness(
     span: Span,
+    endianness: ParserEndianness,
     meta_list: &[MetaAttr],
     config: &mut Config,
 ) -> Result<()> {
+    config.object_endianness = endianness;
     // first, check local attribute
     let req_big_endian = meta_list.iter().any(|m| m.is_type(MetaAttrType::BigEndian));
     let req_little_endian = meta_list
