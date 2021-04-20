@@ -15,6 +15,7 @@
 /// # Table of contents
 ///
 /// - [Attributes](#attributes)
+/// - [Byteorder](#byteorder)
 /// - [Deriving parsers for `Struct`](#deriving-parsers-for-struct)
 /// - [Deriving parsers for `Enum`](#deriving-parsers-for-enum)
 /// - [Generic Errors](#generic-errors)
@@ -127,6 +128,26 @@
 /// # #[derive(Debug, PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
 /// #[nom(LittleEndian)]
+/// struct LittleEndianStruct {
+///   a: u32,
+///   b: u16,
+///   c: u16
+/// }
+///
+/// let input = b"\x00\x00\x00\x01\x12\x34\x56\x78";
+/// let res = LittleEndianStruct::parse(input);
+/// assert_eq!(res, Ok((&input[8..],
+///     LittleEndianStruct{a:0x0100_0000,b:0x3412,c:0x7856}))
+/// );
+/// ```
+///
+/// It is also equivalent (and shorter) to use the `NomBE` or `NomLE` custom derive:
+///
+/// ```rust
+/// # use nom_derive::{NomLE, Parse};
+/// #
+/// # #[derive(Debug, PartialEq)] // for assert_eq!
+/// #[derive(NomLE)] // all fields will be parsed as little-endian
 /// struct LittleEndianStruct {
 ///   a: u32,
 ///   b: u16,

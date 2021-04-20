@@ -57,6 +57,8 @@ pub fn nom(input: TokenStream) -> TokenStream {
     }
 }
 
+/// The `NomBE` acts like the [`Nom`] attribute, but sets the endianness to big-endian for the
+/// current object. This can be overriden locally at the field-level.
 #[proc_macro_derive(NomBE, attributes(nom))]
 pub fn nom_be(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
@@ -69,6 +71,8 @@ pub fn nom_be(input: TokenStream) -> TokenStream {
     }
 }
 
+/// The `NomLE` acts like the [`Nom`] attribute, but sets the endianness to little-endian for the
+/// current object. This can be overriden locally at the field-level.
 #[proc_macro_derive(NomLE, attributes(nom))]
 pub fn nom_le(input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
