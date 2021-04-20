@@ -28,11 +28,17 @@ pub fn set_object_endianness(
 ) -> Result<()> {
     config.object_endianness = endianness;
     // first, check local attribute
-    let req_big_endian = meta_list.iter().any(|m| m.is_type(MetaAttrType::BigEndian));
-    let req_little_endian = meta_list
-        .iter()
-        .any(|m| m.is_type(MetaAttrType::LittleEndian));
-    let req_set_endian = meta_list.iter().any(|m| m.is_type(MetaAttrType::SetEndian));
+    let mut req_big_endian = false;
+    let mut req_little_endian = false;
+    let mut req_set_endian = false;
+    for meta in meta_list {
+        match meta.attr_type {
+            MetaAttrType::BigEndian => req_big_endian = true,
+            MetaAttrType::LittleEndian => req_little_endian = true,
+            MetaAttrType::SetEndian => req_set_endian = true,
+            _ => (),
+        }
+    }
     // test if 2 or more flags are set
     if two_or_more(req_big_endian, req_little_endian, req_set_endian) {
         return Err(Error::new(
@@ -64,11 +70,17 @@ pub fn get_local_endianness(
     config: &Config,
 ) -> Result<ParserEndianness> {
     // first, check local attribute
-    let req_big_endian = meta_list.iter().any(|m| m.is_type(MetaAttrType::BigEndian));
-    let req_little_endian = meta_list
-        .iter()
-        .any(|m| m.is_type(MetaAttrType::LittleEndian));
-    let req_set_endian = meta_list.iter().any(|m| m.is_type(MetaAttrType::SetEndian));
+    let mut req_big_endian = false;
+    let mut req_little_endian = false;
+    let mut req_set_endian = false;
+    for meta in meta_list {
+        match meta.attr_type {
+            MetaAttrType::BigEndian => req_big_endian = true,
+            MetaAttrType::LittleEndian => req_little_endian = true,
+            MetaAttrType::SetEndian => req_set_endian = true,
+            _ => (),
+        }
+    }
     // test if 2 or more flags are set
     if two_or_more(req_big_endian, req_little_endian, req_set_endian) {
         return Err(Error::new(

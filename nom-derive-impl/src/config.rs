@@ -21,8 +21,23 @@ pub struct ConfigError;
 
 impl Config {
     pub fn from_meta_list(name: String, l: &[MetaAttr]) -> Result<Self, ConfigError> {
-        let req_big_endian = l.iter().any(|m| m.is_type(MetaAttrType::BigEndian));
-        let req_little_endian = l.iter().any(|m| m.is_type(MetaAttrType::LittleEndian));
+        let mut req_big_endian = false;
+        let mut req_little_endian = false;
+        let mut complete = false;
+        let mut debug = false;
+        let mut debug_derive = false;
+        let mut generic_errors = false;
+        for meta in l {
+            match meta.attr_type {
+                MetaAttrType::BigEndian => req_big_endian = true,
+                MetaAttrType::LittleEndian => req_little_endian = true,
+                MetaAttrType::Complete => complete = true,
+                MetaAttrType::Debug => debug = true,
+                MetaAttrType::DebugDerive => debug_derive = true,
+                MetaAttrType::GenericErrors => generic_errors = true,
+                _ => (),
+            }
+        }
         if req_big_endian & req_little_endian {
             eprintln!("Struct cannot be both big and little endian");
             return Err(ConfigError);
@@ -34,10 +49,6 @@ impl Config {
         } else {
             ParserEndianness::Unspecified
         };
-        let complete = l.iter().any(|m| m.is_type(MetaAttrType::Complete));
-        let debug = l.iter().any(|m| m.is_type(MetaAttrType::Debug));
-        let debug_derive = l.iter().any(|m| m.is_type(MetaAttrType::DebugDerive));
-        let generic_errors = l.iter().any(|m| m.is_type(MetaAttrType::GenericErrors));
         let input_name = l
             .iter()
             .find_map(|m| {
