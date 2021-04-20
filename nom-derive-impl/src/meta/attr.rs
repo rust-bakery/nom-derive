@@ -1,8 +1,9 @@
-use proc_macro2::TokenStream;
+use proc_macro2::{Span, TokenStream};
 use quote::ToTokens;
 use std::fmt;
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
+use syn::spanned::Spanned;
 use syn::{parenthesized, token, Ident, Token};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -147,11 +148,16 @@ impl fmt::Display for MetaAttrType {
 pub struct MetaAttr {
     pub attr_type: MetaAttrType,
     arg0: Option<TokenStream>,
+    span: Span,
 }
 
 impl MetaAttr {
-    pub fn new(attr_type: MetaAttrType, arg0: Option<TokenStream>) -> Self {
-        MetaAttr { attr_type, arg0 }
+    pub fn new(attr_type: MetaAttrType, arg0: Option<TokenStream>, span: Span) -> Self {
+        MetaAttr {
+            attr_type,
+            arg0,
+            span,
+        }
     }
 
     /// Is attribute acceptable for top-level
@@ -207,6 +213,12 @@ impl fmt::Display for MetaAttr {
     }
 }
 
+impl Spanned for MetaAttr {
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
 impl Parse for MetaAttr {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let ident: Ident = input.parse()?;
@@ -233,7 +245,7 @@ impl Parse for MetaAttr {
         } else {
             None
         };
-        Ok(MetaAttr::new(attr_type, arg0))
+        Ok(MetaAttr::new(attr_type, arg0, ident.span()))
     }
 }
 

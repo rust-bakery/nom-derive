@@ -98,7 +98,7 @@ fn impl_nom(
     // parse top-level attributes and prepare tokens for each field parser
     let meta = meta::parse_nom_top_level_attribute(&ast.attrs)?;
     // eprintln!("top-level meta: {:?}", meta);
-    let mut config = Config::from_meta_list(struct_name, &meta).expect("Could not build config");
+    let mut config = Config::from_meta_list(struct_name, &meta)?;
     config.debug_derive |= debug_derive;
     set_object_endianness(ast.ident.span(), endianness, &meta, &mut config)?;
     let (tl_pre, tl_post) = get_pre_post_exec(&meta, &config);

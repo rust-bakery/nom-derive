@@ -185,7 +185,7 @@ fn get_parser(
                     Some(ident) => ident,
                     None => {
                         return Err(Error::new(
-                            Span::call_site(),
+                            meta.span(),
                             "Nom-derive: can't use Verify with unnamed fields",
                         ))
                     }
@@ -236,7 +236,7 @@ fn get_parser(
                     Some(ident) => ident,
                     None => {
                         return Err(Error::new(
-                            Span::call_site(),
+                            meta.span(),
                             "Nom-derive: can't use Verify with unnamed fields",
                         ))
                     }
@@ -273,11 +273,9 @@ fn get_field_parser(field: &Field, meta_list: &[MetaAttr], config: &Config) -> R
 }
 
 fn quote_align(align: &TokenStream, config: &Config) -> TokenStream {
-    let input_name = syn::Ident::new(&config.input_name, Span::call_site());
-    let orig_input_name = syn::Ident::new(
-        &("orig_".to_string() + &config.input_name),
-        Span::call_site(),
-    );
+    let input_name = syn::Ident::new(&config.input_name, align.span());
+    let orig_input_name =
+        syn::Ident::new(&("orig_".to_string() + &config.input_name), align.span());
     quote! {
         let (#input_name, _) = {
             let offset = #input_name.as_ptr() as usize - #orig_input_name.as_ptr() as usize;
@@ -290,11 +288,9 @@ fn quote_align(align: &TokenStream, config: &Config) -> TokenStream {
 
 // like quote_skip, but offset is an isize
 fn quote_move(offset: &TokenStream, config: &Config) -> TokenStream {
-    let input_name = syn::Ident::new(&config.input_name, Span::call_site());
-    let orig_input_name = syn::Ident::new(
-        &("orig_".to_string() + &config.input_name),
-        Span::call_site(),
-    );
+    let input_name = syn::Ident::new(&config.input_name, offset.span());
+    let orig_input_name =
+        syn::Ident::new(&("orig_".to_string() + &config.input_name), offset.span());
     quote! {
         let #input_name = {
             let start = #orig_input_name.as_ptr() as usize;
@@ -319,11 +315,9 @@ fn quote_move(offset: &TokenStream, config: &Config) -> TokenStream {
 
 // like quote_move, with absolute value as offset
 fn quote_move_abs(offset: &TokenStream, config: &Config) -> TokenStream {
-    let input_name = syn::Ident::new(&config.input_name, Span::call_site());
-    let orig_input_name = syn::Ident::new(
-        &("orig_".to_string() + &config.input_name),
-        Span::call_site(),
-    );
+    let input_name = syn::Ident::new(&config.input_name, offset.span());
+    let orig_input_name =
+        syn::Ident::new(&("orig_".to_string() + &config.input_name), offset.span());
     quote! {
         let #input_name = {
             let offset = #offset as usize;
@@ -336,7 +330,7 @@ fn quote_move_abs(offset: &TokenStream, config: &Config) -> TokenStream {
 }
 
 fn quote_skip(skip: &TokenStream, config: &Config) -> TokenStream {
-    let input_name = syn::Ident::new(&config.input_name, Span::call_site());
+    let input_name = syn::Ident::new(&config.input_name, skip.span());
     quote! {
         let (#input_name, _) = {
             let skip = #skip as usize;
@@ -346,7 +340,7 @@ fn quote_skip(skip: &TokenStream, config: &Config) -> TokenStream {
 }
 
 fn quote_error_if(cond: &TokenStream, config: &Config) -> TokenStream {
-    let input_name = syn::Ident::new(&config.input_name, Span::call_site());
+    let input_name = syn::Ident::new(&config.input_name, cond.span());
     quote! {
         if #cond {
             return Err(nom::Err::Error(nom::error::make_error(#input_name, nom::error::ErrorKind::Verify)));
@@ -404,7 +398,7 @@ pub(crate) fn get_pre_post_exec(
                 tk_pre.extend(qq);
             }
             MetaAttrType::Exact => {
-                let input_name = syn::Ident::new(&config.input_name, Span::call_site());
+                let input_name = syn::Ident::new(&config.input_name, m.span());
                 let cond = quote! { !#input_name.is_empty() };
                 let qq = quote_error_if(&cond, &config);
                 tk_post.extend(qq);
@@ -468,7 +462,7 @@ pub(crate) fn parse_fields(f: &Fields, config: &mut Config) -> Result<StructPars
                 None => {
                     return Err(Error::new(
                         Span::call_site(),
-                        "Nom-derive: can't use Verify with unnamed fields",
+                        "Nom-derive: can't use Debug with unnamed fields",
                     ))
                 }
             };

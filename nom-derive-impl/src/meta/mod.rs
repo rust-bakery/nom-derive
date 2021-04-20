@@ -2,8 +2,7 @@ pub mod attr;
 pub mod attr_list;
 pub mod error;
 
-use proc_macro2::Span;
-use syn::{Error, Result};
+use syn::{spanned::Spanned, Error, Result};
 
 pub fn parse_nom_top_level_attribute(attrs: &[syn::Attribute]) -> Result<Vec<attr::MetaAttr>> {
     // eprintln!("attrs: {:?}", attrs);
@@ -23,7 +22,7 @@ pub fn parse_nom_top_level_attribute(attrs: &[syn::Attribute]) -> Result<Vec<att
     // eprintln!("XXX: {:?}", x);
     if let Some(attr) = x.iter().find(|m| !m.acceptable_tla()) {
         return Err(Error::new(
-            Span::call_site(),
+            attr.span(),
             &format!("Attribute {} is not valid for top-level", attr),
         ));
     }
@@ -53,7 +52,7 @@ pub fn parse_nom_attribute(attrs: &[syn::Attribute]) -> Result<Vec<attr::MetaAtt
     // eprintln!("****\nXXX: {:?}\n", x);
     if let Some(attr) = x.iter().find(|m| !m.acceptable_fla()) {
         return Err(Error::new(
-            Span::call_site(),
+            attr.span(),
             &format!("Attribute {} is not valid for field-level", attr),
         ));
     }

@@ -5,17 +5,19 @@ error: expected literal
   |                 ^^^
 
 error: Attribute Parse(be_u32) is not valid for top-level
-  --> $DIR/invalid_attribute.rs:11:10
+  --> $DIR/invalid_attribute.rs:12:7
    |
-11 | #[derive(Nom)]
-   |          ^^^
-   |
-   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+12 | #[nom(Parse = "be_u32")] // ERROR: Attribute Parse(be_u32) is not valid for top-level
+   |       ^^^^^
 
 error: Attribute Exact is not valid for field-level
-  --> $DIR/invalid_attribute.rs:17:10
+  --> $DIR/invalid_attribute.rs:19:11
    |
-17 | #[derive(Nom)]
-   |          ^^^
+19 |     #[nom(Exact)] // ERROR: Attribute Exact is not valid for field-level
+   |           ^^^^^
+
+error: Struct cannot be both big and little endian
+  --> $DIR/invalid_attribute.rs:24:7
    |
-   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+24 | #[nom(BigEndian, LittleEndian)] // ERROR: Struct cannot be both big and little endian
+   |       ^^^^^^^^^

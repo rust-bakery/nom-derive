@@ -1,5 +1,7 @@
 use crate::endian::ParserEndianness;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
+use proc_macro2::Span;
+use syn::{spanned::Spanned, Error};
 
 #[derive(Debug)]
 pub struct Config {
@@ -16,20 +18,21 @@ pub struct Config {
     pub input_name: String,
 }
 
-#[derive(Debug)]
-pub struct ConfigError;
-
 impl Config {
-    pub fn from_meta_list(name: String, l: &[MetaAttr]) -> Result<Self, ConfigError> {
+    pub fn from_meta_list(name: String, l: &[MetaAttr]) -> Result<Self, Error> {
         let mut req_big_endian = false;
         let mut req_little_endian = false;
         let mut complete = false;
         let mut debug = false;
         let mut debug_derive = false;
         let mut generic_errors = false;
+        let mut span_endian = None;
         for meta in l {
             match meta.attr_type {
-                MetaAttrType::BigEndian => req_big_endian = true,
+                MetaAttrType::BigEndian => {
+                    req_big_endian = true;
+                    span_endian = Some(meta.span());
+                }
                 MetaAttrType::LittleEndian => req_little_endian = true,
                 MetaAttrType::Complete => complete = true,
                 MetaAttrType::Debug => debug = true,
@@ -39,8 +42,10 @@ impl Config {
             }
         }
         if req_big_endian & req_little_endian {
-            eprintln!("Struct cannot be both big and little endian");
-            return Err(ConfigError);
+            return Err(Error::new(
+                span_endian.unwrap_or_else(Span::call_site),
+                "Struct cannot be both big and little endian",
+            ));
         }
         let object_endianness = if req_big_endian {
             ParserEndianness::BigEndian

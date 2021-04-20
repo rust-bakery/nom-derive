@@ -1,7 +1,7 @@
 use crate::config::*;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
 use proc_macro2::Span;
-use syn::{Error, Result};
+use syn::{spanned::Spanned, Error, Result};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ParserEndianness {
@@ -31,18 +31,20 @@ pub fn set_object_endianness(
     let mut req_big_endian = false;
     let mut req_little_endian = false;
     let mut req_set_endian = false;
+    let mut span_endian = None;
     for meta in meta_list {
         match meta.attr_type {
             MetaAttrType::BigEndian => req_big_endian = true,
             MetaAttrType::LittleEndian => req_little_endian = true,
             MetaAttrType::SetEndian => req_set_endian = true,
-            _ => (),
+            _ => continue,
         }
+        span_endian = Some(meta.span());
     }
     // test if 2 or more flags are set
     if two_or_more(req_big_endian, req_little_endian, req_set_endian) {
         return Err(Error::new(
-            span,
+            span_endian.unwrap_or(span),
             "cannot be both big, little and/or set endian",
         ));
     }
