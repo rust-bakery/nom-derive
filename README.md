@@ -114,6 +114,7 @@ Refactor crate:
   - The `NomBE` and `NomLE` custom derive attributes have been added, and allow specifying global endianness using imports (for ex `use nom_derive::NomLE as Nom`) (#14)
 - Add support for generic type parameters and better support for lifetimes and where clauses
 - Add `GenericErrors` attribute, to generate a function signature with generic error type (#19)
+- Add Complete attribute for top-level (#17)
 
 Except for the order of attributes, there should be no breaking change.
 

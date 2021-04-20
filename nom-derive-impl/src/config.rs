@@ -8,6 +8,8 @@ pub struct Config {
     pub global_endianness: ParserEndianness,
     /// Endianness for this struct or enum, if specified
     pub object_endianness: ParserEndianness,
+    /// Complete option for this struct (default: streaming)
+    pub complete: bool,
     pub debug: bool,
     pub debug_derive: bool,
     pub generic_errors: bool,
@@ -32,6 +34,7 @@ impl Config {
         } else {
             ParserEndianness::Unspecified
         };
+        let complete = l.iter().any(|m| m.is_type(MetaAttrType::Complete));
         let debug = l.iter().any(|m| m.is_type(MetaAttrType::Debug));
         let debug_derive = l.iter().any(|m| m.is_type(MetaAttrType::DebugDerive));
         let generic_errors = l.iter().any(|m| m.is_type(MetaAttrType::GenericErrors));
@@ -49,6 +52,7 @@ impl Config {
             struct_name: name,
             global_endianness: ParserEndianness::Unspecified,
             object_endianness,
+            complete,
             debug,
             debug_derive,
             generic_errors,

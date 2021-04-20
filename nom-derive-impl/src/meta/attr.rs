@@ -159,6 +159,7 @@ impl MetaAttr {
         matches!(
             self.attr_type,
             MetaAttrType::DebugDerive
+                | MetaAttrType::Complete
                 | MetaAttrType::Debug
                 | MetaAttrType::ExtraArgs
                 | MetaAttrType::GenericErrors

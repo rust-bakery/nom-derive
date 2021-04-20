@@ -457,6 +457,10 @@ pub(crate) fn parse_fields(f: &Fields, config: &mut Config) -> Result<StructPars
         // eprintln!("meta_list: {:?}", meta_list);
         let mut p = get_field_parser(&field, &meta_list, config)?;
 
+        if config.complete {
+            p = ParserExpr::Complete(Box::new(p));
+        }
+
         if config.debug {
             // debug is set for entire struct
             let ident = match &field.ident {

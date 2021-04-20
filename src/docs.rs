@@ -43,7 +43,7 @@
 /// | [AlignBefore](#alignment-and-padding) | fields | skip bytes until aligned to a multiple of the provided value, before parsing value
 /// | [BigEndian](#byteorder) | all | Set the endianness to big endian
 /// | [Cond](#conditional-values) | fields | Used on an `Option<T>` to read a value of type `T` only if the condition is met
-/// | [Complete](#complete) | fields | Transforms Incomplete into Error
+/// | [Complete](#complete) | all | Transforms Incomplete into Error
 /// | [Count](#count) | fields | Set the expected number of items to parse
 /// | [Debug](#debug) | all | Print error message and input if parser fails (at runtime)
 /// | [DebugDerive](#debugderive) | top-level | Print the generated code to stderr during build
@@ -502,7 +502,14 @@
 ///
 /// The `Complete` attribute transforms Incomplete into Error.
 ///
-/// Default is to use streaming parsers.
+/// Default is to use streaming parsers. If there are not enough bytes, error will look like
+/// `Err(Error::Incomplete(Needed(5)))`. A streaming parser can use this to determine if data is missing,
+/// wait for more data, then call again the parse function.
+///
+/// When the parser has the entire data, it is more useful to transform this into an error to stop
+/// parsing, using the `Complete` attribute.
+///
+/// This attribute can be used on a specific field:
 ///
 /// ```rust
 /// # use nom_derive::{Nom, Parse};
@@ -513,6 +520,25 @@
 /// struct S{
 ///     pub a: u8,
 ///     #[nom(Complete)]
+///     pub b: u64,
+/// }
+/// #
+/// # let input = b"\x01\x00\x01";
+/// # let res = S::parse(input).expect_err("parse error");
+/// # assert!(!res.is_incomplete());
+/// ```
+///
+/// This attribute can be also used on the entire object, applying to every fields:
+///
+/// ```rust
+/// # use nom_derive::{Nom, Parse};
+/// # use nom::number::streaming::be_u8;
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// #[nom(Complete)]
+/// struct S{
+///     pub a: u8,
 ///     pub b: u64,
 /// }
 /// #
