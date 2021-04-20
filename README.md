@@ -100,6 +100,23 @@ That is probably not going to change, since
 
 ### <unreleased>
 
+### 0.8.0
+
+Refactor crate:
+
+- Split crate in two (`nom-derive` and `nom-derive-impl`) so it can export public items, in particular the `Parse` trait
+- Provide implementation of `Parse` for primitive types, including primitive arrays (closes #4). Also provide example of newtype pattern to specify different implementations (#16)
+- Refactor argument parsing and code generation. The AST now include all items, and does not handle most attributes as special, and generate code from top to bottom. This means that
+  - attributes are now all handled the same way for deriving struct and enum
+  - order of attributes is now important
+  - it is possible to specify that a field should be first parse then ignored (#18), or the parse function that will be used with `Count` (#9)
+  - endianness is now determined by first looking a field attribute, then object endianness.
+  - The `NomBE` and `NomLE` custom derive attributes have been added, and allow specifying global endianness using imports (for ex `use nom_derive::NomLE as Nom`) (#14)
+- Add support for generic type parameters and better support for lifetimes and where clauses
+- Add `GenericErrors` attribute, to generate a function signature with generic error type (#19)
+
+Except for the order of attributes, there should be no breaking change.
+
 ### 0.7.2
 
 - Add LengthCount attribute (#15)
