@@ -42,6 +42,7 @@ pub enum ParserExpr {
     Count(Box<ParserExpr>, TokenStream),
     DbgDmp(Box<ParserExpr>, Ident),
     LengthCount(Box<ParserExpr>, TokenStream),
+    Many0(Box<ParserExpr>),
     Map(Box<ParserExpr>, TokenStream),
     Nop,
     PhantomData,
@@ -88,6 +89,9 @@ impl ToTokens for ParserExpr {
             }
             ParserExpr::LengthCount(expr, n) => {
                 quote! { nom::multi::length_count(#n, #expr) }
+            }
+            ParserExpr::Many0(expr) => {
+                quote! { nom::multi::many0(#expr) }
             }
             ParserExpr::Map(expr, m) => {
                 quote! { nom::combinator::map(#expr, #m) }

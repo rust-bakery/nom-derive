@@ -42,8 +42,19 @@ pub(crate) struct StructParserTree {
 fn get_type_parser(ty: &Type, meta_list: &[MetaAttr], config: &Config) -> Result<ParserExpr> {
     // special case: PhantomData
     let ident = get_type_first_ident(ty)?;
-    if ident == "PhantomData" {
-        return Ok(ParserExpr::PhantomData);
+    match ident.as_ref() {
+        "PhantomData" => {
+            return Ok(ParserExpr::PhantomData);
+        }
+        "Vec" => {
+            let sub = get_item_subtype_parser(ty, "Vec", "Vec")?;
+            let sub_ty = syn::parse2::<Type>(sub)?;
+            // force sub_meta_list to be empty, so attributes are not used
+            let expr = get_parser(None, &sub_ty, &[], meta_list, config)?;
+            let p = ParserExpr::Complete(Box::new(expr));
+            return Ok(ParserExpr::Many0(Box::new(p)));
+        }
+        _ => (),
     }
     let endian = get_local_endianness(ty.span(), meta_list, config)?;
     match endian {
@@ -144,6 +155,8 @@ fn get_parser(
     // first check if we have attributes set
     // eprintln!("attrs: {:?}", field.attrs);
     // eprintln!("meta_list: {:?}", meta_list);
+    // eprintln!("sub_meta_list (before loop): {:?}", sub_meta_list);
+    // eprintln!("ty (before loop): {:?}", ty);
     let mut sub_meta_list = sub_meta_list;
     while let Some((meta, rem)) = sub_meta_list.split_first() {
         sub_meta_list = rem;
