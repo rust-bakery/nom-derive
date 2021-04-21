@@ -116,7 +116,7 @@ impl ToTokens for ParserExpr {
             }
             ParserExpr::Verify(expr, i, v) => {
                 quote! {
-                    nom::combinator::verify(#expr, |&#i| { #v })
+                    nom::combinator::verify(#expr, |#i| { #v })
                 }
             }
         };

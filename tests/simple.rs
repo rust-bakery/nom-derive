@@ -50,7 +50,7 @@ struct StructWithSubStruct {
 /// A simple structure with a verification
 #[derive(Debug, PartialEq, Nom)]
 struct StructWithVerify {
-    #[nom(Verify = "a == 1")]
+    #[nom(Verify = "*a == 1")]
     pub a: u32,
 }
 

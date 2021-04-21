@@ -652,7 +652,7 @@
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
 /// struct S{
-///     #[nom(Verify="a == 1")]
+///     #[nom(Verify="*a == 1")]
 ///     pub a: u8,
 /// }
 /// #
