@@ -13,6 +13,8 @@ edition = "2018"
 
 include = [
   "LICENSE-*",
+  "CHANGELOG.md",
+  "UPGRADING.md",
   "README.md",
   ".gitignore",
   ".travis.yml",
