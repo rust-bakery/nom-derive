@@ -41,6 +41,7 @@ pub enum ParserExpr {
     Cond(Box<ParserExpr>, TokenStream),
     Count(Box<ParserExpr>, TokenStream),
     DbgDmp(Box<ParserExpr>, Ident),
+    Into(Box<ParserExpr>),
     LengthCount(Box<ParserExpr>, TokenStream),
     Many0(Box<ParserExpr>),
     Map(Box<ParserExpr>, TokenStream),
@@ -86,6 +87,9 @@ impl ToTokens for ParserExpr {
             ParserExpr::DbgDmp(expr, i) => {
                 let ident = format!("{}", i);
                 quote! { nom::dbg_dmp(#expr, #ident) }
+            }
+            ParserExpr::Into(expr) => {
+                quote! { nom::combinator::into(#expr) }
             }
             ParserExpr::LengthCount(expr, n) => {
                 quote! { nom::multi::length_count(#n, #expr) }

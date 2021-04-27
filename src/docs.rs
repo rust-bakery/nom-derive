@@ -55,6 +55,7 @@
 /// | [If](#conditional-values) | fields | Similar to `Cond`
 /// | [Ignore](#default) | fields | An alias for `default`
 /// | [InputName](#input-name) | top-level | Change the internal name of input
+/// | [Into](#into) | fields | Automatically converts the child parser's result to another type
 /// | [LengthCount](#lengthcount) | fields | Specify a parser to get the number of items, and parse the expected number of items
 /// | [LittleEndian](#byteorder) | all | Set the endianness to little endian
 /// | [Map](#map) | fields | Parse field, then apply a function
@@ -566,6 +567,36 @@
 /// # let input = b"\x01\x00\x01";
 /// # let res = S::parse(input).expect_err("parse error");
 /// # assert!(!res.is_incomplete());
+/// ```
+///
+/// ## Into
+///
+/// The `Into` attribute automatically converts the child parser's output and error types to other types.
+///
+/// It requires the output and error type to implement the `Into` trait.
+///
+/// This attribute can be used on a specific field:
+///
+/// ```rust
+/// # use nom_derive::*;
+/// # use nom::IResult;
+/// # use nom::character::streaming::alpha1;
+/// # use nom::number::streaming::be_u8;
+/// #
+/// fn parser1(i: &[u8]) -> IResult<&[u8], &[u8]> {
+///     alpha1(i)
+/// }
+/// #
+/// # #[derive(Debug,PartialEq)] // for assert_eq!
+/// #[derive(Nom)]
+/// struct S{
+///     pub a: u8,
+///     #[nom(Into, Parse = "parser1")]
+///     pub b: Vec<u8>,
+/// }
+/// #
+/// # let input = b"\x01abcd\x00";
+/// # let res = S::parse(input).expect("parse error");
 /// ```
 ///
 /// ## Map

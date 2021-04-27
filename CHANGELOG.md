@@ -8,6 +8,16 @@
 
 ### Thanks
 
+## [Unreleased][unreleased]
+
+### Changed/Fixed
+
+### Added
+
+- Add Into attribute to convert output/error types
+
+### Thanks
+
 ## 0.8.0
 
 Refactor crate:

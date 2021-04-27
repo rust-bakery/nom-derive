@@ -223,6 +223,10 @@ fn get_parser(
                 let ts = meta.arg().unwrap();
                 return Ok(ParserExpr::Count(Box::new(expr), ts.clone()));
             }
+            MetaAttrType::Into => {
+                let expr = get_parser(ident, ty, sub_meta_list, meta_list, config)?;
+                return Ok(ParserExpr::Into(Box::new(expr)));
+            }
             MetaAttrType::LengthCount => {
                 // try to infer subparser
                 // check type is Vec<T>, and extract T
