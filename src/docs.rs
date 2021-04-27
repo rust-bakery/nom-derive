@@ -80,7 +80,7 @@
 /// Import the `Nom` derive attribute:
 ///
 /// ```rust
-/// use nom_derive::{Nom, Parse};
+/// use nom_derive::*;
 /// ```
 /// and add it to structs or enums.
 /// The `Parse` trait is required for primitive types (`u8`, `u16`, ...).
@@ -88,7 +88,7 @@
 /// For simple structures, the parsers are automatically generated:
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -106,7 +106,7 @@
 /// This also work for tuple structs:
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug, PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -124,7 +124,7 @@
 /// The `LittleEndian` attribute can be applied to a struct to change all integer parsers:
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug, PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -145,7 +145,7 @@
 /// It is also equivalent (and shorter) to use the `NomBE` or `NomLE` custom derive:
 ///
 /// ```rust
-/// # use nom_derive::{NomLE, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug, PartialEq)] // for assert_eq!
 /// #[derive(NomLE)] // all fields will be parsed as little-endian
@@ -169,7 +169,7 @@
 /// except `b`:
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -208,7 +208,7 @@
 /// For ex, to create a parse function having two arguments (`input`, and the endianness):
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// # use nom::number::Endianness;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
@@ -248,7 +248,7 @@
 ///
 /// For ex:
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -267,7 +267,7 @@
 ///
 /// For ex:
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -290,7 +290,7 @@
 ///
 /// For ex:
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -316,7 +316,7 @@
 ///
 /// For ex:
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// # use nom::number::streaming::be_u16;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
@@ -337,7 +337,7 @@
 ///
 /// For ex:
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -362,7 +362,7 @@
 ///
 /// For ex:
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -388,7 +388,7 @@
 ///
 /// For example (using `Nom` derive):
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -410,7 +410,7 @@
 ///
 /// Example (defining `parse` method):
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// # use nom::{IResult,call,map};
 /// # use nom::number::streaming::le_u16;
 /// #
@@ -462,7 +462,7 @@
 /// For example, to specify the parser of a field:
 ///
 /// ```rust
-/// # use nom_derive::Nom;
+/// # use nom_derive::*;
 /// # use nom::number::streaming::le_u16;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
@@ -479,7 +479,7 @@
 ///
 /// The `Parse` argument can be a complex expression:
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// # use nom::combinator::cond;
 /// # use nom::number::streaming::be_u16;
 /// #
@@ -505,7 +505,7 @@
 /// This is convenient if the structured has more fields than the serialized value.
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -534,7 +534,7 @@
 /// This attribute can be used on a specific field:
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// # use nom::number::streaming::be_u8;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
@@ -553,7 +553,7 @@
 /// This attribute can be also used on the entire object, applying to every fields:
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// # use nom::number::streaming::be_u8;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
@@ -606,7 +606,7 @@
 /// It is often used combined with the `Parse` attribute.
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// # use nom::number::streaming::be_u8;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
@@ -630,7 +630,7 @@
 /// The type with this attribute must be an `Option` type.
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -653,7 +653,7 @@
 /// Previous fields can be used in the expression.
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// # use nom::number::streaming::be_u8;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
@@ -678,7 +678,7 @@
 /// The argument used in verify function is passed as a reference.
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -702,7 +702,7 @@
 /// The argument used in verify function is passed as a reference.
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -723,7 +723,7 @@
 /// It succeeds if the input has been entirely consumed by the parser.
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -753,7 +753,7 @@
 /// Expected value: a valid Rust statement
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -783,7 +783,7 @@
 /// Expected value: a valid Rust statement
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -807,7 +807,7 @@
 /// If parsing an enum, the built structure is available in the `enum_def` variable.
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(PartialEq)] // for assert_eq!
 /// #[derive(Debug)]
@@ -841,7 +841,7 @@
 /// Expected value: a valid Rust value (immediate value, or expression)
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -873,7 +873,7 @@
 ///     contain a pattern guard (for ex: `x if x > 2`)
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -907,7 +907,7 @@
 /// trait.
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// #[derive(Debug,PartialEq,Eq,Clone,Copy,Nom)]
 /// pub struct MessageType(pub u8);
@@ -940,7 +940,7 @@
 /// value for one the variants.
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -966,7 +966,7 @@
 /// Named fields:
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// # use nom::bytes::streaming::take;
 /// #
 /// # #[derive(Debug,PartialEq,Eq,Clone,Copy,Nom)]
@@ -986,7 +986,7 @@
 /// Unnamed fields:
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// # use nom::bytes::streaming::take;
 /// #
 /// # #[derive(Debug,PartialEq,Eq,Clone,Copy,Nom)]
@@ -1012,7 +1012,7 @@
 /// In that case, the `Selector` attribute must *not* be specified.
 ///
 /// ```rust
-/// # use nom_derive::Nom;
+/// # use nom_derive::*;
 /// # use nom::*;
 /// # use nom::number::streaming::be_u8;
 /// #
@@ -1055,7 +1055,7 @@
 /// The internal variable name can be renamed using the `InputName` top-level attribute.
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -1076,7 +1076,7 @@
 /// remaining bytes, etc.
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -1101,7 +1101,7 @@
 /// For example, to skip 2 bytes of input:
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
 /// #[derive(Nom)]
@@ -1132,7 +1132,7 @@
 /// This helps resolving parse errors (at runtime).
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// #[derive(Nom)]
 /// pub struct S {
@@ -1150,7 +1150,7 @@
 /// This helps resolving compiler errors.
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// #[derive(Nom)]
 /// #[nom(DebugDerive)]
@@ -1170,7 +1170,7 @@
 /// for the error type:
 ///
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// #[derive(Nom)]
 /// #[nom(GenericErrors)]
@@ -1208,7 +1208,7 @@
 ///
 /// Example:
 /// ```rust
-/// # use nom_derive::{Nom, Parse};
+/// # use nom_derive::*;
 /// #
 /// #[derive(Nom)]
 /// pub struct S<T> where T: Sized {

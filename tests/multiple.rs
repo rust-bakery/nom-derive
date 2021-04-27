@@ -3,7 +3,7 @@
 extern crate pretty_assertions;
 
 use nom::number::streaming::be_u8;
-use nom_derive::{Nom, Parse};
+use nom_derive::*;
 
 /// A structure with a length and a Vec
 #[derive(Debug, PartialEq, Nom)]

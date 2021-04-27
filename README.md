@@ -43,7 +43,7 @@ very easy.
 For example:
 
 ```rust
-use nom_derive::{Nom, Parse};
+use nom_derive::*;
 
 #[derive(Nom)]
 struct S {

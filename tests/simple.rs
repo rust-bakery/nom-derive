@@ -2,7 +2,7 @@
 #[macro_use]
 extern crate pretty_assertions;
 
-use nom_derive::{Nom, Parse};
+use nom_derive::*;
 
 use nom::combinator::opt;
 use nom::number::streaming::le_u32;
