@@ -235,8 +235,7 @@ impl Parse for MetaAttr {
                     let _paren_token = parenthesized!(content in input);
                     type ExpectedType = Punctuated<syn::Field, Token![,]>;
                     let fields: ExpectedType = content.parse_terminated(syn::Field::parse_named)?;
-                    // prepend comma, args will be after input name
-                    quote! { , #fields }
+                    quote! { #fields }
                 }
                 MetaAttrType::PreExec | MetaAttrType::PostExec => {
                     parse_content::<syn::Stmt>(input)?

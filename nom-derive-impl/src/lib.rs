@@ -14,7 +14,6 @@ extern crate syn;
 extern crate quote;
 
 use proc_macro::TokenStream;
-use proc_macro2::Span;
 use syn::*;
 
 mod config;
@@ -25,12 +24,8 @@ mod meta;
 mod parsertree;
 mod structs;
 
-use crate::config::Config;
-use crate::endian::{set_object_endianness, ParserEndianness};
+use crate::endian::*;
 use crate::gen::*;
-use crate::meta::attr::{MetaAttr, MetaAttrType};
-use enums::impl_nom_enums;
-use structs::{get_pre_post_exec, parse_struct};
 
 /// The `Nom` derive automatically generates a `parse` function for the structure
 /// using [nom] parsers. It will try to infer parsers for primitive of known
@@ -51,8 +46,8 @@ pub fn nom(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
 
     // Build and return the generated impl
-    match impl_nom(&ast, false, ParserEndianness::Unspecified) {
-        Ok(ts) => ts,
+    match gen_impl(&ast, false, ParserEndianness::Unspecified) {
+        Ok(ts) => ts.into(),
         Err(e) => e.to_compile_error().into(),
     }
 }
@@ -65,8 +60,8 @@ pub fn nom_be(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
 
     // Build and return the generated impl
-    match impl_nom(&ast, false, ParserEndianness::BigEndian) {
-        Ok(ts) => ts,
+    match gen_impl(&ast, false, ParserEndianness::BigEndian) {
+        Ok(ts) => ts.into(),
         Err(e) => e.to_compile_error().into(),
     }
 }
@@ -79,91 +74,10 @@ pub fn nom_le(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
 
     // Build and return the generated impl
-    match impl_nom(&ast, false, ParserEndianness::LittleEndian) {
-        Ok(ts) => ts,
+    match gen_impl(&ast, false, ParserEndianness::LittleEndian) {
+        Ok(ts) => ts.into(),
         Err(e) => e.to_compile_error().into(),
     }
-}
-
-pub(crate) fn get_extra_args(meta_list: &[MetaAttr]) -> Option<&proc_macro2::TokenStream> {
-    meta_list
-        .iter()
-        .find(|m| m.attr_type == MetaAttrType::ExtraArgs)
-        .and_then(MetaAttr::arg)
-}
-
-fn impl_nom(
-    ast: &syn::DeriveInput,
-    debug_derive: bool,
-    endianness: ParserEndianness,
-) -> Result<TokenStream> {
-    // eprintln!("ast: {:#?}", ast);
-    let struct_name = ast.ident.to_string();
-    // parse top-level attributes and prepare tokens for each field parser
-    let meta = meta::parse_nom_top_level_attribute(&ast.attrs)?;
-    // eprintln!("top-level meta: {:?}", meta);
-    let mut config = Config::from_meta_list(struct_name, &meta)?;
-    config.debug_derive |= debug_derive;
-    set_object_endianness(ast.ident.span(), endianness, &meta, &mut config)?;
-    let (tl_pre, tl_post) = get_pre_post_exec(&meta, &config);
-    // enums are handled differently
-    let s = match &ast.data {
-        syn::Data::Enum(_) => {
-            return impl_nom_enums(ast, &mut config);
-        }
-        syn::Data::Struct(ref s) => parse_struct(s, &mut config)?,
-        syn::Data::Union(_) => panic!("Unions not supported"),
-    };
-    // prepare tokens
-    let generics = &ast.generics;
-    let name = &ast.ident;
-    let (idents, parser_tokens): (Vec<_>, Vec<_>) = s
-        .parsers
-        .iter()
-        .map(|sp| {
-            let id = syn::Ident::new(&sp.name, Span::call_site());
-            (id, &sp.item)
-        })
-        .unzip();
-    let (pre, post): (Vec<_>, Vec<_>) = s
-        .parsers
-        .iter()
-        .map(|sp| (sp.pre_exec.as_ref(), sp.post_exec.as_ref()))
-        .unzip();
-    let idents2 = idents.clone();
-    // Code generation
-    let struct_def = match (s.empty, s.unnamed) {
-        (true, _) => quote! { ( #name ) },
-        (_, true) => quote! { ( #name ( #(#idents2),* ) ) },
-        (_, false) => quote! { ( #name { #(#idents2),* } ) },
-    };
-    let input_name = syn::Ident::new(&config.input_name, Span::call_site());
-    let orig_input_name = get_orig_input_name(&config);
-    let extra_args = get_extra_args(&meta);
-    let fn_body = quote! {
-        let #input_name = #orig_input_name;
-        #tl_pre
-        #(#pre let (#input_name, #idents) = #parser_tokens (#input_name) ?; #post)*
-        let struct_def = #struct_def;
-        #tl_post
-        Ok((#input_name, struct_def))
-    };
-    let fn_decl = gen_fn_decl(generics, extra_args, &config);
-    // extract impl parameters from struct
-    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
-    // Generate impl
-    let impl_tokens = quote! {
-        impl #impl_generics #name #ty_generics #where_clause {
-            #fn_decl
-            {
-                #fn_body
-            }
-        }
-    };
-    if config.debug_derive {
-        eprintln!("tokens:\n{}", impl_tokens);
-    }
-    Ok(impl_tokens.into())
 }
 
 /// This derive macro behaves exactly like [Nom derive](derive.Nom.html), except it
@@ -179,8 +93,8 @@ pub fn nom_derive_debug(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
 
     // Build and return the generated impl
-    match impl_nom(&ast, true, ParserEndianness::Unspecified) {
-        Ok(ts) => ts,
+    match gen_impl(&ast, true, ParserEndianness::Unspecified) {
+        Ok(ts) => ts.into(),
         Err(e) => e.to_compile_error().into(),
     }
 }

@@ -1,5 +1,6 @@
 use crate::config::*;
 use crate::endian::*;
+use crate::gen::*;
 use crate::meta;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
 use crate::parsertree::*;
@@ -37,6 +38,13 @@ pub(crate) struct StructParserTree {
     pub empty: bool,
     pub unnamed: bool,
     pub parsers: Vec<StructParser>,
+}
+
+pub(crate) fn get_extra_args(meta_list: &[MetaAttr]) -> Option<&TokenStream> {
+    meta_list
+        .iter()
+        .find(|m| m.attr_type == MetaAttrType::ExtraArgs)
+        .and_then(MetaAttr::arg)
 }
 
 fn get_type_parser(ty: &Type, meta_list: &[MetaAttr], config: &Config) -> Result<ParserExpr> {
@@ -290,77 +298,74 @@ fn get_field_parser(field: &Field, meta_list: &[MetaAttr], config: &Config) -> R
 }
 
 fn quote_align(align: &TokenStream, config: &Config) -> TokenStream {
-    let input_name = syn::Ident::new(&config.input_name, align.span());
-    let orig_input_name =
-        syn::Ident::new(&("orig_".to_string() + &config.input_name), align.span());
+    let input = syn::Ident::new(config.input_name(), align.span());
+    let orig_input = syn::Ident::new(config.orig_input_name(), align.span());
     quote! {
-        let (#input_name, _) = {
-            let offset = #input_name.as_ptr() as usize - #orig_input_name.as_ptr() as usize;
+        let (#input, _) = {
+            let offset = #input.as_ptr() as usize - #orig_input.as_ptr() as usize;
             let align = #align as usize;
             let align = ((align - (offset % align)) % align);
-            nom::bytes::streaming::take(align)(#input_name)
+            nom::bytes::streaming::take(align)(#input)
         }?;
     }
 }
 
 // like quote_skip, but offset is an isize
 fn quote_move(offset: &TokenStream, config: &Config) -> TokenStream {
-    let input_name = syn::Ident::new(&config.input_name, offset.span());
-    let orig_input_name =
-        syn::Ident::new(&("orig_".to_string() + &config.input_name), offset.span());
+    let input = syn::Ident::new(config.input_name(), offset.span());
+    let orig_input = syn::Ident::new(config.orig_input_name(), offset.span());
     quote! {
-        let #input_name = {
-            let start = #orig_input_name.as_ptr() as usize;
-            let pos = #input_name.as_ptr() as usize - start;
+        let #input = {
+            let start = #orig_input.as_ptr() as usize;
+            let pos = #input.as_ptr() as usize - start;
             let offset = #offset as isize;
             let offset_u = offset.abs() as usize;
             let new_offset = if offset < 0 {
                 if offset_u > pos {
-                    return Err(nom::Err::Error(nom::error::make_error(#input_name, nom::error::ErrorKind::TooLarge)));
+                    return Err(nom::Err::Error(nom::error::make_error(#input, nom::error::ErrorKind::TooLarge)));
                 }
                 pos - offset_u
             } else {
-                if pos + offset_u > #orig_input_name.len() {
+                if pos + offset_u > #orig_input.len() {
                     return Err(nom::Err::Incomplete(nom::Needed::new(offset_u)));
                 }
                 pos + offset_u
             };
-            &#orig_input_name[new_offset..]
+            &#orig_input[new_offset..]
         };
     }
 }
 
 // like quote_move, with absolute value as offset
 fn quote_move_abs(offset: &TokenStream, config: &Config) -> TokenStream {
-    let input_name = syn::Ident::new(&config.input_name, offset.span());
-    let orig_input_name =
-        syn::Ident::new(&("orig_".to_string() + &config.input_name), offset.span());
+    let input = syn::Ident::new(config.input_name(), offset.span());
+    let orig_input = syn::Ident::new(config.orig_input_name(), offset.span());
     quote! {
-        let #input_name = {
+        let #input = {
             let offset = #offset as usize;
-            if offset > #orig_input_name.len() {
+            if offset > #orig_input.len() {
                 return Err(nom::Err::Incomplete(nom::Needed::new(offset)));
             }
-            &#orig_input_name[offset..]
+            &#orig_input[offset..]
         };
     }
 }
 
 fn quote_skip(skip: &TokenStream, config: &Config) -> TokenStream {
-    let input_name = syn::Ident::new(&config.input_name, skip.span());
+    let input = syn::Ident::new(config.input_name(), skip.span());
     quote! {
-        let (#input_name, _) = {
+        let (#input, _) = {
             let skip = #skip as usize;
-            nom::bytes::streaming::take(skip)(#input_name)
+            nom::bytes::streaming::take(skip)(#input)
         }?;
     }
 }
 
 fn quote_error_if(cond: &TokenStream, config: &Config) -> TokenStream {
-    let input_name = syn::Ident::new(&config.input_name, cond.span());
+    let input = syn::Ident::new(config.input_name(), cond.span());
     quote! {
         if #cond {
-            return Err(nom::Err::Error(nom::error::make_error(#input_name, nom::error::ErrorKind::Verify)));
+            return Err(nom::Err::Error(nom::error::make_error(#input, nom::error::ErrorKind::Verify)));
         }
     }
 }
@@ -415,8 +420,8 @@ pub(crate) fn get_pre_post_exec(
                 tk_pre.extend(qq);
             }
             MetaAttrType::Exact => {
-                let input_name = syn::Ident::new(&config.input_name, m.span());
-                let cond = quote! { !#input_name.is_empty() };
+                let input = syn::Ident::new(config.input_name(), m.span());
+                let cond = quote! { !#input.is_empty() };
                 let qq = quote_error_if(&cond, &config);
                 tk_post.extend(qq);
             }
@@ -501,4 +506,66 @@ pub(crate) fn parse_fields(f: &Fields, config: &mut Config) -> Result<StructPars
 
 pub(crate) fn parse_struct(s: &DataStruct, config: &mut Config) -> Result<StructParserTree> {
     parse_fields(&s.fields, config)
+}
+
+pub(crate) fn gen_struct_impl(
+    ast: &syn::DeriveInput,
+    meta: &[MetaAttr],
+    endianness: ParserEndianness,
+    config: &mut Config,
+) -> Result<TokenStream> {
+    // endianness must be set before parsing struct
+    set_object_endianness(ast.ident.span(), endianness, &meta, config)?;
+
+    // parse struct
+    let s = match &ast.data {
+        syn::Data::Struct(ref s) => parse_struct(s, config)?,
+        _ => panic!("unexpected type in gen_struct_impl input"),
+    };
+
+    // XXX split parsing and generation?
+
+    // prepare tokens
+    let (tl_pre, tl_post) = get_pre_post_exec(&meta, &config);
+    let name = &ast.ident;
+    let (idents, parser_tokens): (Vec<_>, Vec<_>) = s
+        .parsers
+        .iter()
+        .map(|sp| {
+            let id = syn::Ident::new(&sp.name, Span::call_site());
+            (id, &sp.item)
+        })
+        .unzip();
+    let (pre, post): (Vec<_>, Vec<_>) = s
+        .parsers
+        .iter()
+        .map(|sp| (sp.pre_exec.as_ref(), sp.post_exec.as_ref()))
+        .unzip();
+    let idents2 = idents.clone();
+    // Code generation
+    let struct_def = match (s.empty, s.unnamed) {
+        (true, _) => quote! { #name },
+        (_, true) => quote! { #name ( #(#idents2),* ) },
+        (_, false) => quote! { #name { #(#idents2),* } },
+    };
+    let input = syn::Ident::new(config.input_name(), Span::call_site());
+    let orig_input = syn::Ident::new(config.orig_input_name(), Span::call_site());
+    let extra_args = get_extra_args(&meta);
+    let fn_body = quote! {
+        let #input = #orig_input;
+        #tl_pre
+        #(#pre let (#input, #idents) = #parser_tokens (#input) ?; #post)*
+        let struct_def = #struct_def;
+        #tl_post
+        Ok((#input, struct_def))
+    };
+    let fn_decl = gen_fn_decl(endianness, extra_args, &config);
+    // Generate impl
+    let impl_tokens = quote! {
+        #fn_decl
+        {
+            #fn_body
+        }
+    };
+    Ok(impl_tokens)
 }

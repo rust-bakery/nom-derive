@@ -408,7 +408,7 @@
 /// # assert_eq!(res, Ok((&input[4..],S{a:0,b:S2{c:1}})));
 /// ```
 ///
-/// Example (defining `parse` method):
+/// Example (implementing the `Parse` trait manually):
 /// ```rust
 /// # use nom_derive::*;
 /// # use nom::{IResult,call,map};
@@ -420,8 +420,8 @@
 ///   c: u16
 /// }
 ///
-/// impl S2 {
-///     fn parse(i:&[u8]) -> IResult<&[u8],S2> {
+/// impl<'a> Parse<&'a[u8]> for S2 {
+///     fn parse(i:&'a [u8]) -> IResult<&'a [u8],S2> {
 ///         map!(
 ///             i,
 ///             le_u16, // little-endian

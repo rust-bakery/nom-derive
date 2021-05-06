@@ -15,7 +15,12 @@ pub struct Config {
     pub debug: bool,
     pub debug_derive: bool,
     pub generic_errors: bool,
-    pub input_name: String,
+    selector: Option<String>,
+    selector_name: Option<String>,
+    input_name: String,
+    orig_input_name: String,
+    lifetime_name: String,
+    error_name: String,
 }
 
 impl Config {
@@ -64,6 +69,18 @@ impl Config {
                 }
             })
             .unwrap_or_else(|| "i".to_string());
+        let selector = l.iter().find_map(|m| {
+            if m.is_type(MetaAttrType::Selector) {
+                Some(m.arg().unwrap().to_string())
+            } else {
+                None
+            }
+        });
+        let selector_name = if selector.is_some() {
+            Some(String::from("selector"))
+        } else {
+            None
+        };
         Ok(Config {
             struct_name: name,
             global_endianness: ParserEndianness::Unspecified,
@@ -72,7 +89,36 @@ impl Config {
             debug,
             debug_derive,
             generic_errors,
+            selector,
+            selector_name,
+            orig_input_name: "orig_".to_string() + &input_name,
+            lifetime_name: String::from("'nom"),
+            error_name: String::from("NomErr"),
             input_name,
         })
+    }
+
+    pub fn selector(&self) -> Option<&String> {
+        self.selector.as_ref()
+    }
+
+    pub fn selector_name(&self) -> Option<&String> {
+        self.selector_name.as_ref()
+    }
+
+    pub fn input_name(&self) -> &str {
+        &self.input_name
+    }
+
+    pub fn orig_input_name(&self) -> &str {
+        &self.orig_input_name
+    }
+
+    pub fn lifetime_name(&self) -> &str {
+        &self.lifetime_name
+    }
+
+    pub fn error_name(&self) -> &str {
+        &self.error_name
     }
 }
