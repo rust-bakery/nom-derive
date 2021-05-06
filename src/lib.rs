@@ -51,20 +51,33 @@
 //! }
 //! ```
 //!
-//! This adds static method `parse` to `S`. The generated code looks
-//! like:
+//! This generates an implementation of the [`Parse`] trait to `S`. The generated code looks
+//! like (code simplified):
 //! ```rust,ignore
-//! impl S {
-//!     pub fn parse(i: &[u8]) -> nom::IResult(&[u8], S) {
+//! impl<'a> Parse<&'a> for S {
+//!     pub fn parse_be(i: &'a [u8]) -> nom::IResult(&'a [u8], S) {
 //!         let (i, a) = be_u32(i)?;
 //!         let (i, b) = be_u16(i)?;
 //!         let (i, c) = be_u16(i)?;
 //!         Ok((i, S{ a, b, c }))
 //!     }
+//!     pub fn parse_le(i: &'a [u8]) -> nom::IResult(&'a [u8], S) {
+//!         let (i, a) = le_u32(i)?;
+//!         let (i, b) = le_u16(i)?;
+//!         let (i, c) = le_u16(i)?;
+//!         Ok((i, S{ a, b, c }))
+//!     }
+//!     pub fn parse(i: &'a [u8]) -> nom::IResult(&'a [u8], S) {
+//!         S::parse_be(i)
+//!     }
 //! }
 //! ```
 //!
-//! To parse input, just call `let res = S::parse(input);`.
+//! To parse input, just call `let res = S::parse_be(input);`.
+//!
+//! If the endianness of the struct is fixed (for ex. using the top-level `BigEndian` or
+//! `LittleEndian` attributes, or the `NomBE` and `NomLE` custom derive), then the implementation
+//! always uses this endianness, and all 3 functions are equivalent.
 //!
 //! For extensive documentation of all attributes and examples, see the documentation of [docs::Nom]
 //! custom derive attribute.

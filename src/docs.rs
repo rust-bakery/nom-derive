@@ -1,9 +1,22 @@
 //! The `docs` pseudo-module contains `nom-derive` documentation. Objects from this module
 //! are only used to add documentation, and are not used in the crate.
 
-/// The `Nom` derive automatically generates a `parse` function for the structure
-/// using [nom] parsers. It will try to infer parsers for primitive of known
-/// types, but also allows you to specify parsers using custom attributes.
+/// The `Nom` derive automatically generates an implementation of the [`Parse`](super::Parse) trait
+/// for the structure using [nom] parsers, when possible. It will try to infer parsers for
+/// primitive of known types, but also allows you to specify parsers using custom attributes.
+///
+/// The code generates 3 methods:
+///   - `parse_be`: parse object as big-endian
+///   - `parse_le`: parse object as little-endian
+///   - `parse`: default function, wraps a call to `parse_be`
+///
+/// If the endianness of the struct is fixed (for ex. using the top-level `BigEndian` or
+/// `LittleEndian` attributes, or the `NomBE` and `NomLE` custom derive), then the implementation
+/// always uses this endianness, and all 3 functions are equivalent.
+///
+/// When there are extra args or a selector, it is not possible to generate the trait
+/// implementation (function signatures are different). In that case, an implementation block is
+/// generate with the same 3 functions.
 ///
 /// Deriving parsers supports `struct` and `enum` types.
 ///
@@ -77,6 +90,19 @@
 ///
 /// # Deriving parsers for `Struct`
 ///
+/// The `Nom` derive automatically generates an implementation of the [`Parse`](super::Parse) trait
+/// for the structure using [nom] parsers, when possible. It will try to infer parsers for
+/// primitive of known types, but also allows you to specify parsers using custom attributes.
+///
+/// The code generates 3 methods:
+///   - `parse_be`: parse object as big-endian
+///   - `parse_le`: parse object as little-endian
+///   - `parse`: default function, wraps a call to `parse_be`
+///
+/// These methods are contained in a generated implementation of the `Parse` trait.
+/// Note: if `ExtraArgs` is specified, the generated code cannot implement the `Parse` trait (the
+/// function signatures are different because of the extra arguments).
+///
 /// Import the `Nom` derive attribute:
 ///
 /// ```rust
@@ -119,9 +145,11 @@
 ///
 /// ## Byteorder
 ///
-/// By default, integers are parsed are big endian.
+/// By default, multiple methods are generated: one for big-endian and one for little-endian.
 ///
-/// The `LittleEndian` attribute can be applied to a struct to change all integer parsers:
+/// The `BigEndian` or `LittleEndian` attributes can be applied to a struct to specify that it must
+/// always be parsed as the given endianness. In that case, the methods `parse_be` and `parse_le`
+/// will be generated as usual, but will use only the given endianness (and thus are equivalent).
 ///
 /// ```rust
 /// # use nom_derive::*;
@@ -163,6 +191,9 @@
 /// ```
 ///
 /// The `BigEndian` and `LittleEndian` attributes can be specified for struct fields.
+/// The corresponding field will always be parsed using the given endianness in the generated
+/// `parse_be` and `parse_le` methods.
+///
 /// If both per-struct and per-field attributes are present, the more specific wins.
 ///
 /// For example, the all fields of the following struct will be parsed as big-endian,
@@ -892,13 +923,25 @@
 ///
 /// <pre>
 /// impl U1{
-///     pub fn parse(i:&[u8], selector: u8) -> IResult<&[u8],U1> {
+///     pub fn parse_be(i:&[u8], selector: u8) -> IResult<&[u8],U1> {
 ///         match selector {
 ///             ...
 ///         }
 ///     }
+///     pub fn parse_le(i:&[u8], selector: u8) -> IResult<&[u8],U1> {
+///         match selector {
+///             ...
+///         }
+///     }
+///     pub fn parse(i:&[u8], selector: u8) -> IResult<&[u8],U1> {
+///         U1::parse_be(i, selector)
+///     }
 /// }
 /// </pre>
+///
+/// Note that it is not possible to generate an implementation of the `Parse` trait, since the
+/// function signature has an extra argument (the selector).
+/// Except this extra argument, the generated implementation behaves the same as the trait.
 ///
 /// It can be called either directly (`U1::parse(n)`) or using nom
 /// (`call!(U1::parse,n)`).
@@ -1010,6 +1053,9 @@
 ///   - the `Enum` implements the `Eq` trait
 ///
 /// In that case, the `Selector` attribute must *not* be specified.
+///
+/// Note: if `ExtraArgs` is not specified, the generated code is an implementation of the `Parse`
+/// trait.
 ///
 /// ```rust
 /// # use nom_derive::*;
@@ -1180,18 +1226,21 @@
 /// ```
 /// will generate the following code signature (simplified):
 /// ```rust,ignore
-/// impl S
+/// impl <'nom, E> Parse <&'nom [u8], E> for S
+/// where
+///     E : nom::error::ParseError <&'nom [u8]>
 /// {
-///     pub fn parse<'nom, NomErr>(i: &'nom [u8]) -> IResult<&'nom [u8], Self, NomErr>
-///     where
-///         NomErr: ParseError<&'nom [u8]> {
+///     fn parse_be(orig_i : &'nom [u8]) -> IResult <&'nom [u8], Self, E>
+///     {
+///         ...
 ///     }
 /// }
 /// ```
 ///
 /// The `parse` method requires to give a concrete type for the error type when called:
 /// ```rust,ignore
-/// let (rem, obj) = S::parse::<VerboseError<_>>(input).unwrap();
+/// let res: IResult<_, _, VerboseError<_>> = S::parse_be(input);
+/// let (rem, res) = res.unwrap();
 /// ```
 ///
 /// This attribute has the following requirements:
