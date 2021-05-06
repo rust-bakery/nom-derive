@@ -1,4 +1,5 @@
 use nom_derive::nom::error::VerboseError;
+use nom_derive::nom::IResult;
 use nom_derive::*;
 
 /// A struct with a generic parameter
@@ -28,16 +29,16 @@ fn main() {
     assert_eq!(rem, (&input[4..], StructWithGenerics { t: 0x10203u32 }));
 
     // test generics: u16 and custom error: unit
-    let rem = StructWithGenericsAndErrors::<u16>::parse::<()>(input).unwrap();
+    let rem: IResult<_, _, ()> = StructWithGenericsAndErrors::<u16>::parse(input);
     assert_eq!(
-        rem,
+        rem.unwrap(),
         (&input[2..], StructWithGenericsAndErrors { t: 0x1u16 })
     );
 
     // test generics: u16 and custom error: VerboseError
-    let rem = StructWithGenericsAndErrors::<u16>::parse::<VerboseError<_>>(input).unwrap();
+    let rem: IResult<_, _, VerboseError<_>> = StructWithGenericsAndErrors::<u16>::parse(input);
     assert_eq!(
-        rem,
+        rem.unwrap(),
         (&input[2..], StructWithGenericsAndErrors { t: 0x1u16 })
     );
 }

@@ -1,5 +1,6 @@
 use nom_derive::nom::bytes::streaming::take;
-use nom_derive::nom::error::VerboseError;
+use nom_derive::nom::error::{Error, VerboseError};
+use nom_derive::nom::IResult;
 use nom_derive::*;
 
 /// unnamed struct
@@ -73,6 +74,6 @@ fn main() {
     assert_eq!(rem, (&input[5..], U4::Field1(b"\x01\x02\x03\x04")));
 
     // test fieldless enum and error type: unit
-    let rem = U6::parse::<()>(&input[2..]).unwrap();
-    assert_eq!(rem, (&input[3..], U6::B));
+    let rem: IResult<_, _, Error<_>> = U6::parse(&input[2..]);
+    assert_eq!(rem.unwrap(), (&input[3..], U6::B));
 }

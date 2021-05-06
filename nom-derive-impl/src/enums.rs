@@ -1,14 +1,11 @@
-use proc_macro::TokenStream;
-use proc_macro2::Span;
-
 use crate::config::*;
 use crate::endian::*;
 use crate::gen::*;
-use crate::get_extra_args;
 use crate::meta;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
 use crate::parsertree::{ParserExpr, ParserTreeItem};
 use crate::structs::{get_pre_post_exec, parse_fields, StructParser, StructParserTree};
+use proc_macro2::{Span, TokenStream};
 use syn::{spanned::Spanned, *};
 
 #[derive(Debug)]
@@ -111,14 +108,12 @@ fn is_input_fieldless_enum(ast: &syn::DeriveInput) -> bool {
 fn impl_nom_fieldless_repr_enum(
     ast: &syn::DeriveInput,
     repr: &str,
+    endianness: ParserEndianness,
     meta_list: &[MetaAttr],
     config: &Config,
 ) -> Result<TokenStream> {
-    let input_name = syn::Ident::new(&config.input_name, Span::call_site());
-    let orig_input_name = syn::Ident::new(
-        &("orig_".to_string() + &config.input_name),
-        Span::call_site(),
-    );
+    let input = syn::Ident::new(config.input_name(), Span::call_site());
+    let orig_input = syn::Ident::new(config.orig_input_name(), Span::call_site());
     let (tl_pre, tl_post) = get_pre_post_exec(&meta_list, config);
     let parser = match repr {
         "u8" | "u16" | "u24" | "u32" | "u64" | "u128" | "i8" | "i16" | "i24" | "i32" | "i64"
@@ -159,7 +154,6 @@ fn impl_nom_fieldless_repr_enum(
     } else {
         panic!("expect enum");
     };
-    let generics = &ast.generics;
     let name = &ast.ident;
     let ty = syn::Ident::new(&repr, Span::call_site());
     let variants_code: Vec<_> = variant_names
@@ -170,40 +164,41 @@ fn impl_nom_fieldless_repr_enum(
         })
         .collect();
     // note: fieldless enums cannot have lifetimes
-    let fn_decl = gen_fn_decl(generics, None, config);
-    // extract impl parameters
-    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+    let fn_decl = gen_fn_decl(endianness, None, config);
     // generate impl
     let tokens = quote! {
-        impl#impl_generics #name#ty_generics #where_clause {
-            #fn_decl {
-                let #input_name = #orig_input_name;
-                #tl_pre
-                let (#input_name, selector) = #parser(#input_name)?;
-                let enum_def =
-                    #(#variants_code else)*
-                { return Err(::nom::Err::Error(nom::error::make_error(#orig_input_name, ::nom::error::ErrorKind::Switch))); };
-                #tl_post
-                Ok((#input_name, enum_def))
-            }
+        #fn_decl {
+            let #input = #orig_input;
+            #tl_pre
+            let (#input, selector) = #parser(#input)?;
+            let enum_def =
+                #(#variants_code else)*
+            { return Err(nom::Err::Error(nom::error::make_error(#orig_input, nom::error::ErrorKind::Switch))); };
+            #tl_post
+            Ok((#input, enum_def))
         }
     };
-    if config.debug_derive {
-        eprintln!("impl_nom_enums: {}", tokens);
-    }
 
-    Ok(tokens.into())
+    Ok(tokens)
 }
 
-pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Result<TokenStream> {
+pub(crate) fn impl_nom_enums(
+    ast: &syn::DeriveInput,
+    meta: &[MetaAttr],
+    endianness: ParserEndianness,
+    config: &mut Config,
+) -> Result<TokenStream> {
     let name = &ast.ident;
     // eprintln!("{:?}", ast.attrs);
-    let meta_list = meta::parse_nom_top_level_attribute(&ast.attrs)?;
-    let input_name = syn::Ident::new(&config.input_name, Span::call_site());
-    let orig_input_name = get_orig_input_name(config);
-    let extra_args = get_extra_args(&meta_list);
-    let selector = match get_selector(&meta_list) {
-        Some(s) => s,
+
+    // endianness must be set before parsing enum
+    set_object_endianness(ast.ident.span(), endianness, &meta, config)?;
+
+    let input = syn::Ident::new(config.input_name(), Span::call_site());
+    let orig_input = syn::Ident::new(config.orig_input_name(), Span::call_site());
+    let extra_args = get_extra_args(&meta);
+    let selector = match config.selector() {
+        Some(s) => s.to_owned(),
         None => {
             if is_input_fieldless_enum(ast) {
                 // check that we have a repr attribute
@@ -213,7 +208,7 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Res
                         "Nom-derive: fieldless enums must have a 'repr' or 'selector' attribute",
                     )
                 })?;
-                return impl_nom_fieldless_repr_enum(ast, &repr, &meta_list, config);
+                return impl_nom_fieldless_repr_enum(ast, &repr, endianness, &meta, config);
             } else {
                 return Err(Error::new(
                     ast.ident.span(),
@@ -234,8 +229,7 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Res
     };
     let mut variants_defs = variants_defs?;
     // parse string items and prepare tokens for each variant
-    let (tl_pre, tl_post) = get_pre_post_exec(&meta_list, config);
-    let generics = &ast.generics;
+    let (tl_pre, tl_post) = get_pre_post_exec(&meta, config);
     let selector_type: proc_macro2::TokenStream = selector.parse().unwrap();
     let mut default_case_handled = false;
     let mut variants_code: Vec<_> = {
@@ -273,11 +267,11 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Res
                 #m => {
                     #(
                         #pre
-                        let (#input_name, #idents) = #parser_tokens (#input_name) ?;
+                        let (#input, #idents) = #parser_tokens (#input) ?;
                         #post
                     )*
                     let struct_def = #struct_def;
-                    Ok((#input_name, struct_def))
+                    Ok((#input, struct_def))
                         // Err(nom::Err::Error(error_position!(#input_name, nom::ErrorKind::Switch)))
                 },
                 }
@@ -296,34 +290,30 @@ pub(crate) fn impl_nom_enums(ast: &syn::DeriveInput, config: &mut Config) -> Res
             variants_code.swap(pos, last_index);
         }
     }
-    let extra_args = quote! { , selector: #selector_type #extra_args };
-    let fn_decl = gen_fn_decl(generics, Some(&extra_args), &config);
-    // extract impl parameters
-    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+    let extra_args = if extra_args.is_some() {
+        quote! { selector: #selector_type, #extra_args }
+    } else {
+        quote! { selector: #selector_type }
+    };
+    let fn_decl = gen_fn_decl(endianness, Some(&extra_args), &config);
     // generate impl
     let default_case = if default_case_handled {
         quote! {}
     } else {
-        quote! { _ => Err(nom::Err::Error(nom::error_position!(#input_name, nom::error::ErrorKind::Switch))) }
+        quote! { _ => Err(nom::Err::Error(nom::error_position!(#input, nom::error::ErrorKind::Switch))) }
     };
     let tokens = quote! {
-        impl#impl_generics #name#ty_generics #where_clause {
-            #fn_decl {
-                let #input_name = #orig_input_name;
-                #tl_pre
-                let (#input_name, enum_def) = match selector {
-                    #(#variants_code)*
-                    #default_case
-                }?;
-                #tl_post
-                Ok((#input_name, enum_def))
-            }
+        #fn_decl {
+            let #input = #orig_input;
+            #tl_pre
+            let (#input, enum_def) = match selector {
+                #(#variants_code)*
+                #default_case
+            }?;
+            #tl_post
+            Ok((#input, enum_def))
         }
     };
 
-    if config.debug_derive {
-        eprintln!("impl_nom_enums: {}", tokens);
-    }
-
-    Ok(tokens.into())
+    Ok(tokens)
 }

@@ -1,4 +1,5 @@
 use nom_derive::nom::error::VerboseError;
+use nom_derive::nom::IResult;
 use nom_derive::*;
 
 #[derive(Nom, Debug, PartialEq)]
@@ -32,17 +33,17 @@ fn main() {
     let input: &[u8] = b"\x00\x01\x02\x03\x04\x05\x06\x07";
 
     // test error type: unit
-    let rem = S1::parse::<()>(input).unwrap();
-    assert_eq!(rem, (&input[4..], S1 { a: 0x10203 }));
+    let rem: IResult<_, _, ()> = S1::parse(input);
+    assert_eq!(rem.unwrap(), (&input[4..], S1 { a: 0x10203 }));
 
     // test error type: VerboseError
-    let rem = S1::parse::<VerboseError<_>>(input).unwrap();
-    assert_eq!(rem, (&input[4..], S1 { a: 0x10203 }));
+    let rem: IResult<_, _, VerboseError<_>> = S1::parse(input);
+    assert_eq!(rem.unwrap(), (&input[4..], S1 { a: 0x10203 }));
 
     // test lifetimes and error type: VerboseError
-    let rem = StructWithLifetime::parse::<VerboseError<_>>(input).unwrap();
+    let rem: IResult<_, _, VerboseError<_>> = StructWithLifetime::parse(input);
     assert_eq!(
-        rem,
+        rem.unwrap(),
         (
             &input[4..],
             StructWithLifetime {
@@ -53,9 +54,9 @@ fn main() {
     );
 
     // test two lifetimes and error type: VerboseError
-    let rem = StructWithTwoLifetimes::parse::<VerboseError<_>>(input).unwrap();
+    let rem: IResult<_, _, VerboseError<_>> = StructWithTwoLifetimes::parse(input);
     assert_eq!(
-        rem,
+        rem.unwrap(),
         (
             &input[8..],
             StructWithTwoLifetimes {

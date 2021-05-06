@@ -1,5 +1,5 @@
 use nom::number::streaming::be_u8;
-use nom_derive::Nom;
+use nom_derive::*;
 
 /// A fieldless enum, using the 'Selector' attribute
 ///
