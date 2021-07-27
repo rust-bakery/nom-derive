@@ -40,11 +40,16 @@ pub(crate) fn gen_fn_decl(
             fn_args.push(extra_arg.clone());
         }
     };
+    let special_case = extra_args.is_some() || config.selector().is_some();
+    let mut scope = quote! {};
+    if special_case {
+        scope = quote!{ pub }
+    }
     // function declaration line
     if config.generic_errors {
         let ident_e = Ident::new(config.error_name(), Span::call_site());
         let mut fn_generics = None;
-        if extra_args.is_some() || config.selector().is_some() {
+        if special_case {
             // special case: not implementing the Parse trait,
             // generic errors must be added to function, not struct
             //
@@ -59,12 +64,12 @@ pub(crate) fn gen_fn_decl(
             fn_generics = Some(quote!(<#ident_e>));
         }
         quote! {
-            fn #parse#fn_generics(#fn_args) -> nom::IResult<&#lft [u8], Self, #ident_e>
+           #scope fn #parse#fn_generics(#fn_args) -> nom::IResult<&#lft [u8], Self, #ident_e>
             #fn_where_clause
         }
     } else {
         quote! {
-            fn #parse(#fn_args) -> nom::IResult<&#lft [u8], Self>
+           #scope fn #parse(#fn_args) -> nom::IResult<&#lft [u8], Self>
             #fn_where_clause
         }
     }
@@ -187,9 +192,14 @@ pub(crate) fn gen_impl(
     } else {
         quote!()
     };
+    let special_case = extra_args.is_some() || config.selector().is_some();
+    let mut scope = quote! {};
+    if special_case {
+        scope = quote!{ pub };
+    }
     let tokens_parse = {
         let (fn_generics, where_clause) =
-            if config.generic_errors && (extra_args.is_some() || config.selector().is_some()) {
+            if config.generic_errors && special_case {
                 (
                     quote!(<#ident_e>),
                     quote! {where
@@ -201,7 +211,7 @@ pub(crate) fn gen_impl(
                 (quote!(), quote!())
             };
         quote! {
-            fn parse#fn_generics(#fn_args) -> nom::IResult<&'nom [u8], Self #maybe_err> #where_clause {
+           #scope fn parse#fn_generics(#fn_args) -> nom::IResult<&'nom [u8], Self #maybe_err> #where_clause {
                 Self::parse_be(#call_args)
             }
         }
