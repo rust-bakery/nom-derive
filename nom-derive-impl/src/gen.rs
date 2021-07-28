@@ -41,10 +41,11 @@ pub(crate) fn gen_fn_decl(
         }
     };
     let special_case = extra_args.is_some() || config.selector().is_some();
-    let mut scope = quote! {};
-    if special_case {
-        scope = quote! { pub }
-    }
+    let scope = if special_case {
+        quote! { pub }
+    } else {
+        quote! {}
+    };
     // function declaration line
     if config.generic_errors {
         let ident_e = Ident::new(config.error_name(), Span::call_site());
@@ -193,10 +194,11 @@ pub(crate) fn gen_impl(
         quote!()
     };
     let special_case = extra_args.is_some() || config.selector().is_some();
-    let mut scope = quote! {};
-    if special_case {
-        scope = quote! { pub };
-    }
+    let scope = if special_case {
+        quote! { pub }
+    } else {
+        quote! {}
+    };
     let tokens_parse = {
         let (fn_generics, where_clause) = if config.generic_errors && special_case {
             (
