@@ -43,7 +43,7 @@ pub(crate) fn gen_fn_decl(
     let special_case = extra_args.is_some() || config.selector().is_some();
     let mut scope = quote! {};
     if special_case {
-        scope = quote!{ pub }
+        scope = quote! { pub }
     }
     // function declaration line
     if config.generic_errors {
@@ -195,21 +195,20 @@ pub(crate) fn gen_impl(
     let special_case = extra_args.is_some() || config.selector().is_some();
     let mut scope = quote! {};
     if special_case {
-        scope = quote!{ pub };
+        scope = quote! { pub };
     }
     let tokens_parse = {
-        let (fn_generics, where_clause) =
-            if config.generic_errors && special_case {
-                (
-                    quote!(<#ident_e>),
-                    quote! {where
-                        #ident_e: nom_derive::nom::error::ParseError<&#lft [u8]>,
-                        #ident_e: std::fmt::Debug,
-                    },
-                )
-            } else {
-                (quote!(), quote!())
-            };
+        let (fn_generics, where_clause) = if config.generic_errors && special_case {
+            (
+                quote!(<#ident_e>),
+                quote! {where
+                    #ident_e: nom_derive::nom::error::ParseError<&#lft [u8]>,
+                    #ident_e: std::fmt::Debug,
+                },
+            )
+        } else {
+            (quote!(), quote!())
+        };
         quote! {
            #scope fn parse#fn_generics(#fn_args) -> nom::IResult<&'nom [u8], Self #maybe_err> #where_clause {
                 Self::parse_be(#call_args)
