@@ -31,7 +31,7 @@ impl ToTokens for ParserTreeItem {
     }
 }
 
-#[allow(clippy::clippy::upper_case_acronyms)]
+#[allow(clippy::upper_case_acronyms)]
 #[derive(Debug)]
 pub enum ParserExpr {
     CallParse(TypeItem),
