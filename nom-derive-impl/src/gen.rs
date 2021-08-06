@@ -159,7 +159,7 @@ pub(crate) fn gen_impl(
         }
     } else {
         // generate stub to call parse_le
-        let fn_decl = gen_fn_decl(ParserEndianness::BigEndian, None, &config);
+        let fn_decl = gen_fn_decl(ParserEndianness::BigEndian, extra_args, &config);
         quote! {
             #fn_decl {
                 Self::parse_le(#call_args)
@@ -179,7 +179,7 @@ pub(crate) fn gen_impl(
         }
     } else {
         // generate stub to call parse_be
-        let fn_decl = gen_fn_decl(ParserEndianness::LittleEndian, None, &config);
+        let fn_decl = gen_fn_decl(ParserEndianness::LittleEndian, extra_args, &config);
         quote! {
             #fn_decl {
                 Self::parse_be(#call_args)
