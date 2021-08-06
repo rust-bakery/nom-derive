@@ -76,7 +76,7 @@ pub(crate) fn gen_fn_decl(
     }
 }
 
-pub(crate) fn get_extra_args(meta_list: &[MetaAttr]) -> Option<&proc_macro2::TokenStream> {
+pub(crate) fn get_extra_args(meta_list: &[MetaAttr]) -> Option<&TokenStream> {
     meta_list
         .iter()
         .find(|m| m.attr_type == MetaAttrType::ExtraArgs)

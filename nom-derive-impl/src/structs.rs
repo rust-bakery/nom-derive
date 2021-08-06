@@ -40,13 +40,6 @@ pub(crate) struct StructParserTree {
     pub parsers: Vec<StructParser>,
 }
 
-pub(crate) fn get_extra_args(meta_list: &[MetaAttr]) -> Option<&TokenStream> {
-    meta_list
-        .iter()
-        .find(|m| m.attr_type == MetaAttrType::ExtraArgs)
-        .and_then(MetaAttr::arg)
-}
-
 fn get_type_parser(ty: &Type, meta_list: &[MetaAttr], config: &Config) -> Result<ParserExpr> {
     // special case: PhantomData
     let ident = get_type_first_ident(ty)?;
