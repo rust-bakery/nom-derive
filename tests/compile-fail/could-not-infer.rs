@@ -4,7 +4,7 @@ use nom_derive::Nom;
 
 #[derive(Nom)]
 pub struct S {
-    a: [u32; 4],
+    a: dyn Fn(u16) -> u16,
 }
 
 fn main() {}

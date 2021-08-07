@@ -107,6 +107,7 @@ fn get_type_first_ident(ty: &Type) -> Result<String> {
             let ident_s = segment.ident.to_string();
             Ok(ident_s)
         }
+        Type::Array(ref typearray) => get_type_first_ident(&typearray.elem),
         _ => Err(Error::new(
             ty.span(),
             "Nom-derive: could not get first path ident",
