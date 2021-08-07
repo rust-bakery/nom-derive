@@ -34,7 +34,8 @@ pub(crate) fn gen_fn_decl(
     // check extra args
     if let Some(ts) = extra_args {
         let ts = ts.clone();
-        let parser = Punctuated::<syn::FnArg, syn::Token![,]>::parse_separated_nonempty;
+        type Comma = syn::Token![,];
+        let parser = Punctuated::<syn::FnArg, Comma>::parse_separated_nonempty;
         let extra_args = parser.parse2(ts).expect("parse extra_args");
         for extra_arg in &extra_args {
             fn_args.push(extra_arg.clone());
@@ -122,7 +123,8 @@ pub(crate) fn gen_impl(
     // check extra args
     if let Some(ts) = extra_args {
         let ts = ts.clone();
-        let parser = Punctuated::<syn::FnArg, syn::Token![,]>::parse_separated_nonempty;
+        type Comma = syn::Token![,];
+        let parser = Punctuated::<syn::FnArg, Comma>::parse_separated_nonempty;
         let extra_args = parser.parse2(ts).expect("parse extra_args");
         for extra_arg in &extra_args {
             fn_args.push(extra_arg.clone());
