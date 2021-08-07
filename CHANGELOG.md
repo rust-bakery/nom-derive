@@ -8,13 +8,38 @@
 
 ### Thanks
 
-## [Unreleased][unreleased]
+## 0.9.1
+
+### Changed/Fixed
+
+- Special case derive functions should be public (#27)
+- Fixed missing extra_args in parsing function decls (#29)
+
+### Added
+
+- Enable array fields (#26)
+
+### Thanks
+
+- @dbcfd for fixing public attribute on special-case functions
+- @katyo for fixing missing extra_args
+- @hammypants for arrays (#26)
+
+## 0.9.0
 
 ### Changed/Fixed
 
 ### Added
 
 - Add Into attribute to convert output/error types
+- Generate implementation of Parse trait when possible (closes #21)
+
+The code now generates 3 functions instead of one (parse):
+- parse_be: parse object as big-endian
+- parse_le: parse object as little-endian
+- parse: default function, wraps a call to parse_be
+    
+If the endianness of the struct is fixed, then all 3 functions are equivalent.
 
 ### Thanks
 
