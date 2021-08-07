@@ -23,7 +23,7 @@ pub(crate) fn gen_fn_decl(
     };
     let parse = Ident::new(parse, Span::call_site());
     // get lifetimes
-    let lft = Lifetime::new(&config.lifetime_name(), Span::call_site());
+    let lft = Lifetime::new(config.lifetime_name(), Span::call_site());
     let mut fn_where_clause = WhereClause {
         where_token: Token![where](Span::call_site()),
         predicates: punctuated::Punctuated::new(),

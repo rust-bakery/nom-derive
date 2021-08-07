@@ -114,7 +114,7 @@ fn impl_nom_fieldless_repr_enum(
 ) -> Result<TokenStream> {
     let input = syn::Ident::new(config.input_name(), Span::call_site());
     let orig_input = syn::Ident::new(config.orig_input_name(), Span::call_site());
-    let (tl_pre, tl_post) = get_pre_post_exec(&meta_list, config);
+    let (tl_pre, tl_post) = get_pre_post_exec(meta_list, config);
     let parser = match repr {
         "u8" | "u16" | "u24" | "u32" | "u64" | "u128" | "i8" | "i16" | "i24" | "i32" | "i64"
         | "i128" => {
@@ -155,7 +155,7 @@ fn impl_nom_fieldless_repr_enum(
         panic!("expect enum");
     };
     let name = &ast.ident;
-    let ty = syn::Ident::new(&repr, Span::call_site());
+    let ty = syn::Ident::new(repr, Span::call_site());
     let variants_code: Vec<_> = variant_names
         .iter()
         .map(|variant_name| {
@@ -192,11 +192,11 @@ pub(crate) fn impl_nom_enums(
     // eprintln!("{:?}", ast.attrs);
 
     // endianness must be set before parsing enum
-    set_object_endianness(ast.ident.span(), endianness, &meta, config)?;
+    set_object_endianness(ast.ident.span(), endianness, meta, config)?;
 
     let input = syn::Ident::new(config.input_name(), Span::call_site());
     let orig_input = syn::Ident::new(config.orig_input_name(), Span::call_site());
-    let extra_args = get_extra_args(&meta);
+    let extra_args = get_extra_args(meta);
     let selector = match config.selector() {
         Some(s) => s.to_owned(),
         None => {
@@ -208,7 +208,7 @@ pub(crate) fn impl_nom_enums(
                         "Nom-derive: fieldless enums must have a 'repr' or 'selector' attribute",
                     )
                 })?;
-                return impl_nom_fieldless_repr_enum(ast, &repr, endianness, &meta, config);
+                return impl_nom_fieldless_repr_enum(ast, &repr, endianness, meta, config);
             } else {
                 return Err(Error::new(
                     ast.ident.span(),
@@ -229,7 +229,7 @@ pub(crate) fn impl_nom_enums(
     };
     let mut variants_defs = variants_defs?;
     // parse string items and prepare tokens for each variant
-    let (tl_pre, tl_post) = get_pre_post_exec(&meta, config);
+    let (tl_pre, tl_post) = get_pre_post_exec(meta, config);
     let selector_type: proc_macro2::TokenStream = selector.parse().unwrap();
     let mut default_case_handled = false;
     let mut variants_code: Vec<_> = {
@@ -295,7 +295,7 @@ pub(crate) fn impl_nom_enums(
     } else {
         quote! { selector: #selector_type }
     };
-    let fn_decl = gen_fn_decl(endianness, Some(&extra_args), &config);
+    let fn_decl = gen_fn_decl(endianness, Some(&extra_args), config);
     // generate impl
     let default_case = if default_case_handled {
         quote! {}

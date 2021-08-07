@@ -366,43 +366,43 @@ pub(crate) fn get_pre_post_exec(
             }
             MetaAttrType::AlignAfter => {
                 let align = m.arg().unwrap();
-                let qq = quote_align(align, &config);
+                let qq = quote_align(align, config);
                 tk_post.extend(qq);
             }
             MetaAttrType::AlignBefore => {
                 let align = m.arg().unwrap();
-                let qq = quote_align(align, &config);
+                let qq = quote_align(align, config);
                 tk_pre.extend(qq);
             }
             MetaAttrType::SkipAfter => {
                 let skip = m.arg().unwrap();
-                let qq = quote_skip(skip, &config);
+                let qq = quote_skip(skip, config);
                 tk_post.extend(qq);
             }
             MetaAttrType::SkipBefore => {
                 let skip = m.arg().unwrap();
-                let qq = quote_skip(skip, &config);
+                let qq = quote_skip(skip, config);
                 tk_pre.extend(qq);
             }
             MetaAttrType::Move => {
                 let offset = m.arg().unwrap();
-                let qq = quote_move(offset, &config);
+                let qq = quote_move(offset, config);
                 tk_pre.extend(qq);
             }
             MetaAttrType::MoveAbs => {
                 let offset = m.arg().unwrap();
-                let qq = quote_move_abs(offset, &config);
+                let qq = quote_move_abs(offset, config);
                 tk_pre.extend(qq);
             }
             MetaAttrType::ErrorIf => {
                 let cond = m.arg().unwrap();
-                let qq = quote_error_if(cond, &config);
+                let qq = quote_error_if(cond, config);
                 tk_pre.extend(qq);
             }
             MetaAttrType::Exact => {
                 let input = syn::Ident::new(config.input_name(), m.span());
                 let cond = quote! { !#input.is_empty() };
-                let qq = quote_error_if(&cond, &config);
+                let qq = quote_error_if(&cond, config);
                 tk_post.extend(qq);
             }
             MetaAttrType::SetEndian => {
@@ -451,7 +451,7 @@ pub(crate) fn parse_fields(f: &Fields, config: &mut Config) -> Result<StructPars
         };
         let meta_list = meta::parse_nom_attribute(&field.attrs)?;
         // eprintln!("meta_list: {:?}", meta_list);
-        let mut p = get_field_parser(&field, &meta_list, config)?;
+        let mut p = get_field_parser(field, &meta_list, config)?;
 
         if config.complete {
             p = ParserExpr::Complete(Box::new(p));
@@ -495,7 +495,7 @@ pub(crate) fn gen_struct_impl(
     config: &mut Config,
 ) -> Result<TokenStream> {
     // endianness must be set before parsing struct
-    set_object_endianness(ast.ident.span(), endianness, &meta, config)?;
+    set_object_endianness(ast.ident.span(), endianness, meta, config)?;
 
     // parse struct
     let s = match &ast.data {
@@ -506,7 +506,7 @@ pub(crate) fn gen_struct_impl(
     // XXX split parsing and generation?
 
     // prepare tokens
-    let (tl_pre, tl_post) = get_pre_post_exec(&meta, &config);
+    let (tl_pre, tl_post) = get_pre_post_exec(meta, config);
     let name = &ast.ident;
     let (idents, parser_tokens): (Vec<_>, Vec<_>) = s
         .parsers
@@ -530,7 +530,7 @@ pub(crate) fn gen_struct_impl(
     };
     let input = syn::Ident::new(config.input_name(), Span::call_site());
     let orig_input = syn::Ident::new(config.orig_input_name(), Span::call_site());
-    let extra_args = get_extra_args(&meta);
+    let extra_args = get_extra_args(meta);
     let fn_body = quote! {
         let #input = #orig_input;
         #tl_pre
@@ -539,7 +539,7 @@ pub(crate) fn gen_struct_impl(
         #tl_post
         Ok((#input, struct_def))
     };
-    let fn_decl = gen_fn_decl(endianness, extra_args, &config);
+    let fn_decl = gen_fn_decl(endianness, extra_args, config);
     // Generate impl
     let impl_tokens = quote! {
         #fn_decl
