@@ -2,6 +2,8 @@ use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::Ident;
 
+use crate::endian::ParserEndianness;
+
 #[derive(Debug)]
 pub struct ParserTree {
     root: ParserExpr,
@@ -23,6 +25,13 @@ impl ParserTreeItem {
     pub fn new(ident: Option<Ident>, expr: ParserExpr) -> Self {
         ParserTreeItem { ident, expr }
     }
+
+    pub fn with_endianness(&self, endianness: ParserEndianness) -> Self {
+        ParserTreeItem {
+            ident: self.ident.clone(),
+            expr: self.expr.with_endianness(endianness),
+        }
+    }
 }
 
 impl ToTokens for ParserTreeItem {
@@ -32,7 +41,7 @@ impl ToTokens for ParserTreeItem {
 }
 
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum ParserExpr {
     CallParse(TypeItem),
     CallParseBE(TypeItem),
@@ -53,7 +62,20 @@ pub enum ParserExpr {
     Verify(Box<ParserExpr>, Ident, TokenStream),
 }
 
-#[derive(Debug)]
+impl ParserExpr {
+    pub fn with_endianness(&self, endianness: ParserEndianness) -> Self {
+        match self {
+            ParserExpr::CallParse(item) => match endianness {
+                ParserEndianness::BigEndian => ParserExpr::CallParseBE(item.clone()),
+                ParserEndianness::LittleEndian => ParserExpr::CallParseLE(item.clone()),
+                _ => unreachable!(),
+            },
+            expr => expr.clone(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct TypeItem(pub syn::Type);
 
 impl ToTokens for TypeItem {

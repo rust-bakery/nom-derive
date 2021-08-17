@@ -9,7 +9,7 @@ use nom_derive::*;
 pub struct MessageType(pub u8);
 
 /// An enum with unnamed fields
-#[derive(Debug, PartialEq, Nom)]
+#[derive(Debug, PartialEq, NomBE)]
 #[nom(Selector = "MessageType")]
 // #[nom(DebugDerive)]
 pub enum U1 {

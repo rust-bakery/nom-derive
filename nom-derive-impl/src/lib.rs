@@ -46,7 +46,7 @@ pub fn nom(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
 
     // Build and return the generated impl
-    match gen_impl(&ast, false, ParserEndianness::Unspecified) {
+    match gen_impl(&ast, ParserEndianness::Unspecified) {
         Ok(ts) => ts.into(),
         Err(e) => e.to_compile_error().into(),
     }
@@ -60,7 +60,7 @@ pub fn nom_be(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
 
     // Build and return the generated impl
-    match gen_impl(&ast, false, ParserEndianness::BigEndian) {
+    match gen_impl(&ast, ParserEndianness::BigEndian) {
         Ok(ts) => ts.into(),
         Err(e) => e.to_compile_error().into(),
     }
@@ -74,26 +74,7 @@ pub fn nom_le(input: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
 
     // Build and return the generated impl
-    match gen_impl(&ast, false, ParserEndianness::LittleEndian) {
-        Ok(ts) => ts.into(),
-        Err(e) => e.to_compile_error().into(),
-    }
-}
-
-/// This derive macro behaves exactly like [Nom derive](derive.Nom.html), except it
-/// prints the generated parser on stderr.
-/// This is helpful for debugging generated parsers.
-#[deprecated(
-    since = "0.6.0",
-    note = "Please use the nom(DebugDerive) attribute instead"
-)]
-#[proc_macro_derive(NomDeriveDebug, attributes(nom))]
-pub fn nom_derive_debug(input: TokenStream) -> TokenStream {
-    // Parse the input tokens into a syntax tree
-    let ast = parse_macro_input!(input as DeriveInput);
-
-    // Build and return the generated impl
-    match gen_impl(&ast, true, ParserEndianness::Unspecified) {
+    match gen_impl(&ast, ParserEndianness::LittleEndian) {
         Ok(ts) => ts.into(),
         Err(e) => e.to_compile_error().into(),
     }

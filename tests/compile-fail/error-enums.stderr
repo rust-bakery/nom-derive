@@ -4,7 +4,7 @@ error: Nom-derive: fieldless enums must have a 'repr' or 'selector' attribute
 6 | pub enum E1 {
   |          ^^
 
-error: Nom-derive: enums must specify the 'selector' attribute
+error: Nom-derive: enums must have a 'selector' attribute
   --> $DIR/error-enums.rs:12:10
    |
 12 | pub enum E2 {
@@ -17,10 +17,10 @@ error: Nom-derive: the 'Selector' attribute must be used to give the value of se
    |     ^
 
 error: Nom-derive: cannot parse 'repr' content (must be a primitive type)
-  --> $DIR/error-enums.rs:27:1
+  --> $DIR/error-enums.rs:27:8
    |
 27 | #[repr(U24)] // ERROR: Nom-derive: cannot parse 'repr' content (must be a primitive type)
-   | ^
+   |        ^^^
 
 error[E0552]: unrecognized representation hint
   --> $DIR/error-enums.rs:27:8
