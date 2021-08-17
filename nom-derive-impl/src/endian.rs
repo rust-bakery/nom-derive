@@ -100,3 +100,50 @@ pub fn get_local_endianness(
     // otherwise, get object-level endianness
     Ok(get_object_endianness(config))
 }
+
+pub fn validate_endianness(
+    attr_endianness: ParserEndianness,
+    object_endianness: ParserEndianness,
+    global_endianness: ParserEndianness,
+) -> Result<()> {
+    let mut req_big_endian = false;
+    let mut req_little_endian = false;
+    let mut req_set_endian = false;
+
+    match attr_endianness {
+        ParserEndianness::Unspecified => (),
+        ParserEndianness::BigEndian => req_big_endian = true,
+        ParserEndianness::LittleEndian => req_little_endian = true,
+        _ => unreachable!(),
+    }
+
+    match object_endianness {
+        ParserEndianness::Unspecified => (),
+        ParserEndianness::BigEndian => req_big_endian = true,
+        ParserEndianness::LittleEndian => req_little_endian = true,
+        ParserEndianness::SetEndian => req_set_endian = true,
+    }
+
+    match global_endianness {
+        ParserEndianness::Unspecified => (),
+        ParserEndianness::BigEndian => req_big_endian = true,
+        ParserEndianness::LittleEndian => req_little_endian = true,
+        _ => unreachable!(),
+    }
+
+    if req_big_endian & req_little_endian {
+        return Err(Error::new(
+            Span::call_site(),
+            "Object cannot be both big and little endian",
+        ));
+    }
+
+    if req_set_endian & (req_big_endian | req_little_endian) {
+        return Err(Error::new(
+            Span::call_site(),
+            "Object cannot be both SetEndian, and specify big or little endian",
+        ));
+    }
+
+    Ok(())
+}
