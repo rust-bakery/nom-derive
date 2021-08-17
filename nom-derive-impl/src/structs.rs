@@ -1,6 +1,5 @@
 use crate::config::*;
 use crate::endian::*;
-use crate::gen::*;
 use crate::meta;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
 use crate::parsertree::*;
@@ -487,66 +486,4 @@ pub(crate) fn parse_fields(f: &Fields, config: &mut Config) -> Result<StructPars
 
 pub(crate) fn parse_struct(s: &DataStruct, config: &mut Config) -> Result<StructParserTree> {
     parse_fields(&s.fields, config)
-}
-
-pub(crate) fn gen_struct_impl(
-    ast: &syn::DeriveInput,
-    meta: &[MetaAttr],
-    endianness: ParserEndianness,
-    config: &mut Config,
-) -> Result<TokenStream> {
-    // endianness must be set before parsing struct
-    set_object_endianness(ast.ident.span(), endianness, meta, config)?;
-
-    // parse struct
-    let s = match &ast.data {
-        syn::Data::Struct(ref s) => parse_struct(s, config)?,
-        _ => panic!("unexpected type in gen_struct_impl input"),
-    };
-
-    // XXX split parsing and generation?
-
-    // prepare tokens
-    let (tl_pre, tl_post) = get_pre_post_exec(meta, config);
-    let name = &ast.ident;
-    let (idents, parser_tokens): (Vec<_>, Vec<_>) = s
-        .parsers
-        .iter()
-        .map(|sp| {
-            let id = syn::Ident::new(&sp.name, Span::call_site());
-            (id, &sp.item)
-        })
-        .unzip();
-    let (pre, post): (Vec<_>, Vec<_>) = s
-        .parsers
-        .iter()
-        .map(|sp| (sp.pre_exec.as_ref(), sp.post_exec.as_ref()))
-        .unzip();
-    let idents2 = idents.clone();
-    // Code generation
-    let struct_def = match (s.empty, s.unnamed) {
-        (true, _) => quote! { #name },
-        (_, true) => quote! { #name ( #(#idents2),* ) },
-        (_, false) => quote! { #name { #(#idents2),* } },
-    };
-    let input = syn::Ident::new(config.input_name(), Span::call_site());
-    let orig_input = syn::Ident::new(config.orig_input_name(), Span::call_site());
-    let extra_args = get_extra_args(meta);
-    let fn_body = quote! {
-        let #input = #orig_input;
-        #tl_pre
-        #(#pre let (#input, #idents) = #parser_tokens (#input) ?; #post)*
-        let struct_def = #struct_def;
-        #tl_post
-        Ok((#input, struct_def))
-    };
-    let fn_decl = gen_fn_decl(endianness, extra_args, config);
-    // Generate impl
-    let impl_tokens = quote! {
-        #fn_decl
-        {
-            #fn_body
-        }
-    };
-    Ok(impl_tokens)
 }

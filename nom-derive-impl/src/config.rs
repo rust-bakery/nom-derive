@@ -1,6 +1,6 @@
 use crate::endian::ParserEndianness;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
-use proc_macro2::Span;
+use proc_macro2::{Span, TokenStream};
 use syn::{spanned::Spanned, Error};
 
 #[derive(Debug)]
@@ -15,7 +15,7 @@ pub struct Config {
     pub debug: bool,
     pub debug_derive: bool,
     pub generic_errors: bool,
-    selector: Option<String>,
+    selector_type: Option<TokenStream>,
     selector_name: Option<String>,
     input_name: String,
     orig_input_name: String,
@@ -69,14 +69,14 @@ impl Config {
                 }
             })
             .unwrap_or_else(|| "i".to_string());
-        let selector = l.iter().find_map(|m| {
+        let selector_type = l.iter().find_map(|m| {
             if m.is_type(MetaAttrType::Selector) {
-                Some(m.arg().unwrap().to_string())
+                Some(m.arg().unwrap().clone())
             } else {
                 None
             }
         });
-        let selector_name = if selector.is_some() {
+        let selector_name = if selector_type.is_some() {
             Some(String::from("selector"))
         } else {
             None
@@ -89,7 +89,7 @@ impl Config {
             debug,
             debug_derive,
             generic_errors,
-            selector,
+            selector_type,
             selector_name,
             orig_input_name: "orig_".to_string() + &input_name,
             lifetime_name: String::from("'nom"),
@@ -98,26 +98,32 @@ impl Config {
         })
     }
 
-    pub fn selector(&self) -> Option<&String> {
-        self.selector.as_ref()
+    #[inline]
+    pub fn selector_type(&self) -> Option<&TokenStream> {
+        self.selector_type.as_ref()
     }
 
-    pub fn selector_name(&self) -> Option<&String> {
-        self.selector_name.as_ref()
+    #[inline]
+    pub fn selector_name(&self) -> Option<&str> {
+        self.selector_name.as_ref().map(|s| s.as_ref())
     }
 
+    #[inline]
     pub fn input_name(&self) -> &str {
         &self.input_name
     }
 
+    #[inline]
     pub fn orig_input_name(&self) -> &str {
         &self.orig_input_name
     }
 
+    #[inline]
     pub fn lifetime_name(&self) -> &str {
         &self.lifetime_name
     }
 
+    #[inline]
     pub fn error_name(&self) -> &str {
         &self.error_name
     }
