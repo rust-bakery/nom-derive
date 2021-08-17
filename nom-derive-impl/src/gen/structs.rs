@@ -123,7 +123,12 @@ impl GenStruct {
 
         let extra_args = get_extra_args(&meta).map(Clone::clone);
 
-        // XXX test endianness validity (not 2 or more)
+        // test endianness validity (not 2 or more)
+        validate_endianness(
+            endianness,
+            config.object_endianness,
+            config.global_endianness,
+        )?;
 
         // save global pre/post exec
         let (tl_pre, tl_post) = get_pre_post_exec(&meta, &config);
