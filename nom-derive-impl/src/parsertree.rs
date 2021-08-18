@@ -80,15 +80,6 @@ impl ParserExpr {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct TypeItem(pub syn::Type);
-
-impl ToTokens for TypeItem {
-    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        self.0.to_tokens(tokens)
-    }
-}
-
 impl ToTokens for ParserExpr {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         let ts = match self {
@@ -152,5 +143,14 @@ impl ToTokens for ParserExpr {
             }
         };
         tokens.extend(ts);
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct TypeItem(pub syn::Type);
+
+impl ToTokens for TypeItem {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        self.0.to_tokens(tokens)
     }
 }
