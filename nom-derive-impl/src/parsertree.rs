@@ -73,6 +73,11 @@ impl ParserExpr {
             expr => expr.clone(),
         }
     }
+
+    #[inline]
+    pub fn complete(self) -> Self {
+        ParserExpr::Complete(Box::new(self))
+    }
 }
 
 #[derive(Clone, Debug)]

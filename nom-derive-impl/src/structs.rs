@@ -178,7 +178,7 @@ fn get_parser(
             }
             MetaAttrType::Complete => {
                 let expr = get_parser(ident, ty, sub_meta_list, meta_list, config)?;
-                return Ok(ParserExpr::Complete(Box::new(expr)));
+                return Ok(expr.complete());
             }
             MetaAttrType::Debug => {
                 let expr = get_parser(ident, ty, sub_meta_list, meta_list, config)?;
@@ -454,7 +454,7 @@ pub(crate) fn parse_fields(f: &Fields, config: &mut Config) -> Result<StructPars
         let mut p = get_field_parser(field, &meta_list, config)?;
 
         if config.complete {
-            p = ParserExpr::Complete(Box::new(p));
+            p = p.complete();
         }
 
         if config.debug {
