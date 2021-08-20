@@ -29,7 +29,7 @@ include = [
 members = ["nom-derive-impl"]
 
 [dependencies]
-nom = {version = "6.0", default-features = false, features=["alloc"]}
+nom = {version = "6.0", default-features = false}
 nom-derive-impl = { version="=0.9.1", path="./nom-derive-impl" }
 rustversion = "1.0"
 
@@ -38,6 +38,6 @@ pretty_assertions = "0.7"
 trybuild = "1.0"
 
 [features]
-alloc = []
+alloc = ["nom/alloc"]
 default = ["std"]
-std = ["alloc"]
+std = ["alloc", "nom/std"]
