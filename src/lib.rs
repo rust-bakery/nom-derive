@@ -105,6 +105,7 @@
 //!   `stderr` if the parser fails.
 //!
 //! [nom]: https://github.com/geal/nom
+#![cfg_attr(not(any(test, feature = "std")), no_std)]
 
 pub mod docs;
 mod helpers;
