@@ -60,7 +60,7 @@ pub(crate) fn gen_fn_decl(
                 #ident_e: nom_derive::nom::error::ParseError<&#lft [u8]>
             };
             fn_where_clause.predicates.push(dep);
-            let dep: WherePredicate = parse_quote! { #ident_e: std::fmt::Debug };
+            let dep: WherePredicate = parse_quote! { #ident_e: core::fmt::Debug };
             fn_where_clause.predicates.push(dep);
             // add error type to function generics
             fn_generics = Some(quote!(<#ident_e>));

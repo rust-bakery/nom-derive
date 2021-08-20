@@ -5,8 +5,18 @@ use nom::multi::{many0, many_m_n};
 use nom::number::streaming::*;
 use nom::sequence::pair;
 use nom::*;
-use std::convert::TryFrom;
-use std::ops::RangeFrom;
+use core::convert::TryFrom;
+use core::ops::RangeFrom;
+
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
+#[cfg(feature = "alloc")]
+use alloc::{
+    vec::Vec, 
+    string::String,
+    borrow::ToOwned,
+};
 
 pub use nom::{InputLength, Slice};
 
@@ -152,11 +162,11 @@ impl_primitive_type!(f64, be_f64, le_f64);
 
 impl<'a, E> Parse<&'a [u8], E> for String
 where
-    E: ParseError<&'a [u8]> + FromExternalError<&'a [u8], std::str::Utf8Error>,
+    E: ParseError<&'a [u8]> + FromExternalError<&'a [u8], core::str::Utf8Error>,
 {
     fn parse(i: &'a [u8]) -> IResult<&'a [u8], Self, E> {
         let (rem, sz) = <u32>::parse(i)?;
-        let (rem, s) = map_res(take(sz as usize), std::str::from_utf8)(rem)?;
+        let (rem, s) = map_res(take(sz as usize), core::str::from_utf8)(rem)?;
         Ok((rem, s.to_owned()))
     }
 }
