@@ -21,6 +21,10 @@ pub(crate) trait Generator {
 
     fn orig_generics(&self) -> &Generics;
 
+    fn impl_where_predicates(&self) -> Option<&Vec<WherePredicate>> {
+        None
+    }
+
     fn config(&self) -> &Config;
 
     fn gen_fn_body(&self, endianness: ParserEndianness) -> Result<TokenStream>;
@@ -158,6 +162,11 @@ pub(crate) trait Generator {
             let param_ident = &param.ident;
             let dep: WherePredicate = parse_quote! { #param_ident: Parse< &#lft [u8] #maybe_err > };
             gen_wh.predicates.push(dep);
+        }
+        if let Some(impl_where_predicates) = self.impl_where_predicates() {
+            for wh in impl_where_predicates {
+                gen_wh.predicates.push(wh.clone());
+            }
         }
 
         // Global impl

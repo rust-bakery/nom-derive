@@ -92,7 +92,7 @@ fn get_item_subtype_parser(ty: &Type, expected: &str, attr: &str) -> Result<Toke
     ))
 }
 
-fn get_type_first_ident(ty: &Type) -> Result<String> {
+pub(crate) fn get_type_first_ident(ty: &Type) -> Result<String> {
     match ty {
         Type::Path(ref typepath) => {
             let path = &typepath.path;

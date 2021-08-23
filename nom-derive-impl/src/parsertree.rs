@@ -78,6 +78,23 @@ impl ParserExpr {
     pub fn complete(self) -> Self {
         ParserExpr::Complete(Box::new(self))
     }
+
+    pub fn last_type(&self) -> Option<&TypeItem> {
+        match self {
+            ParserExpr::CallParse(e) | ParserExpr::CallParseBE(e) | ParserExpr::CallParseLE(e) => {
+                Some(e)
+            }
+            ParserExpr::Complete(expr)
+            | ParserExpr::Cond(expr, _)
+            | ParserExpr::Count(expr, _)
+            | ParserExpr::DbgDmp(expr, _)
+            | ParserExpr::Into(expr)
+            | ParserExpr::LengthCount(expr, _)
+            | ParserExpr::Map(expr, _)
+            | ParserExpr::Verify(expr, _, _) => expr.last_type(),
+            _ => None,
+        }
+    }
 }
 
 impl ToTokens for ParserExpr {

@@ -18,6 +18,7 @@ pub struct GenStruct {
     tl_pre: Option<TokenStream>,
     tl_post: Option<TokenStream>,
     parser_tree: StructParserTree,
+    impl_where_predicates: Option<Vec<WherePredicate>>,
 }
 
 impl Generator for GenStruct {
@@ -51,6 +52,10 @@ impl Generator for GenStruct {
     #[inline]
     fn orig_generics(&self) -> &Generics {
         &self.orig_generics
+    }
+
+    fn impl_where_predicates(&self) -> Option<&Vec<WherePredicate>> {
+        self.impl_where_predicates.as_ref()
     }
 
     #[inline]
@@ -135,6 +140,8 @@ impl GenStruct {
 
         let s = parse_struct(datastruct, &mut config)?;
 
+        let impl_where_predicates = add_extra_where_predicates(&s, &config);
+
         Ok(GenStruct {
             name,
             config,
@@ -143,6 +150,41 @@ impl GenStruct {
             tl_pre,
             tl_post,
             parser_tree: s,
+            impl_where_predicates,
         })
+    }
+}
+
+/// Find additional where clauses to add (for ex. `String` requires `FromExternalError<&[u8], Utf8Error>`)
+#[allow(clippy::single_match)]
+fn add_extra_where_predicates(
+    parser_tree: &StructParserTree,
+    config: &Config,
+) -> Option<Vec<WherePredicate>> {
+    if config.generic_errors {
+        let mut v = Vec::new();
+        let lft = Lifetime::new(config.lifetime_name(), Span::call_site());
+        let err = Ident::new(config.error_name(), Span::call_site());
+        // visit parser tree and look for types with requirement on Error type
+        for p in &parser_tree.parsers {
+            if let Some(ty) = p.item.expr.last_type() {
+                if let Ok(s) = get_type_first_ident(&ty.0) {
+                    match s.as_ref() {
+                        "String" => {
+                            let wh: WherePredicate = parse_quote! {#err: nom::error::FromExternalError<&#lft [u8], core::str::Utf8Error>};
+                            v.push(wh)
+                        }
+                        _ => (),
+                    }
+                }
+            }
+        }
+        if !v.is_empty() {
+            Some(v)
+        } else {
+            None
+        }
+    } else {
+        None
     }
 }
