@@ -1,3 +1,5 @@
+use core::convert::TryFrom;
+use core::ops::RangeFrom;
 use nom::bytes::streaming::take;
 use nom::combinator::{complete, map_res, opt};
 use nom::error::{Error, FromExternalError, ParseError};
@@ -5,18 +7,12 @@ use nom::multi::{many0, many_m_n};
 use nom::number::streaming::*;
 use nom::sequence::pair;
 use nom::*;
-use core::convert::TryFrom;
-use core::ops::RangeFrom;
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
 #[cfg(feature = "alloc")]
-use alloc::{
-    vec::Vec, 
-    string::String,
-    borrow::ToOwned,
-};
+use alloc::{borrow::ToOwned, string::String, vec::Vec};
 
 pub use nom::{InputLength, Slice};
 

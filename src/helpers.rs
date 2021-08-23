@@ -1,7 +1,7 @@
 use crate::traits::*;
+use core::marker::PhantomData;
 use nom::error::ParseError;
 use nom::{IResult, ToUsize};
-use core::marker::PhantomData;
 
 #[derive(Debug, PartialEq)]
 pub struct LengthData<L, D> {
