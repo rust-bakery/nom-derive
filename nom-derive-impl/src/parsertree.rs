@@ -120,7 +120,7 @@ impl ToTokens for ParserExpr {
             }
             ParserExpr::DbgDmp(expr, i) => {
                 let ident = format!("{}", i);
-                quote! { nom::dbg_dmp(#expr, #ident) }
+                quote! { nom::error::dbg_dmp(#expr, #ident) }
             }
             ParserExpr::Into(expr) => {
                 quote! { nom::combinator::into(#expr) }

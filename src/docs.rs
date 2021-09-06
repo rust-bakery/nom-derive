@@ -442,7 +442,8 @@
 /// Example (implementing the `Parse` trait manually):
 /// ```rust
 /// # use nom_derive::*;
-/// # use nom::{IResult,call,map};
+/// # use nom::IResult;
+/// # use nom::combinator::map;
 /// # use nom::number::streaming::le_u16;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
@@ -453,11 +454,10 @@
 ///
 /// impl<'a> Parse<&'a[u8]> for S2 {
 ///     fn parse(i:&'a [u8]) -> IResult<&'a [u8],S2> {
-///         map!(
-///             i,
+///         map(
 ///             le_u16, // little-endian
 ///             |c| S2{c} // return a struct S2
-///         )
+///         )(i)
 ///     }
 /// }
 ///
