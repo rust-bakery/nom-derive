@@ -8,6 +8,15 @@
 
 ### Thanks
 
+## 0.10.0
+
+### Changed/Fixed
+
+- Refactor code
+- Upgrade to nom 7
+- Reduce nom dependencies and features (remove bitvec)
+- Fix parsing of String with generic errors enabled (#32)
+
 ## 0.9.1
 
 ### Changed/Fixed
