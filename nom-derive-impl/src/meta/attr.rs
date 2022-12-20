@@ -26,6 +26,8 @@ pub enum MetaAttrType {
     LengthCount,
     LittleEndian,
     Map,
+    MapRes,
+    MapOpt,
     Move,
     MoveAbs,
     Parse,
@@ -62,6 +64,8 @@ impl MetaAttrType {
             "LengthCount" => Some(MetaAttrType::LengthCount),
             "LittleEndian" => Some(MetaAttrType::LittleEndian),
             "Map" => Some(MetaAttrType::Map),
+            "MapRes" => Some(MetaAttrType::MapRes),
+            "MapOpt" => Some(MetaAttrType::MapOpt),
             "Move" => Some(MetaAttrType::Move),
             "MoveAbs" => Some(MetaAttrType::MoveAbs),
             "Parse" => Some(MetaAttrType::Parse),
@@ -91,6 +95,8 @@ impl MetaAttrType {
                 | MetaAttrType::InputName
                 | MetaAttrType::LengthCount
                 | MetaAttrType::Map
+                | MetaAttrType::MapRes
+                | MetaAttrType::MapOpt
                 | MetaAttrType::Move
                 | MetaAttrType::MoveAbs
                 | MetaAttrType::Parse
@@ -129,6 +135,8 @@ impl fmt::Display for MetaAttrType {
             MetaAttrType::LengthCount => "LengthCount",
             MetaAttrType::LittleEndian => "LittleEndian",
             MetaAttrType::Map => "Map",
+            MetaAttrType::MapRes => "MapRes",
+            MetaAttrType::MapOpt => "MapOpt",
             MetaAttrType::Move => "Move",
             MetaAttrType::MoveAbs => "MoveAbs",
             MetaAttrType::Parse => "Parse",
