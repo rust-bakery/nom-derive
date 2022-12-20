@@ -133,6 +133,20 @@ fn get_type_default(ty: &Type) -> Result<ParserExpr> {
     Ok(ParserExpr::Raw(ts))
 }
 
+macro_rules! impl_map {
+    ($map_type: ident,$ident:ident,$ty:expr,$sub_meta_list:expr,$meta_list:expr,$config:expr,$meta:expr) => {
+        let expr = get_parser($ident, $ty, $sub_meta_list, $meta_list, $config)?;
+        // if meta.arg is string, parse content
+        let ts_arg = $meta.arg().unwrap();
+        if let Some(TokenTree::Literal(_)) = ts_arg.clone().into_iter().next() {
+            let ts_arg = syn::parse2::<Expr>(ts_arg.clone())?;
+            return Ok(ParserExpr::Map(Box::new(expr), ts_arg.to_token_stream()));
+        }
+        let ts_arg = $meta.arg().unwrap();
+        return Ok(ParserExpr::$map_type(Box::new(expr), ts_arg.clone()));
+    };
+}
+
 fn get_parser(
     ident: Option<&Ident>,
     ty: &Type,
@@ -225,15 +239,13 @@ fn get_parser(
                 return Ok(ParserExpr::LengthCount(Box::new(expr), ts.clone()));
             }
             MetaAttrType::Map => {
-                let expr = get_parser(ident, ty, sub_meta_list, meta_list, config)?;
-                // if meta.arg is string, parse content
-                let ts_arg = meta.arg().unwrap();
-                if let Some(TokenTree::Literal(_)) = ts_arg.clone().into_iter().next() {
-                    let ts_arg = syn::parse2::<Expr>(ts_arg.clone())?;
-                    return Ok(ParserExpr::Map(Box::new(expr), ts_arg.to_token_stream()));
-                }
-                let ts_arg = meta.arg().unwrap();
-                return Ok(ParserExpr::Map(Box::new(expr), ts_arg.clone()));
+                impl_map!(Map, ident, ty, sub_meta_list, meta_list, config, meta);
+            }
+            MetaAttrType::MapRes => {
+                impl_map!(MapRes, ident, ty, sub_meta_list, meta_list, config, meta);
+            }
+            MetaAttrType::MapOpt => {
+                impl_map!(MapOpt, ident, ty, sub_meta_list, meta_list, config, meta);
             }
             MetaAttrType::Verify => {
                 let expr = get_parser(ident, ty, sub_meta_list, meta_list, config)?;

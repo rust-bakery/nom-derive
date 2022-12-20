@@ -53,6 +53,8 @@ pub enum ParserExpr {
     Into(Box<ParserExpr>),
     LengthCount(Box<ParserExpr>, TokenStream),
     Map(Box<ParserExpr>, TokenStream),
+    MapRes(Box<ParserExpr>, TokenStream),
+    MapOpt(Box<ParserExpr>, TokenStream),
     Nop,
     PhantomData,
     Raw(TokenStream),
@@ -91,6 +93,8 @@ impl ParserExpr {
             | ParserExpr::Into(expr)
             | ParserExpr::LengthCount(expr, _)
             | ParserExpr::Map(expr, _)
+            | ParserExpr::MapRes(expr, _)
+            | ParserExpr::MapOpt(expr, _)
             | ParserExpr::Verify(expr, _, _) => expr.last_type(),
             _ => None,
         }
@@ -130,6 +134,12 @@ impl ToTokens for ParserExpr {
             }
             ParserExpr::Map(expr, m) => {
                 quote! { nom::combinator::map(#expr, #m) }
+            }
+            ParserExpr::MapRes(expr, m) => {
+                quote! { nom::combinator::map_res(#expr, #m) }
+            }
+            ParserExpr::MapOpt(expr, m) => {
+                quote! { nom::combinator::map_opt(#expr, #m) }
             }
             ParserExpr::Nop => {
                 quote! {
