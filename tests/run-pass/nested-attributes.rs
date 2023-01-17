@@ -40,6 +40,18 @@ fn main() {
         ))
     );
 
+    let res = OptionVecS1::parse_le(input);
+    assert_eq!(
+        res,
+        Ok((
+            &input[16..],
+            OptionVecS1 {
+                a: 0x400,
+                b: Some(vec![0x100, 0x3412, 0x7856, 0x3412, 0x7856, 0, 0x100])
+            }
+        ))
+    );
+
     let res = OptionVecS2::parse(input);
     assert_eq!(
         res,
@@ -52,6 +64,18 @@ fn main() {
         ))
     );
 
+    let res = OptionVecS2::parse_le(input);
+    assert_eq!(
+        res,
+        Ok((
+            &input[16..],
+            OptionVecS2 {
+                a: 0x400,
+                b: Some(vec![0x100, 0x3412, 0x7856, 0x3412, 0x7856, 0, 0x100])
+            }
+        ))
+    );
+
     let res = OptionVecS3::parse(input);
     assert_eq!(
         res,
@@ -60,6 +84,18 @@ fn main() {
             OptionVecS3 {
                 a: 4,
                 b: Some(vec![1, 0x1234, 0x5678, 0x1234])
+            }
+        ))
+    );
+
+    let res = OptionVecS3::parse_le(input);
+    assert_eq!(
+        res,
+        Ok((
+            &input[10..],
+            OptionVecS3 {
+                a: 0x400,
+                b: Some(vec![0x100, 0x3412, 0x7856, 0x3412])
             }
         ))
     );
