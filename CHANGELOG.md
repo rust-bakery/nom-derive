@@ -8,6 +8,13 @@
 
 ### Thanks
 
+## 0.10.1
+
+### Changed/Fixed
+
+- Fix build failure caused by syn 2.0 (#47, #48)
+- Set MSRV to 1.48 (caused by build dependencies)
+
 ## 0.10.0
 
 ### Changed/Fixed
