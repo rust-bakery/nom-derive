@@ -192,16 +192,15 @@ pub(crate) trait Generator {
             }
         } else {
             // Generate an impl block for the Parse trait
-            let error;
-            if self.config().generic_errors {
+            let error = if self.config().generic_errors {
                 let wh: WherePredicate =
                     parse_quote!(#ident_e: nom::error::ParseError<& #lft [u8]>);
                 gen_wh.predicates.push(wh);
                 gen_impl.params.push(GenericParam::Type(param_e));
-                error = quote! { #ident_e };
+                quote! { #ident_e }
             } else {
-                error = quote! { nom::error::Error<&#lft [u8]> };
-            }
+                quote! { nom::error::Error<&#lft [u8]> }
+            };
             quote! {
                     impl #gen_impl nom_derive::Parse<& #lft [u8], #error> for #name #ty_generics #gen_wh {
                         #tokens_parse_be
