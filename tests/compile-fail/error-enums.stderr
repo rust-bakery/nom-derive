@@ -1,29 +1,31 @@
 error: Nom-derive: fieldless enums must have a 'repr' or 'selector' attribute
- --> $DIR/error-enums.rs:6:10
+ --> tests/compile-fail/error-enums.rs:6:10
   |
 6 | pub enum E1 {
   |          ^^
 
 error: Nom-derive: enums must have a 'selector' attribute
-  --> $DIR/error-enums.rs:12:10
+  --> tests/compile-fail/error-enums.rs:12:10
    |
 12 | pub enum E2 {
    |          ^^
 
 error: Nom-derive: the 'Selector' attribute must be used to give the value of selector item
-  --> $DIR/error-enums.rs:21:5
+  --> tests/compile-fail/error-enums.rs:21:5
    |
 21 |     A(u32),
    |     ^
 
 error: Nom-derive: cannot parse 'repr' content (must be a primitive type)
-  --> $DIR/error-enums.rs:27:8
+  --> tests/compile-fail/error-enums.rs:27:8
    |
 27 | #[repr(U24)] // ERROR: Nom-derive: cannot parse 'repr' content (must be a primitive type)
    |        ^^^
 
 error[E0552]: unrecognized representation hint
-  --> $DIR/error-enums.rs:27:8
+  --> tests/compile-fail/error-enums.rs:27:8
    |
 27 | #[repr(U24)] // ERROR: Nom-derive: cannot parse 'repr' content (must be a primitive type)
    |        ^^^
+   |
+   = help: valid reprs are `C`, `align`, `packed`, `transparent`, `simd`, `i8`, `u8`, `i16`, `u16`, `i32`, `u32`, `i64`, `u64`, `i128`, `u128`, `isize`, `usize`
