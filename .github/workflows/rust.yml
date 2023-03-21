@@ -12,6 +12,11 @@ jobs:
           - stable
           - 1.65.0
           - nightly
+
+        features:
+          - ''
+          - '--no-default-features'
+          - '--no-default-features --features "alloc"'
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
@@ -24,6 +29,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: check
+          args: ${{ matrix.features }}
 
   test:
     name: Test Suite

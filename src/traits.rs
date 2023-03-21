@@ -1,11 +1,29 @@
-use nom::bytes::streaming::take;
-use nom::combinator::{complete, map_res, opt};
-use nom::error::{Error, FromExternalError, ParseError};
-use nom::multi::{many0, many_m_n};
+use nom::combinator::{complete, opt};
+use nom::error::{Error, ParseError};
 use nom::number::streaming::*;
 use nom::sequence::pair;
 use nom::*;
-use std::convert::TryFrom;
+
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
+#[cfg(feature = "alloc")]
+use alloc::{borrow::ToOwned, string::String, vec::Vec};
+
+#[cfg(feature = "alloc")]
+use core::convert::TryFrom;
+
+#[cfg(feature = "alloc")]
+use nom::bytes::streaming::take;
+
+#[cfg(feature = "alloc")]
+use nom::combinator::map_res;
+
+#[cfg(feature = "alloc")]
+use nom::error::FromExternalError;
+
+#[cfg(feature = "alloc")]
+use nom::multi::{many0, many_m_n};
 
 pub trait InputSlice: Input<Item = u8> {}
 impl InputSlice for &[u8] {}
@@ -144,13 +162,14 @@ impl_primitive_type!(u128, be_u128, le_u128);
 impl_primitive_type!(f32, be_f32, le_f32);
 impl_primitive_type!(f64, be_f64, le_f64);
 
+#[cfg(feature = "alloc")]
 impl<'a, E> Parse<&'a [u8], E> for String
 where
-    E: ParseError<&'a [u8]> + FromExternalError<&'a [u8], std::str::Utf8Error>,
+    E: ParseError<&'a [u8]> + FromExternalError<&'a [u8], core::str::Utf8Error>,
 {
     fn parse(i: &'a [u8]) -> IResult<&'a [u8], Self, E> {
         let (rem, sz) = <u32>::parse(i)?;
-        let (rem, s) = map_res(take(sz as usize), std::str::from_utf8).parse(rem)?;
+        let (rem, s) = map_res(take(sz as usize), core::str::from_utf8).parse(rem)?;
         Ok((rem, s.to_owned()))
     }
 }
@@ -172,6 +191,7 @@ where
     }
 }
 
+#[cfg(feature = "alloc")]
 impl<T, I, E> Parse<I, E> for Vec<T>
 where
     I: Clone + PartialEq + InputSlice,
@@ -209,6 +229,7 @@ where
 
 /// *Note: this implementation uses const generics and requires rust >= 1.51*
 #[rustversion::since(1.51)]
+#[cfg(feature = "alloc")]
 impl<T, I, E, const N: usize> Parse<I, E> for [T; N]
 where
     I: Clone + PartialEq + InputSlice,
