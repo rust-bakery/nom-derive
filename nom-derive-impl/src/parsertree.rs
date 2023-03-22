@@ -70,6 +70,30 @@ impl ParserExpr {
                 ParserEndianness::LittleEndian => ParserExpr::CallParseLE(item.clone()),
                 _ => unreachable!(),
             },
+            ParserExpr::Complete(expr) => {
+                ParserExpr::Complete(expr.with_endianness(endianness).into())
+            }
+            ParserExpr::Cond(expr, c) => {
+                ParserExpr::Cond(expr.with_endianness(endianness).into(), c.clone())
+            }
+            ParserExpr::Count(expr, n) => {
+                ParserExpr::Count(expr.with_endianness(endianness).into(), n.clone())
+            }
+            ParserExpr::DbgDmp(expr, i) => {
+                ParserExpr::DbgDmp(expr.with_endianness(endianness).into(), i.clone())
+            }
+            ParserExpr::Into(expr) => ParserExpr::Into(expr.with_endianness(endianness).into()),
+            ParserExpr::LengthCount(expr, n) => {
+                ParserExpr::LengthCount(expr.with_endianness(endianness).into(), n.clone())
+            }
+            ParserExpr::Map(expr, m) => {
+                ParserExpr::Map(expr.with_endianness(endianness).into(), m.clone())
+            }
+            ParserExpr::Verify(expr, i, v) => ParserExpr::Verify(
+                expr.with_endianness(endianness).into(),
+                i.clone(),
+                v.clone(),
+            ),
             expr => expr.clone(),
         }
     }
