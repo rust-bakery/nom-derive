@@ -19,13 +19,13 @@ use syn::*;
 mod config;
 mod endian;
 mod enums;
-mod gen;
+mod r#gen;
 mod meta;
 mod parsertree;
 mod structs;
 
 use crate::endian::*;
-use crate::gen::*;
+use crate::r#gen::*;
 
 /// The `Nom` derive automatically generates a `parse` function for the structure
 /// using [nom] parsers. It will try to infer parsers for primitive of known

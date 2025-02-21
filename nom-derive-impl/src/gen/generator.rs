@@ -15,6 +15,7 @@ pub(crate) trait Generator {
 
     fn name(&self) -> &Ident;
 
+    #[allow(dead_code)]
     fn set_debug(&mut self, debug_derive: bool);
 
     fn extra_args(&self) -> Option<&TokenStream>;
@@ -113,7 +114,7 @@ pub(crate) trait Generator {
             let call_args = self.get_call_args();
             let fn_args = get_fn_args(self.extra_args(), self.config());
             quote! {
-               #scope fn parse#fn_generics(#fn_args) -> nom::IResult<&'nom [u8], Self #maybe_err> #where_clause {
+               #scope fn parse #fn_generics(#fn_args) -> nom::IResult<&'nom [u8], Self #maybe_err> #where_clause {
                     Self::parse_be(#call_args)
                 }
             }
@@ -318,7 +319,7 @@ pub(crate) fn gen_fn_decl(
             fn_generics = Some(quote!(<#ident_e>));
         }
         quote! {
-           #scope fn #parse#fn_generics(#fn_args) -> nom::IResult<&#lft [u8], Self, #ident_e>
+           #scope fn #parse #fn_generics(#fn_args) -> nom::IResult<&#lft [u8], Self, #ident_e>
             #fn_where_clause
         }
     } else {

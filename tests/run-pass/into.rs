@@ -1,5 +1,6 @@
-use nom::character::streaming::alpha1;
 use nom::IResult;
+use nom::Parser;
+use nom::character::streaming::alpha1;
 use nom_derive::*;
 
 fn parser1(i: &[u8]) -> IResult<&[u8], &[u8]> {
@@ -31,3 +32,4 @@ fn main() {
         ))
     )
 }
+

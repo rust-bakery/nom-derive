@@ -1,4 +1,5 @@
-use nom_derive::nom::{error::*, Err, Needed};
+use nom::Parser;
+use nom_derive::nom::{Err, Needed, error::*};
 use nom_derive::*;
 
 /// By default, derived parsers use "streaming"

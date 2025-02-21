@@ -66,7 +66,7 @@ fn get_type_parser(ty: &Type, meta_list: &[MetaAttr], config: &Config) -> Result
 }
 
 fn get_item_subtype_parser(ty: &Type, expected: &str, attr: &str) -> Result<TokenStream> {
-    if let Type::Path(ref typepath) = ty {
+    if let Type::Path(typepath) = ty {
         let path = &typepath.path;
         if path.segments.len() != 1 {
             return Err(Error::new(
@@ -94,7 +94,7 @@ fn get_item_subtype_parser(ty: &Type, expected: &str, attr: &str) -> Result<Toke
 
 pub(crate) fn get_type_first_ident(ty: &Type) -> Result<String> {
     match ty {
-        Type::Path(ref typepath) => {
+        Type::Path(typepath) => {
             let path = &typepath.path;
             if path.segments.len() != 1 {
                 return Err(Error::new(
@@ -106,7 +106,7 @@ pub(crate) fn get_type_first_ident(ty: &Type) -> Result<String> {
             let ident_s = segment.ident.to_string();
             Ok(ident_s)
         }
-        Type::Array(ref typearray) => get_type_first_ident(&typearray.elem),
+        Type::Array(typearray) => get_type_first_ident(&typearray.elem),
         _ => Err(Error::new(
             ty.span(),
             "Nom-derive: could not get first path ident",
@@ -188,7 +188,7 @@ fn get_parser(
                         return Err(Error::new(
                             meta.span(),
                             "Nom-derive: can't use Verify with unnamed fields",
-                        ))
+                        ));
                     }
                 };
                 return Ok(ParserExpr::DbgDmp(Box::new(expr), ident.clone()));
@@ -243,7 +243,7 @@ fn get_parser(
                         return Err(Error::new(
                             meta.span(),
                             "Nom-derive: can't use Verify with unnamed fields",
-                        ))
+                        ));
                     }
                 };
                 // if meta.arg is string, parse content
@@ -465,7 +465,7 @@ pub(crate) fn parse_fields(f: &Fields, config: &mut Config) -> Result<StructPars
                     return Err(Error::new(
                         Span::call_site(),
                         "Nom-derive: can't use Debug with unnamed fields",
-                    ))
+                    ));
                 }
             };
             p = ParserExpr::DbgDmp(Box::new(p), ident.clone());

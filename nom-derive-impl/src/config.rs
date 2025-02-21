@@ -1,10 +1,11 @@
 use crate::endian::ParserEndianness;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
 use proc_macro2::{Span, TokenStream};
-use syn::{spanned::Spanned, Error};
+use syn::{Error, spanned::Spanned};
 
 #[derive(Debug)]
 pub struct Config {
+    #[allow(dead_code)]
     pub struct_name: String,
     /// Endianness for all parsers, if specified
     pub global_endianness: ParserEndianness,

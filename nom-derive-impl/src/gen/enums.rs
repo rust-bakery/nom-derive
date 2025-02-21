@@ -3,13 +3,13 @@ use proc_macro2::Span;
 use proc_macro2::TokenStream;
 use syn::*;
 
+use crate::Result;
 use crate::config::Config;
 use crate::endian::*;
 use crate::enums::*;
-use crate::gen::get_extra_args;
+use crate::r#gen::get_extra_args;
 use crate::meta;
 use crate::structs::get_pre_post_exec;
-use crate::Result;
 
 use super::Generator;
 
@@ -106,7 +106,7 @@ impl GenEnum {
         // endianness must be set before parsing struct
         set_object_endianness(name.span(), endianness, &meta, &mut config)?;
 
-        let extra_args = get_extra_args(&meta).map(Clone::clone);
+        let extra_args = get_extra_args(&meta).cloned();
 
         // test endianness validity (not 2 or more)
         validate_endianness(

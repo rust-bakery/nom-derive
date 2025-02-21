@@ -4,7 +4,7 @@ use std::fmt;
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
-use syn::{parenthesized, token, Ident, Token};
+use syn::{Ident, Token, parenthesized, token};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MetaAttrType {
