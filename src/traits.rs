@@ -1,20 +1,20 @@
 use nom::bytes::streaming::take;
 use nom::combinator::{complete, map_res, opt};
 use nom::error::{Error, FromExternalError, ParseError};
-use nom::multi::{many0, many_m_n};
+use nom::multi::{many_m_n, many0};
 use nom::number::streaming::*;
 use nom::sequence::pair;
 use nom::*;
 use std::convert::TryFrom;
-use std::ops::RangeFrom;
+// use std::ops::RangeFrom;
 
-pub use nom::{InputLength, Slice};
+// pub use nom::{InputLength, Slice};
 
-pub trait InputSlice:
-    Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength + InputTake
+pub trait InputSlice: Input<Item = u8>
+// Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength + InputTake
 {
 }
-impl<'a> InputSlice for &'a [u8] {}
+impl InputSlice for &[u8] {}
 
 /// Common trait for all parsers in nom-derive
 ///
@@ -156,7 +156,7 @@ where
 {
     fn parse(i: &'a [u8]) -> IResult<&'a [u8], Self, E> {
         let (rem, sz) = <u32>::parse(i)?;
-        let (rem, s) = map_res(take(sz as usize), std::str::from_utf8)(rem)?;
+        let (rem, s) = map_res(take(sz as usize), std::str::from_utf8).parse(rem)?;
         Ok((rem, s.to_owned()))
     }
 }
@@ -168,13 +168,13 @@ where
     T: Parse<I, E>,
 {
     fn parse(i: I) -> IResult<I, Self, E> {
-        opt(complete(<T>::parse))(i)
+        opt(complete(<T>::parse)).parse(i)
     }
     fn parse_be(i: I) -> IResult<I, Self, E> {
-        opt(complete(<T>::parse_be))(i)
+        opt(complete(<T>::parse_be)).parse(i)
     }
     fn parse_le(i: I) -> IResult<I, Self, E> {
-        opt(complete(<T>::parse_le))(i)
+        opt(complete(<T>::parse_le)).parse(i)
     }
 }
 
@@ -185,13 +185,13 @@ where
     T: Parse<I, E>,
 {
     fn parse(i: I) -> IResult<I, Self, E> {
-        many0(complete(<T>::parse))(i)
+        many0(complete(<T>::parse)).parse(i)
     }
     fn parse_be(i: I) -> IResult<I, Self, E> {
-        many0(complete(<T>::parse_be))(i)
+        many0(complete(<T>::parse_be)).parse(i)
     }
     fn parse_le(i: I) -> IResult<I, Self, E> {
-        many0(complete(<T>::parse_le))(i)
+        many0(complete(<T>::parse_le)).parse(i)
     }
 }
 
@@ -203,13 +203,13 @@ where
     T2: Parse<I, E>,
 {
     fn parse(i: I) -> IResult<I, Self, E> {
-        pair(T1::parse, T2::parse)(i)
+        pair(T1::parse, T2::parse).parse(i)
     }
     fn parse_be(i: I) -> IResult<I, Self, E> {
-        pair(T1::parse_be, T2::parse_be)(i)
+        pair(T1::parse_be, T2::parse_be).parse(i)
     }
     fn parse_le(i: I) -> IResult<I, Self, E> {
-        pair(T1::parse_le, T2::parse_le)(i)
+        pair(T1::parse_le, T2::parse_le).parse(i)
     }
 }
 
@@ -222,17 +222,19 @@ where
     T: Parse<I, E>,
 {
     fn parse(i: I) -> IResult<I, Self, E> {
-        map_res(many_m_n(N, N, complete(<T>::parse)), Self::try_from)(i)
+        map_res(many_m_n(N, N, complete(<T>::parse)), Self::try_from).parse(i)
     }
     fn parse_be(i: I) -> IResult<I, Self, E> {
         map_res(many_m_n(N, N, complete(<T>::parse_be)), |v| {
             Self::try_from(v)
-        })(i)
+        })
+        .parse(i)
     }
     fn parse_le(i: I) -> IResult<I, Self, E> {
         map_res(many_m_n(N, N, complete(<T>::parse_le)), |v| {
             Self::try_from(v)
-        })(i)
+        })
+        .parse(i)
     }
 }
 

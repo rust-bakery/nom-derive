@@ -126,7 +126,7 @@ impl GenStruct {
         // endianness must be set before parsing struct
         set_object_endianness(name.span(), endianness, &meta, &mut config)?;
 
-        let extra_args = get_extra_args(&meta).map(Clone::clone);
+        let extra_args = get_extra_args(&meta).cloned();
 
         // test endianness validity (not 2 or more)
         validate_endianness(
@@ -179,11 +179,7 @@ fn add_extra_where_predicates(
                 }
             }
         }
-        if !v.is_empty() {
-            Some(v)
-        } else {
-            None
-        }
+        if !v.is_empty() { Some(v) } else { None }
     } else {
         None
     }

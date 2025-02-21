@@ -1,4 +1,3 @@
-use nom_derive::nom::error::VerboseError;
 use nom_derive::nom::IResult;
 use nom_derive::*;
 
@@ -36,9 +35,10 @@ fn main() {
     );
 
     // test generics: u16 and custom error: VerboseError
-    let rem: IResult<_, _, VerboseError<_>> = StructWithGenericsAndErrors::<u16>::parse(input);
+    let rem: IResult<_, _, nom::error::Error<_>> = StructWithGenericsAndErrors::<u16>::parse(input);
     assert_eq!(
         rem.unwrap(),
         (&input[2..], StructWithGenericsAndErrors { t: 0x1u16 })
     );
 }
+

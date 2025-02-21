@@ -4,8 +4,6 @@ extern crate pretty_assertions;
 use nom_derive::*;
 
 use nom::bytes::complete::take;
-use nom::combinator::map;
-use nom::number::streaming::be_u64;
 use std::marker::PhantomData;
 
 /// A simple structure, with a lifetime
@@ -28,8 +26,7 @@ struct StructWithLifetimes<'a, 'b> {
 // /// A structure with PhantomData
 #[derive(Debug, PartialEq, Nom)]
 struct StructWithPhantomData<'a> {
-    #[nom(Parse = "map(be_u64, |x| x as *const u8)")]
-    start: *const u8,
+    start: u64,
     phantom: PhantomData<&'a u8>,
 }
 
@@ -68,7 +65,7 @@ fn test_struct_with_phantomdata() {
         Ok((
             &input[8..],
             StructWithPhantomData {
-                start: 0x1234567812345678 as *const u8,
+                start: 0x1234567812345678,
                 phantom: PhantomData
             }
         ))

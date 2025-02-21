@@ -5,17 +5,18 @@ extern crate pretty_assertions;
 use nom_derive::Nom;
 use nom_derive::Parse;
 
+use nom::Parser;
 use nom::bytes::complete::take_till;
 use nom::combinator::cond;
-use nom::number::streaming::{be_u64, be_u8};
 use nom::number::Endianness;
+use nom::number::streaming::{be_u8, be_u64};
 use std::ffi::CString;
 
 /// A simple structure, with a complex sub-parser expression
 #[derive(Debug, PartialEq, Nom)]
 struct StructWithComplexParser {
     pub a: u32,
-    #[nom(Parse = "cond(a > 0,be_u64)")]
+    #[nom(Parse = "cond(a > 0,be_u64).parse")]
     pub b: Option<u64>,
 }
 
@@ -176,7 +177,7 @@ pub struct MixedEndian {
 }
 
 fn test_value(x: u8) -> bool {
-    x >> 3 & 1 == 1
+    (x >> 3) & 1 == 1
 }
 
 #[derive(Debug, Nom, PartialEq)]

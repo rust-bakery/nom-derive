@@ -2,7 +2,7 @@ use crate::config::*;
 use crate::meta;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
 use crate::parsertree::{ParserExpr, ParserTreeItem};
-use crate::structs::{get_pre_post_exec, parse_fields, StructParser, StructParserTree};
+use crate::structs::{StructParser, StructParserTree, get_pre_post_exec, parse_fields};
 use syn::{spanned::Spanned, *};
 
 #[derive(Debug)]
@@ -62,10 +62,11 @@ pub(crate) fn get_repr(attrs: &[syn::Attribute]) -> Option<Ident> {
         if let Ok(ref meta) = attr.parse_meta() {
             match meta {
                 syn::Meta::NameValue(_) | syn::Meta::Path(_) => (),
-                syn::Meta::List(ref metalist) => {
+                syn::Meta::List(metalist) => {
                     if let Some(ident) = metalist.path.get_ident() {
                         if ident == "repr" {
-                            for n in metalist.nested.iter() {
+                            if let Some(n) = metalist.nested.first() {
+                                //for n in metalist.nested.iter() {
                                 match n {
                                     syn::NestedMeta::Meta(meta) => match meta {
                                         syn::Meta::Path(path) => {

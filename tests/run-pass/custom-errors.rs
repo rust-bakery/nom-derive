@@ -1,4 +1,4 @@
-use nom_derive::nom::error::VerboseError;
+use nom::{Parser, error::Error};
 use nom_derive::nom::IResult;
 use nom_derive::*;
 
@@ -37,11 +37,11 @@ fn main() {
     assert_eq!(rem.unwrap(), (&input[4..], S1 { a: 0x10203 }));
 
     // test error type: VerboseError
-    let rem: IResult<_, _, VerboseError<_>> = S1::parse(input);
+    let rem: IResult<_, _, Error<_>> = S1::parse(input);
     assert_eq!(rem.unwrap(), (&input[4..], S1 { a: 0x10203 }));
 
     // test lifetimes and error type: VerboseError
-    let rem: IResult<_, _, VerboseError<_>> = StructWithLifetime::parse(input);
+    let rem: IResult<_, _, Error<_>> = StructWithLifetime::parse(input);
     assert_eq!(
         rem.unwrap(),
         (
@@ -54,7 +54,7 @@ fn main() {
     );
 
     // test two lifetimes and error type: VerboseError
-    let rem: IResult<_, _, VerboseError<_>> = StructWithTwoLifetimes::parse(input);
+    let rem: IResult<_, _, Error<_>> = StructWithTwoLifetimes::parse(input);
     assert_eq!(
         rem.unwrap(),
         (
@@ -67,3 +67,4 @@ fn main() {
         )
     );
 }
+

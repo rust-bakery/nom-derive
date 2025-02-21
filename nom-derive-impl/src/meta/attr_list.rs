@@ -1,6 +1,6 @@
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
-use syn::{parenthesized, Token};
+use syn::{Token, parenthesized};
 
 #[derive(Debug)]
 pub struct AttrList<T: Parse>(pub Vec<T>);

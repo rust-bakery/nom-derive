@@ -1,6 +1,6 @@
-use nom_derive::nom::bytes::streaming::take;
-use nom_derive::nom::error::{Error, VerboseError};
 use nom_derive::nom::IResult;
+use nom_derive::nom::bytes::streaming::take;
+use nom_derive::nom::error::Error;
 use nom_derive::*;
 
 /// unnamed struct
@@ -62,7 +62,7 @@ fn main() {
     assert_eq!(rem, (&input[5..], U1::Field1(0x01020304)));
 
     // test error type: VerboseError
-    let rem = U1::parse::<VerboseError<_>>(&input[1..], MessageType(input[0])).unwrap();
+    let rem = U1::parse::<nom::error::Error<_>>(&input[1..], MessageType(input[0])).unwrap();
     assert_eq!(rem, (&input[5..], U1::Field1(0x01020304)));
 
     // test lifetime and error type: unit
@@ -77,3 +77,4 @@ fn main() {
     let rem: IResult<_, _, Error<_>> = U6::parse(&input[2..]);
     assert_eq!(rem.unwrap(), (&input[3..], U6::B));
 }
+
