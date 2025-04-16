@@ -9,7 +9,7 @@ authors = ["Pierre Chifflier <chifflier@wzdftpd.net>"]
 homepage = "https://github.com/rust-bakery/nom-derive"
 repository = "https://github.com/rust-bakery/nom-derive.git"
 readme = "README.md"
-edition = "2024"
+edition = "2018"
 
 include = [
     "LICENSE-*",
