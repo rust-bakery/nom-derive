@@ -7,7 +7,6 @@ use nom_derive::Parse;
 
 use nom::Parser;
 use nom::bytes::complete::take_till;
-use nom::combinator::cond;
 use nom::number::Endianness;
 use nom::number::streaming::{be_u8, be_u64};
 use std::ffi::CString;
@@ -16,7 +15,7 @@ use std::ffi::CString;
 #[derive(Debug, PartialEq, Nom)]
 struct StructWithComplexParser {
     pub a: u32,
-    #[nom(Parse = "cond(a > 0,be_u64).parse")]
+    #[nom(Cond = "a > 0", Parse = "be_u64")]
     pub b: Option<u64>,
 }
 
