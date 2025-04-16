@@ -37,19 +37,7 @@ impl ParserTreeItem {
 impl ToTokens for ParserTreeItem {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         self.expr.to_tokens(tokens);
-        #[allow(unused_variables)]
-        match &self.expr {
-            ParserExpr::Complete(expr)
-            | ParserExpr::Cond(expr, _)
-            | ParserExpr::Count(expr, _)
-            | ParserExpr::Into(expr)
-            | ParserExpr::LengthCount(expr, _)
-            | ParserExpr::Map(expr, _)
-            | ParserExpr::Verify(expr, _, _) => {
-                tokens.extend(quote! {.parse});
-            }
-            _ => {}
-        }
+        tokens.extend(quote! {.parse});
     }
 }
 
