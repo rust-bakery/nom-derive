@@ -5,8 +5,6 @@ use syn::{Error, spanned::Spanned};
 
 #[derive(Debug)]
 pub struct Config {
-    #[allow(dead_code)]
-    pub struct_name: String,
     /// Endianness for all parsers, if specified
     pub global_endianness: ParserEndianness,
     /// Endianness for this struct or enum, if specified
@@ -25,7 +23,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn from_meta_list(name: String, l: &[MetaAttr]) -> Result<Self, Error> {
+    pub fn from_meta_list(l: &[MetaAttr]) -> Result<Self, Error> {
         let mut req_big_endian = false;
         let mut req_little_endian = false;
         let mut complete = false;
@@ -83,7 +81,7 @@ impl Config {
             None
         };
         Ok(Config {
-            struct_name: name,
+            // struct_name: name,
             global_endianness: ParserEndianness::Unspecified,
             object_endianness,
             complete,

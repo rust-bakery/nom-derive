@@ -121,7 +121,7 @@ impl GenStruct {
         // parse top-level attributes and prepare tokens for each field parser
         let meta = meta::parse_nom_top_level_attribute(attrs)?;
         // eprintln!("top-level meta: {:?}", meta);
-        let mut config = Config::from_meta_list(name.to_string(), &meta)?;
+        let mut config = Config::from_meta_list(&meta)?;
 
         // endianness must be set before parsing struct
         set_object_endianness(name.span(), endianness, &meta, &mut config)?;
