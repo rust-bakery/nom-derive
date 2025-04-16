@@ -10,6 +10,7 @@ homepage = "https://github.com/rust-bakery/nom-derive"
 repository = "https://github.com/rust-bakery/nom-derive.git"
 readme = "README.md"
 edition = "2018"
+rust-version = "1.65"
 
 include = [
     "LICENSE-*",
