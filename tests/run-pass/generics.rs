@@ -41,4 +41,3 @@ fn main() {
         (&input[2..], StructWithGenericsAndErrors { t: 0x1u16 })
     );
 }
-

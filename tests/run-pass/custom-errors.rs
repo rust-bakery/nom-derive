@@ -1,5 +1,4 @@
 use nom_derive::nom::IResult;
-use nom_derive::nom::Parser;
 use nom_derive::nom::error::{ErrorKind, ParseError};
 use nom_derive::*;
 

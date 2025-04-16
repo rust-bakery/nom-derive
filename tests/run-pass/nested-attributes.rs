@@ -1,4 +1,3 @@
-use nom::Parser;
 use nom_derive::*;
 
 #[derive(Debug, PartialEq, Nom)]
@@ -65,4 +64,3 @@ fn main() {
         ))
     );
 }
-

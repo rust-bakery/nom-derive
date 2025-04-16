@@ -1,11 +1,9 @@
-// use nom_derive::nom::error::VerboseError;
 use nom_derive::nom::IResult;
 use nom_derive::*;
 
 // strings and generic errors (#32)
 #[derive(Debug, PartialEq, NomBE)]
 #[nom(GenericErrors)]
-// #[nom(DebugDerive)]
 struct SimpleStruct1 {
     b: String,
 }

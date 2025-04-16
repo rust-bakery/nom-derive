@@ -2,10 +2,8 @@
 #[macro_use]
 extern crate pretty_assertions;
 
-use nom_derive::Nom;
-use nom_derive::Parse;
+use nom_derive::*;
 
-use nom::Parser;
 use nom::bytes::complete::take_till;
 use nom::number::Endianness;
 use nom::number::streaming::{be_u8, be_u64};
