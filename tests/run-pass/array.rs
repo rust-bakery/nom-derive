@@ -44,8 +44,7 @@ fn main() {
         Ok((
             &input[6..],
             StructWithArrayOfStructs {
-                a: [ SubStruct {a:0, b:255},
-                     SubStruct {a:0, b:255}],
+                a: [SubStruct { a: 0, b: 255 }, SubStruct { a: 0, b: 255 }],
                 b: 1,
                 c: 2
             }

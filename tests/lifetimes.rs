@@ -1,9 +1,8 @@
 #[macro_use]
 extern crate pretty_assertions;
 
-use nom_derive::*;
-
 use nom::bytes::complete::take;
+use nom_derive::*;
 use std::marker::PhantomData;
 
 /// A simple structure, with a lifetime

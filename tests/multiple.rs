@@ -2,7 +2,6 @@
 #[macro_use]
 extern crate pretty_assertions;
 
-use nom::Parser;
 use nom::number::streaming::be_u8;
 use nom_derive::*;
 

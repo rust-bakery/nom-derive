@@ -1,4 +1,3 @@
-use nom::Parser;
 use nom_derive::nom::{Err, Needed, error::*};
 use nom_derive::*;
 
