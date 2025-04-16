@@ -114,4 +114,5 @@ pub use helpers::*;
 pub use traits::*;
 
 pub use nom;
+pub use nom::Parser;
 pub use nom_derive_impl::*;
