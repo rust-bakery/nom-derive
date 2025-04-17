@@ -144,7 +144,7 @@ impl ToTokens for ParserExpr {
             }
             ParserExpr::Raw(s) => s.to_token_stream(),
             ParserExpr::Tag(s) => {
-                quote! { nom::bytes::streaming::tag(#s) }
+                quote! { nom::bytes::streaming::tag(&#s[..]) }
             }
             ParserExpr::Take(s) => {
                 quote! { nom::bytes::streaming::take(#s as usize) }

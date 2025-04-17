@@ -2,6 +2,8 @@
 extern crate pretty_assertions;
 
 use nom::bytes::complete::take;
+use nom::combinator::map;
+use nom::number::complete::be_u64;
 use nom_derive::*;
 use std::marker::PhantomData;
 
@@ -25,7 +27,8 @@ struct StructWithLifetimes<'a, 'b> {
 // /// A structure with PhantomData
 #[derive(Debug, PartialEq, Nom)]
 struct StructWithPhantomData<'a> {
-    start: u64,
+    #[nom(Parse = "map(be_u64, |x| x as *const u8)")]
+    start: *const u8,
     phantom: PhantomData<&'a u8>,
 }
 
@@ -64,7 +67,7 @@ fn test_struct_with_phantomdata() {
         Ok((
             &input[8..],
             StructWithPhantomData {
-                start: 0x1234567812345678,
+                start: 0x1234567812345678 as *const u8,
                 phantom: PhantomData
             }
         ))

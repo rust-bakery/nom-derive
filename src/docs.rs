@@ -457,7 +457,7 @@
 ///         map(
 ///             le_u16, // little-endian
 ///             |c| S2{c} // return a struct S2
-///         )(i)
+///         ).parse(i)
 ///     }
 /// }
 ///
