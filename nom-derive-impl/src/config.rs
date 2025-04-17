@@ -1,7 +1,7 @@
 use crate::endian::ParserEndianness;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
 use proc_macro2::{Span, TokenStream};
-use syn::{Error, spanned::Spanned};
+use syn::{spanned::Spanned, Error};
 
 #[derive(Debug)]
 pub struct Config {
@@ -81,7 +81,6 @@ impl Config {
             None
         };
         Ok(Config {
-            // struct_name: name,
             global_endianness: ParserEndianness::Unspecified,
             object_endianness,
             complete,
