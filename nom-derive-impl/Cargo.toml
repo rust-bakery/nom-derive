@@ -27,7 +27,7 @@ include = [
 proc-macro = true
 
 [dependencies]
-syn = { version="1.0.58", features=["parsing","extra-traits","full"] }
+syn = { version="2.0", features=["parsing","extra-traits","full"] }
 quote = "1.0"
 proc-macro2 = "1.0"
 

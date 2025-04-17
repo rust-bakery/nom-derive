@@ -143,7 +143,7 @@ pub(crate) trait Generator {
         let mut gen_impl: Generics = parse_quote!(#impl_generics);
         gen_impl
             .params
-            .push(GenericParam::Lifetime(LifetimeDef::new(lft.clone())));
+            .push(GenericParam::Lifetime(LifetimeParam::new(lft.clone())));
         let param_e = TypeParam::from(ident_e.clone());
 
         let mut gen_wh: WhereClause = if where_clause.is_none() {

@@ -3,7 +3,8 @@ use crate::meta;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
 use crate::parsertree::{ParserExpr, ParserTreeItem};
 use crate::structs::{get_pre_post_exec, parse_fields, StructParser, StructParserTree};
-use syn::{spanned::Spanned, *};
+use syn::spanned::Spanned;
+use syn::*;
 
 #[derive(Debug)]
 pub(crate) struct VariantParserTree {
@@ -58,36 +59,22 @@ fn get_selector(meta_list: &[MetaAttr]) -> Option<String> {
 }
 
 pub(crate) fn get_repr(attrs: &[syn::Attribute]) -> Option<Ident> {
-    for attr in attrs {
-        if let Ok(ref meta) = attr.parse_meta() {
-            match meta {
-                syn::Meta::NameValue(_) | syn::Meta::Path(_) => (),
-                syn::Meta::List(metalist) => {
-                    if let Some(ident) = metalist.path.get_ident() {
-                        if ident == "repr" {
-                            if let Some(n) = metalist.nested.first() {
-                                //for n in metalist.nested.iter() {
-                                match n {
-                                    syn::NestedMeta::Meta(meta) => match meta {
-                                        syn::Meta::Path(path) => {
-                                            if let Some(word) = path.get_ident() {
-                                                return Some(word.clone());
-                                            } else {
-                                                panic!("unsupported nested type for 'repr'")
-                                            }
-                                        }
-                                        _ => panic!("unsupported nested type for 'repr'"),
-                                    },
-                                    _ => panic!("unsupported meta type for 'repr'"),
-                                }
-                            }
-                        }
-                    }
+    attrs.iter().find_map(|attr| {
+        //
+        let mut ident = None::<Ident>;
+        if attr.path().is_ident("repr") {
+            attr.parse_nested_meta(|meta| {
+                if let Some(word) = meta.path.get_ident() {
+                    ident = Some(word.clone());
+                    Ok(())
+                } else {
+                    panic!("unsupported nested type for 'repr'");
                 }
-            }
+            })
+            .ok()?;
         }
-    }
-    None
+        ident
+    })
 }
 
 pub(crate) fn is_input_fieldless_enum(ast: &syn::DeriveInput) -> bool {

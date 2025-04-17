@@ -1,11 +1,11 @@
 error: Struct cannot be both big and little endian
- --> $DIR/endianness-multiple.rs:6:7
+ --> tests/compile-fail/endianness-multiple.rs:6:7
   |
 6 | #[nom(BigEndian, LittleEndian)] // ERROR: Struct cannot be both big and little endian
   |       ^^^^^^^^^
 
 error: Object cannot be both big and little endian
-  --> $DIR/endianness-multiple.rs:12:10
+  --> tests/compile-fail/endianness-multiple.rs:12:10
    |
 12 | #[derive(NomLE)] // ERROR: Object cannot be both big and little endian
    |          ^^^^^
