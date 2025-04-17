@@ -861,7 +861,7 @@
 ///  - `SkipAfter`/`SkipBefore`: skip the specified number of bytes
 ///  - `Move`: add the speficied offset to current position, before parsing. Offset can be negative.
 ///  - `MoveAbs`: go to specified absolute position (relative to the start of original parser
-///     input), before parsing
+///    input), before parsing
 ///
 ///  If multiple directives are provided, they are applied in order of appearance of the
 ///  attribute.
