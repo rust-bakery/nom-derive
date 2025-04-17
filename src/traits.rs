@@ -1,19 +1,13 @@
 use nom::bytes::streaming::take;
 use nom::combinator::{complete, map_res, opt};
 use nom::error::{Error, FromExternalError, ParseError};
-use nom::multi::{many_m_n, many0};
+use nom::multi::{many0, many_m_n};
 use nom::number::streaming::*;
 use nom::sequence::pair;
 use nom::*;
 use std::convert::TryFrom;
-// use std::ops::RangeFrom;
 
-// pub use nom::{InputLength, Slice};
-
-pub trait InputSlice: Input<Item = u8>
-// Slice<RangeFrom<usize>> + InputIter<Item = u8> + InputLength + InputTake
-{
-}
+pub trait InputSlice: Input<Item = u8> {}
 impl InputSlice for &[u8] {}
 
 /// Common trait for all parsers in nom-derive
@@ -55,7 +49,7 @@ impl InputSlice for &[u8] {}
 /// {
 ///     fn parse(i: &'a [u8]) -> IResult<&'a [u8], Self, E> {
 ///         let (rem, sz) = <u32>::parse(i)?;
-///         let (rem, s) = map_res(take(sz as usize), std::str::from_utf8)(rem)?;
+///         let (rem, s) = map_res(take(sz as usize), std::str::from_utf8).parse(rem)?;
 ///         Ok((rem, s.to_owned()))
 ///     }
 /// }
@@ -67,7 +61,7 @@ impl InputSlice for &[u8] {}
 /// common way is to use a newtype pattern:
 ///
 /// ```rust
-/// use nom_derive::{Parse, nom};
+/// use nom_derive::{Parse, nom, Parser};
 ///
 /// use nom::IResult;
 /// use nom::bytes::complete::take;
@@ -82,7 +76,7 @@ impl InputSlice for &[u8] {}
 /// {
 ///     fn parse(i: &'a [u8]) -> IResult<&'a [u8], Self, E> {
 ///         let (rem, sz) = <u32>::parse(i)?;
-///         let (rem, s) = map_res(take(sz as usize), std::str::from_utf8)(rem)?;
+///         let (rem, s) = map_res(take(sz as usize), std::str::from_utf8).parse(rem)?;
 ///         Ok((rem, MyString(s.to_owned())))
 ///     }
 /// }
