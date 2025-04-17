@@ -161,7 +161,12 @@ impl GenEnum {
                         .parsers
                         .iter()
                         .map(|sp| {
-                            let id = syn::Ident::new(&sp.name, Span::call_site());
+                            let id = if sp.name.starts_with("r#") {
+                                // raw identifier: r#type
+                                syn::Ident::new_raw(&sp.name[2..], Span::call_site())
+                            } else {
+                                syn::Ident::new(&sp.name, Span::call_site())
+                            };
                             // set current endianness for functions that do not specify it
                             let item = sp.item.with_endianness(endianness);
                             (id, item)
