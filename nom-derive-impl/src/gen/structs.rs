@@ -97,6 +97,7 @@ impl Generator for GenStruct {
         };
 
         let fn_body = quote! {
+            use nom::Parser;
             let #input = #orig_input;
             #tl_pre
             #(#pre let (#input, #idents) = #parser_tokens (#input) ?; #post)*
