@@ -1,10 +1,11 @@
-use proc_macro2::{Span, TokenStream};
+use core::convert::TryFrom;
+use core::fmt;
+use proc_macro2::TokenStream;
 use quote::ToTokens;
-use std::fmt;
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
-use syn::{parenthesized, token, Ident, Token};
+use syn::{token, Expr, ExprLit, FnArg, Ident, Lit, Meta, Pat, Stmt, Token};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum MetaAttrType {
@@ -151,15 +152,17 @@ impl fmt::Display for MetaAttrType {
 pub struct MetaAttr {
     pub attr_type: MetaAttrType,
     arg0: Option<TokenStream>,
-    span: Span,
+
+    // the original token stream for the Meta attribute
+    tokens: TokenStream,
 }
 
 impl MetaAttr {
-    pub fn new(attr_type: MetaAttrType, arg0: Option<TokenStream>, span: Span) -> Self {
+    pub fn new(attr_type: MetaAttrType, arg0: Option<TokenStream>, tokens: TokenStream) -> Self {
         MetaAttr {
             attr_type,
             arg0,
-            span,
+            tokens,
         }
     }
 
@@ -216,75 +219,80 @@ impl fmt::Display for MetaAttr {
     }
 }
 
-impl Spanned for MetaAttr {
-    fn span(&self) -> Span {
-        self.span
-    }
-}
+impl TryFrom<&'_ Meta> for MetaAttr {
+    type Error = syn::Error;
 
-impl Parse for MetaAttr {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
-        let ident: Ident = input.parse()?;
+    fn try_from(meta: &Meta) -> std::result::Result<Self, Self::Error> {
+        let ident: Ident = meta.path().get_ident().cloned().unwrap();
         let attr_type =
             MetaAttrType::from_ident(&ident).unwrap_or_else(|| panic!("Wrong meta name {}", ident));
+
         let arg0 = if attr_type.takes_argument() {
-            // read (value), or ="value"
             let token_stream = match attr_type {
                 MetaAttrType::ExtraArgs => {
-                    let content;
-                    let _paren_token = parenthesized!(content in input);
-                    type ExpectedType = Punctuated<syn::Field, Token![,]>;
-                    let fields: ExpectedType = content.parse_terminated(syn::Field::parse_named)?;
+                    let list = meta.require_list()?;
+                    let fields =
+                        list.parse_args_with(Punctuated::<FnArg, Token![,]>::parse_terminated)?;
                     quote! { #fields }
                 }
-                MetaAttrType::PreExec | MetaAttrType::PostExec => {
-                    parse_content::<syn::Stmt>(input)?
-                }
-                MetaAttrType::Selector => parse_content::<PatternAndGuard>(input)?,
-                _ => parse_content::<syn::Expr>(input)?,
+                MetaAttrType::PreExec | MetaAttrType::PostExec => parse_meta_content::<Stmt>(meta)?,
+                MetaAttrType::Selector => parse_meta_content::<PatternAndGuard>(meta)?,
+                _ => parse_meta_content::<Expr>(meta)?,
             };
             Some(token_stream)
         } else {
             None
         };
-        Ok(MetaAttr::new(attr_type, arg0, ident.span()))
+
+        Ok(MetaAttr::new(attr_type, arg0, meta.to_token_stream()))
     }
 }
 
-fn parse_content<P>(input: ParseStream) -> syn::Result<TokenStream>
+// Implemented to provided `Spanned``
+impl quote::ToTokens for MetaAttr {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.extend(self.tokens.clone());
+    }
+}
+
+impl Parse for MetaAttr {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let meta: Meta = input.parse()?;
+        Self::try_from(&meta)
+    }
+}
+
+fn parse_meta_content<P>(meta: &Meta) -> syn::Result<TokenStream>
 where
     P: Parse + ToTokens + fmt::Debug,
 {
-    if input.peek(Token![=]) {
-        // eprintln!("Exec Peek: =");
-        let _: Token![=] = input.parse()?;
-        // next item is a string containing the real value
-        let x = syn::Lit::parse(input)?;
-        // eprintln!("content: {:?}", x);
-        match x {
-            syn::Lit::Str(s) => {
-                let xx: P = s.parse()?;
-                // eprintln!("xx: {:?}", xx);
-                Ok(quote! { #xx })
-            }
-            _ => Err(syn::Error::new(
-                x.span(),
-                "Unexpected type for nom attribute content (!LitStr)",
-            )),
-        }
-    } else if input.peek(token::Paren) {
-        // eprintln!("Exec Peek: (");
-        let content;
-        let _paren_token = parenthesized!(content in input);
-        let x = P::parse(&content)?;
-        // let x: Punctuated<Type, Token![,]> = content.parse_terminated(Type::parse)?;
-        // eprintln!("content: {:?}", x);
-        Ok(quote! { #x })
-    } else {
-        Err(syn::Error::new(
-            input.span(),
+    match meta {
+        Meta::Path(_path) => Err(syn::Error::new(
+            meta.span(),
             "Unexpected type for nom attribute content (!LitStr)",
-        ))
+        )),
+        Meta::List(meta_list) => {
+            // let lit_str: LitStr = meta_list.parse_args()?;
+
+            // let expr: Expr = lit_str.parse()?;
+            // quote! { #expr }
+            Ok(meta_list.tokens.clone())
+        }
+        Meta::NameValue(meta_name_value) => {
+            if let Expr::Lit(ExprLit {
+                lit: Lit::Str(lit_str),
+                ..
+            }) = &meta_name_value.value
+            {
+                let p: P = lit_str.parse()?;
+                Ok(quote! { #p })
+            } else {
+                Err(syn::Error::new(
+                    meta.span(),
+                    "Unexpected type for nom attribute content (!LitStr)",
+                ))
+            }
+        }
     }
 }
 
@@ -296,7 +304,7 @@ struct PatternAndGuard {
 
 impl Parse for PatternAndGuard {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        let pat = input.parse()?;
+        let pat = Pat::parse_single(input)?;
         let guard = if input.peek(Token![if]) {
             let tk_if: Token![if] = input.parse()?;
             let expr: syn::Expr = input.parse()?;
