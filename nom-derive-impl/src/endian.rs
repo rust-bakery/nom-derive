@@ -1,7 +1,7 @@
 use crate::config::*;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
 use proc_macro2::Span;
-use syn::{Error, Result, spanned::Spanned};
+use syn::{spanned::Spanned, Error, Result};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ParserEndianness {
@@ -59,7 +59,11 @@ pub fn set_object_endianness(
 }
 
 fn two_or_more(a: bool, b: bool, c: bool) -> bool {
-    if a { b | c } else { b & c }
+    if a {
+        b | c
+    } else {
+        b & c
+    }
 }
 
 pub fn get_local_endianness(

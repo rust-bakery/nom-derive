@@ -2,7 +2,7 @@ use crate::config::*;
 use crate::meta;
 use crate::meta::attr::{MetaAttr, MetaAttrType};
 use crate::parsertree::{ParserExpr, ParserTreeItem};
-use crate::structs::{StructParser, StructParserTree, get_pre_post_exec, parse_fields};
+use crate::structs::{get_pre_post_exec, parse_fields, StructParser, StructParserTree};
 use syn::{spanned::Spanned, *};
 
 #[derive(Debug)]

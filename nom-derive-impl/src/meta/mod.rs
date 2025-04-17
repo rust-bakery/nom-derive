@@ -2,7 +2,7 @@ pub mod attr;
 pub mod attr_list;
 pub mod error;
 
-use syn::{Error, Result, spanned::Spanned};
+use syn::{spanned::Spanned, Error, Result};
 
 pub fn parse_nom_top_level_attribute(attrs: &[syn::Attribute]) -> Result<Vec<attr::MetaAttr>> {
     // eprintln!("attrs: {:?}", attrs);

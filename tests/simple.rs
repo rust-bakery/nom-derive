@@ -4,7 +4,7 @@ extern crate pretty_assertions;
 
 use nom::combinator::opt;
 use nom::number::streaming::le_u32;
-use nom::{Err, error_position};
+use nom::{error_position, Err};
 use nom_derive::*;
 
 /// A simple structure, deriving a trivial parser

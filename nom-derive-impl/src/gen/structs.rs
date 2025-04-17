@@ -179,7 +179,11 @@ fn add_extra_where_predicates(
                 }
             }
         }
-        if !v.is_empty() { Some(v) } else { None }
+        if !v.is_empty() {
+            Some(v)
+        } else {
+            None
+        }
     } else {
         None
     }

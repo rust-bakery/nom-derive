@@ -3,13 +3,13 @@ use proc_macro2::Span;
 use proc_macro2::TokenStream;
 use syn::*;
 
-use crate::Result;
 use crate::config::Config;
 use crate::endian::*;
 use crate::enums::*;
-use crate::r#gen::get_extra_args;
 use crate::meta;
+use crate::r#gen::get_extra_args;
 use crate::structs::get_pre_post_exec;
+use crate::Result;
 
 use super::Generator;
 
