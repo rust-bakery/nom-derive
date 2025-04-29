@@ -1183,6 +1183,9 @@
 ///
 /// This helps resolving parse errors (at runtime).
 ///
+/// _Note: this feature is only available when `std` is enabled, because it relies on
+/// `nom::dbg_dmp` (which requires `std`).
+///
 /// ```rust
 /// # #[cfg(feature = "std")] {
 /// # use nom_derive::*;
