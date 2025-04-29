@@ -1184,7 +1184,7 @@
 /// This helps resolving parse errors (at runtime).
 ///
 /// ```rust
-/// # #[cfg(feature = "alloc")] {
+/// # #[cfg(feature = "std")] {
 /// # use nom_derive::*;
 /// #
 /// #[derive(Nom)]
