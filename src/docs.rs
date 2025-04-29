@@ -298,6 +298,7 @@
 ///
 /// For ex:
 /// ```rust
+/// # #[cfg(feature = "alloc")] {
 /// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
@@ -309,6 +310,7 @@
 /// let input = b"\x00\x00\x00\x01";
 /// let res = S::parse(input);
 /// assert_eq!(res, Ok((&input[4..],S{a:vec![0,1]})));
+/// # }
 /// ```
 ///
 /// ## Count
@@ -321,6 +323,7 @@
 ///
 /// For ex:
 /// ```rust
+/// # #[cfg(feature = "alloc")] {
 /// # use nom_derive::*;
 /// #
 /// # #[derive(Debug,PartialEq)] // for assert_eq!
@@ -334,6 +337,7 @@
 /// # let input = b"\x00\x01\x12\x34";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[4..],S{a:1, b:vec![0x1234]})));
+/// # }
 /// ```
 ///
 /// ## LengthCount
@@ -347,6 +351,7 @@
 ///
 /// For ex:
 /// ```rust
+/// # #[cfg(feature = "alloc")] {
 /// # use nom_derive::*;
 /// # use nom::number::streaming::be_u16;
 /// #
@@ -360,6 +365,7 @@
 /// # let input = b"\x00\x01\x12\x34";
 /// # let res = S::parse(input);
 /// # assert_eq!(res, Ok((&input[4..],S{b:vec![0x1234]})));
+/// # }
 /// ```
 ///
 /// ## Tag
@@ -1178,6 +1184,7 @@
 /// This helps resolving parse errors (at runtime).
 ///
 /// ```rust
+/// # #[cfg(feature = "alloc")] {
 /// # use nom_derive::*;
 /// #
 /// #[derive(Nom)]
@@ -1186,6 +1193,7 @@
 ///     #[nom(Debug)]
 ///     pub b: u64,
 /// }
+/// # }
 /// ```
 ///
 /// ## DebugDerive
