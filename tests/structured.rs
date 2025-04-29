@@ -18,13 +18,6 @@ struct StructWithOptionOption {
     b: Option<Option<u64>>,
 }
 
-/// A simple structure with a Vec type
-#[derive(Debug, PartialEq, Nom)]
-struct StructWithVec {
-    pub a: u32,
-    b: Vec<u32>,
-}
-
 #[test]
 fn test_struct_with_option() {
     let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
@@ -61,18 +54,33 @@ fn test_struct_with_option_option() {
     );
 }
 
-#[test]
-fn test_struct_with_vec() {
-    let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
-    let res = StructWithVec::parse(input);
-    assert_eq!(
-        res,
-        Ok((
-            &input[16..],
-            StructWithVec {
-                a: 1,
-                b: vec![0x12345678, 0x12345678, 0x1]
-            }
-        ))
-    );
+#[cfg(test)]
+#[cfg(feature = "alloc")]
+mod tests_alloc {
+    extern crate alloc;
+    use super::*;
+    use alloc::vec::Vec;
+
+    /// A simple structure with a Vec type
+    #[derive(Debug, PartialEq, Nom)]
+    struct StructWithVec {
+        pub a: u32,
+        b: Vec<u32>,
+    }
+
+    #[test]
+    fn test_struct_with_vec() {
+        let input = b"\x00\x00\x00\x01\x12\x34\x56\x78\x12\x34\x56\x78\x00\x00\x00\x01";
+        let res = StructWithVec::parse(input);
+        assert_eq!(
+            res,
+            Ok((
+                &input[16..],
+                StructWithVec {
+                    a: 1,
+                    b: vec![0x12345678, 0x12345678, 0x1]
+                }
+            ))
+        );
+    }
 }

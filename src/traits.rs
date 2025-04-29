@@ -283,17 +283,11 @@ where
 }
 
 #[cfg(test)]
-mod tests {
+#[cfg(feature = "alloc")]
+mod tests_alloc {
+    extern crate alloc;
     use super::*;
-
-    #[test]
-    fn test_parse_trait_vec() {
-        let input: &[u8] = b"\x00\x01\x02\x03";
-
-        type T = Vec<u8>;
-        let res: IResult<_, _, Error<&[u8]>> = <T>::parse(input);
-        assert_eq!(res.unwrap(), (b"" as &[u8], vec![0, 1, 2, 3]));
-    }
+    use alloc::string::String;
 
     #[test]
     fn test_parse_trait_array() {
@@ -302,6 +296,15 @@ mod tests {
         type T = [u8; 4];
         let res: IResult<_, _, Error<&[u8]>> = <T>::parse(input);
         assert_eq!(res.unwrap(), (b"" as &[u8], [0, 1, 2, 3]));
+    }
+
+    #[test]
+    fn test_parse_trait_vec() {
+        let input: &[u8] = b"\x00\x01\x02\x03";
+
+        type T = Vec<u8>;
+        let res: IResult<_, _, Error<&[u8]>> = <T>::parse(input);
+        assert_eq!(res.unwrap(), (b"" as &[u8], vec![0, 1, 2, 3]));
     }
 
     #[test]

@@ -1,3 +1,6 @@
+// #[nom(Debug)] requires `nom::dbg_dmp`, which requires `std`
+#![cfg(feature = "std")]
+
 use nom_derive::*;
 
 /// test for the `Debug` attribute (field)
