@@ -133,7 +133,7 @@ impl ToTokens for ParserExpr {
                 quote! { nom::multi::count(#expr, #n as usize) }
             }
             ParserExpr::DbgDmp(expr, i) => {
-                let ident = format!("{}", i);
+                let ident = format!("{i}");
                 quote! { nom::error::dbg_dmp(#expr, #ident) }
             }
             ParserExpr::Into(expr) => {

@@ -85,10 +85,7 @@ fn get_item_subtype_parser(ty: &Type, expected: &str, attr: &str) -> Result<Toke
     }
     Err(Error::new(
         ty.span(),
-        format!(
-            "Nom-derive: unexpected type for {} attribute. Expected type: {}",
-            attr, expected
-        ),
+        format!("Nom-derive: unexpected type for {attr} attribute. Expected type: {expected}"),
     ))
 }
 
@@ -447,7 +444,7 @@ pub(crate) fn parse_fields(f: &Fields, config: &mut Config) -> Result<StructPars
         let ident_str = if let Some(s) = field.ident.as_ref() {
             s.to_string()
         } else {
-            format!("_{}", idx)
+            format!("_{idx}")
         };
         let meta_list = meta::parse_nom_attribute(&field.attrs)?;
         // eprintln!("meta_list: {:?}", meta_list);

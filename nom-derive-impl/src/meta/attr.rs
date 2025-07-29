@@ -213,7 +213,7 @@ impl fmt::Display for MetaAttr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.attr_type)?;
         if let Some(arg) = &self.arg0 {
-            write!(f, "({})", arg)?;
+            write!(f, "({arg})")?;
         }
         Ok(())
     }

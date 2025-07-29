@@ -213,7 +213,7 @@ pub(crate) trait Generator {
         };
 
         if self.config().debug_derive {
-            eprintln!("tokens:\n{}", impl_tokens);
+            eprintln!("tokens:\n{impl_tokens}");
         }
 
         Ok(impl_tokens)
