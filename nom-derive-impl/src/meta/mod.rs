@@ -1,6 +1,5 @@
 pub mod attr;
 pub mod attr_list;
-pub mod error;
 
 use attr::MetaAttr;
 use attr_list::AttrList;

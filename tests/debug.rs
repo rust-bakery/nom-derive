@@ -1,5 +1,6 @@
 // #[nom(Debug)] requires `nom::dbg_dmp`, which requires `std`
 #![cfg(feature = "std")]
+#![allow(dead_code)]
 
 use nom_derive::*;
 

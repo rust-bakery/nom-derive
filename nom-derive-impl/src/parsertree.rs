@@ -5,17 +5,6 @@ use syn::Ident;
 use crate::endian::ParserEndianness;
 
 #[derive(Debug)]
-pub struct ParserTree {
-    root: ParserExpr,
-}
-
-impl ToTokens for ParserTree {
-    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        self.root.to_tokens(tokens)
-    }
-}
-
-#[derive(Debug)]
 pub struct ParserTreeItem {
     pub ident: Option<Ident>,
     pub expr: ParserExpr,
